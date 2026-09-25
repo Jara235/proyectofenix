@@ -10,15 +10,19 @@ echo.
 echo   [1/2] Iniciando motor de flujos n8n en puerto 5678...
 echo.
 
-:: Verificar si n8n esta en PATH o usar npx
-where n8n >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo   Usando binario global de n8n...
-    start "FENIX - Servidor n8n (NO CERRAR)" cmd /k "title n8n Server && n8n start"
-) else (
-    echo   Iniciando via npx n8n...
-    start "FENIX - Servidor n8n (NO CERRAR)" cmd /k "title n8n Server && npx -y n8n start"
-)
+:: Configuracion de base de datos PostgreSQL para n8n
+set DB_TYPE=postgresdb
+set DB_POSTGRESDB_DATABASE=fenix_db
+set DB_POSTGRESDB_HOST=localhost
+set DB_POSTGRESDB_PORT=5432
+set DB_POSTGRESDB_USER=postgres
+set DB_POSTGRESDB_PASSWORD=Bupito*268
+set DB_POSTGRESDB_SCHEMA=n8n
+set N8N_PORT=5678
+set N8N_DIAGNOSTICS_ENABLED=false
+
+:: Iniciar n8n con binario global
+start "FENIX - Servidor n8n (NO CERRAR)" cmd /k "title n8n Server && n8n start"
 
 echo   [2/2] Esperando que el servidor n8n responda...
 timeout /t 6 /nobreak >nul
