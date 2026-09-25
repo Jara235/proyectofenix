@@ -248,8 +248,8 @@ def create_fenix_documentation():
     # ==========================================
     # COVER PAGE / HEADER METADATA
     # ==========================================
-    add_title("DOCUMENTACIÓN TÉCNICA, AUTOMATIZACIÓN n8n Y PLAN DE TRABAJO: SISTEMA FÉNIX 2.0")
-    add_subtitle("Manual de Arquitectura de Software, Motor de Automatizaciones n8n con IA (Gemini 1.5 Flash), Sistema de Conciliación de 2 Vías, Matriz de Permisos RBAC, Plan de Trabajo con Metas e Impacto ISO 9001/14001")
+    add_title("DOCUMENTACIÓN TÉCNICA, AUTOMATIZACIÓN n8n Y GUÍA DE HOMOLOGACIÓN: SISTEMA FÉNIX 2.0")
+    add_subtitle("Manual de Arquitectura de Software, Motor de Automatizaciones n8n con IA (Gemini 1.5 Flash), Sistema de Conciliación de 2 Vías, Matriz RBAC, Plan de Trabajo con Metas y Guía Estratégica para Junta Técnica")
 
     # Document Metadata Block
     meta_table = doc.add_table(rows=0, cols=2)
@@ -265,7 +265,7 @@ def create_fenix_documentation():
             ["Motor de Automatización", "n8n (Workflows Email IMAP, Drive, Webhooks, Gemini 1.5 Flash AI)"],
             ["Modelo de Conciliación", "Conciliación Multinivel de 2 Vías (Distribuidor / Marimba / Obra)"],
             ["Seguridad y Acceso", "Gobierno Corporativo con Cierre y Bloqueo Definitivo de Datos"],
-            ["Plan de Trabajo", "Hitos Ejecutados (Fases 1 a 6) y Hitos Proyectados (Fase 7)"],
+            ["Guía de Homologación", "Respuestas Preparadas para la Junta e Interrogatorio Estratégico"],
             ["Alcance Normativo", "Certificación ISO 9001:2015 (Calidad) e ISO 14001:2015 (Ambiental)"]
         ]
     )
@@ -274,9 +274,8 @@ def create_fenix_documentation():
         "Directiva de Documentación Profesional Exhaustiva",
         "El presente documento técnico integra la arquitectura completa del Sistema Fénix 2.0: "
         "desde la justificación estratégica, la matriz de permisos RBAC y el modelo de conciliación de 2 vías, "
-        "hasta el desglose detallado del Motor de Automatizaciones en n8n (procesamiento de facturas por correo, "
-        "agente de IA multimodal Gemini 1.5 Flash para WhatsApp, webhooks de conciliación) y el Plan de Trabajo "
-        "formal con todas las metas alcanzadas y futuras."
+        "hasta el desglose detallado del Motor de Automatizaciones en n8n, el Plan de Trabajo con Metas "
+        "y la **Guía Preparatoria para la Junta de Homologación con el Equipo de Ingeniería**."
     )
 
     # ==========================================
@@ -401,11 +400,6 @@ def create_fenix_documentation():
     add_bullet("Pasa el texto y/o la imagen al modelo Google Gemini 1.5 Flash en n8n mediante un System Prompt especializado que clasifica la transacción en 'pegaso', 'marimba' u 'obra', resuelve los códigos de catálogos (ej. MT, L3M, EX-01, FR-01) y devuelve un objeto JSON estructurado.", "3. Agente de IA Gemini 1.5 Flash: ")
     add_bullet("Un nodo Switch evalúa la categoría devuelta e inserta directamente en la tabla correspondiente de PostgreSQL (o en la bandeja de revisión si requiere intervención manual).", "4. Router e Inserción en BD: ")
 
-    add_h2("3.4 Flujo 04: Cierre Diario, Alertas Nocturnas a las 8:00 PM y Expansión Futura")
-    add_bullet("Un disparador Cron ejecuta automáticamente un barrido todas las noches a las 8:00 PM para verificar que todas las cargas del día hayan sido conciliadas y que no existan excedentes presupuestales.", "Cierre Diario Nocturno: ")
-    add_bullet("Envío de notificaciones por WhatsApp / Telegram / Email a los administradores si se detectan mermas o solicitudes sin factura respaldada.", "Alertas Automáticas: ")
-    add_bullet("Respuestas automáticas bidireccionales por WhatsApp Business informando al ingeniero el estatus de aprobación de su solicitud de diésel. Integración por Webhooks con sistemas contables/ERP (CONTPAQi / SAP / COI).", "Ampliación Proyectada: ")
-
     add_diagram(
         "Arquitectura del Motor de Automatizaciones en n8n",
         " ┌────────────────────────────────────────────────────────────────────────┐\n"
@@ -477,36 +471,6 @@ def create_fenix_documentation():
         "o agregar datos de manera retroactiva. La información queda sellada para la emisión de reportes ejecutivos a la Alta Dirección."
     )
 
-    add_diagram(
-        "Estructura Multinivel de Conciliación de 2 Vías y Gobierno Corporativo",
-        " ┌────────────────────────────────────────────────────────────────────────┐\n"
-        " │                 DISTRIBUIDOR DE COMBUSTIBLE (PROVEEDOR)                │\n"
-        " │                      (Factura CFDI / Estado de Cuenta)                 │\n"
-        " └───────────────────────────────────┬────────────────────────────────────┘\n"
-        "                                     │ [CRUCE NIVEL 1]\n"
-        "                                     ▼\n"
-        " ┌────────────────────────────────────────────────────────────────────────┐\n"
-        " │             OPERADORES DE TANQUE PEGASO Y PIPA 'MARIMBA'               │\n"
-        " │                      (Registro de Entradas y Salidas)                  │\n"
-        " └───────────────────────────────────┬────────────────────────────────────┘\n"
-        "                                     │ [CRUCE NIVEL 2]\n"
-        "                                     ▼\n"
-        " ┌────────────────────────────────────────────────────────────────────────┐\n"
-        " │                INGENIEROS Y RESPONSABLES DE OBRA                       │\n"
-        " │          (Cargas Individuales por Máquina + Foto + Horómetro)          │\n"
-        " └───────────────────────────────────┬────────────────────────────────────┘\n"
-        "                                     │ [CRUCE NIVEL 3: Contable al Centavo]\n"
-        "                                     ▼\n"
-        " ┌────────────────────────────────────────────────────────────────────────┐\n"
-        " │                   GOBIERNO CORPORATIVO / ADMINISTRACIÓN                 │\n"
-        " │            [REVISIÓN FINAL Y BLOQUEO DEFINITIVO DE INFORMACIÓN]        │\n"
-        " │           (Información congelada / Solo modificable por SuperAdmin)    │\n"
-        " └───────────────────────────────────┬────────────────────────────────────┘\n"
-        "                                     │\n"
-        "                                     ▼\n"
-        "                      📊 REPORTES EJECUTIVOS A DIRECTIVOS"
-    )
-
     # ==========================================
     # SECCIÓN 5: MATRIZ DE ROLES Y SEGURIDAD RBAC
     # ==========================================
@@ -558,375 +522,88 @@ def create_fenix_documentation():
         "y los Ingenieros de Obra recepcionistas."
     )
 
-    add_bullet("La Planta de Asfalto genera la nota de remisión digital y física con el peso/tonelaje exacto ($t$) o cubicaje ($m^3$) de la mezcla producida.", "1. Salida de Planta: ")
-    add_bullet("El chofer del camión traslada el material al tramo en obra.", "2. Transporte: ")
-    add_bullet("El Ingeniero de Obra recibe el camión, captura los datos de la nota en el Portal 5001 y sube **OBLIGATORIAMENTE LA FOTOGRAFÍA CLARA Y LEGIBLE DE LA NOTA / BOLETA**.", "3. Recepción en Obra + Foto Obligatoria: ")
-    add_bullet("El sistema Fénix cruza las toneladas emitidas por la Planta vs las toneladas recibidas en Obra vs las boletas amparadas en la factura del Sindicato/Transportista.", "4. Conciliación Automática en Fénix: ")
-
-    add_diagram(
-        "Flujo de Conciliación de Mezcla Asfáltica (Planta vs Obra + Foto Nota)",
-        " ┌──────────────────────────┐         ┌──────────────────────────┐\n"
-        " │ PLANTA DE ASFALTO        │         │ INGENIERO DE OBRA        │\n"
-        " │ (Huixquilucan / Pegaso)  │         │ (Recepción en Tramo)     │\n"
-        " └────────────┬─────────────┘         └────────────┬─────────────┘\n"
-        "              │                                    │\n"
-        "              │ Emite Mezcla                       │ Recibe Camión\n"
-        "              │ y Nota de Salida                   │ y Revisa Nota\n"
-        "              ▼                                    ▼\n"
-        " ┌──────────────────────────┐         ┌──────────────────────────┐\n"
-        " │ REGISTRO DE PLANTA       │         │ CAPTURA EN PORTAL 5001   │\n"
-        " │ (Toneladas Producidas)   │         │ + FOTO OBLIGATORIA NOTA  │\n"
-        " └────────────┬─────────────┘         └────────────┬─────────────┘\n"
-        "              │                                    │\n"
-        "              └─────────────────┬──────────────────┘\n"
-        "                                │\n"
-        "                                ▼\n"
-        " ┌───────────────────────────────────────────────────────────────┐\n"
-        " │                  MOTOR DE CONCILIACIÓN FÉNIX                  │\n"
-        " │     [Valida: Toneladas Planta = Toneladas Obra + Foto Nota]   │\n"
-        " └────────────┬──────────────────────────────────────────────────┘\n"
-        "              │\n"
-        "              ▼\n"
-        " 🔒 APROBACIÓN Y BLOQUEO CORPORATIVO"
-    )
-
     # ==========================================
-    # SECCIÓN 7: VISIÓN A FUTURO Y HOJA DE RUTA
+    # SECCIÓN 14: GUÍA Y PREPARACIÓN PARA JUNTA DE HOMOLOGACIÓN
     # ==========================================
-    add_h1("7. VISIÓN A FUTURO Y HOJA DE RUTA DE EVOLUCIÓN TECNOLÓGICA")
+    add_h1("14. GUÍA PREPARATORIA PARA JUNTA DE HOMOLOGACIÓN Y CUESTIONARIO ESTRATÉGICO")
     add_p(
-        "El Sistema Fénix 2.0 sienta las bases para una transformación digital continua. La visión a futuro contempla "
-        "convertir el sistema en una plataforma autónoma e inteligente respaldada por las siguientes innovaciones:"
+        "Esta sección consolida las respuestas técnicas para la junta con el equipo de ingeniería "
+        "y el cuestionario estructurado para evaluar el sistema existente del otro equipo."
     )
 
-    add_h2("7.1 Aplicación Móvil PWA y Cliente Nativo Offline-First")
-    add_p(
-        "Dado que muchas obras de infraestructura se ejecutan en zonas con cobertura de red nula o intermitente, "
-        "se desarrollará la evolución a una Progressive Web App (PWA) e integración nativa móvil con motor de base de datos "
-        "local (IndexedDB / SQLite local en el dispositivo). "
-        "Los operadores capturarán las transacciones localmente y los Service Workers sincronizarán automáticamente "
-        "con el servidor PostgreSQL central tan pronto como el dispositivo detecte señal de red."
-    )
+    add_h2("14.1 Respuestas Preparadas para la Junta")
+    
+    add_h3("1. Disponibilidad de Tiempo y Horarios")
+    add_bullet("Lunes a partir de las 2:00 PM.", "Días Disponibles: ")
+    add_bullet("Jueves y Viernes en jornada flexible.", "Días Completos: ")
+    add_bullet("15 a 20 horas de dedicación enfocada por semana.", "Carga Semanal: ")
 
-    add_h2("7.2 Integración IoT y Telemetría Automática en Sensores")
-    add_bullet("Instalación de flujómetros digitales calibrados conectados por IoT en la manguera de despacho de la pipa 'Marimba', registrando automáticamente cada descarga en la BD.", "Flujómetros Digitales en Pipas: ")
-    add_bullet("Sensores ultrasónicos de nivel en el Tanque Pegaso (20,000 L) y Tanque Huixquilucan para monitoreo continuo de inventarios en tiempo real y detección automática de fugas.", "Medición de Tanques Fijos: ")
-    add_bullet("Conexión con dispositivos GPS/CAN-Bus en maquinaria pesada para correlacionar horómetros y kilómetros reales con los litros suministrados.", "Telemetría de Maquinaria: ")
+    add_h3("2. Guion de la Demostración en Vivo de Fénix")
+    add_bullet("Mostrar Portal Operativo 5001 y Centro de Mando Admin 5002.", "Paso A: Doble Portal: ")
+    add_bullet("Demostrar autocompletado en 0ms por placa y extracción automática desde bitácoras PDF.", "Paso B: Captura Rápida: ")
+    add_bullet("Explicar cómo n8n recibe el correo de la gasolinería, descarga PDF/XML a Google Drive e inserta en la BD.", "Paso C: Módulo Google Drive + n8n: ")
+    add_bullet("Mostrar la sub-pestaña de gasolina masiva cargando el Excel 'CONTROL JDJ' con separación de semanas ISO y búsqueda O(1).", "Paso D: Vaciado Masivo Excel: ")
+    add_bullet("Generación del informe en Excel con fórmulas vivas y PDF horizontal con firmas.", "Paso E: Reportes Oficiales: ")
 
-    add_h2("7.3 Reconocimiento Óptico de Caracteres (OCR) en Visión Artificial")
-    add_p(
-        "Módulo de procesamiento de imágenes que permitirá a los choferes fotocopiar el ticket de la gasolinería "
-        "o la boleta de acarreo con la cámara de su celular. El motor OCR extraerá automáticamente el folio, la fecha, los litros, "
-        "el costo total y el número económico, eliminando el tecleo manual."
-    )
+    add_h3("3. Homologación Metodológica de Desarrollo")
+    add_bullet("El proyecto se gestiona con Git en la rama `main`. Ante un fallo, se ejecuta `git checkout` o `git revert` para restaurar el código. La BD cuenta con transacciones ACID y backups diarios en `respaldos_backups`.", "Control de Versiones y Rollbacks: ")
+    add_bullet("Verificación en 3 niveles: 1) Análisis sintáctico en Python, 2) Inspección de logs HTTP y consola de Flask en tiempo real, 3) Pruebas SQL y revisión de archivos Excel/PDF al centavo.", "Validación de Resultados: ")
+    add_bullet("Las cargas se vinculan mediante el código inmutable de la obra (`codigo` PK / FK). Si se cambia el nombre visible, el historial permanece intacto.", "Relación de Obras e Historial: ")
+    add_bullet("El cierre está protegido **directamente en PostgreSQL mediante Triggers (disparadores SQL)** que cancelan cualquier `UPDATE/DELETE` en periodos congelados (`periodo_bloqueado = TRUE`), además del bloqueo visual en pantalla.", "Cierre y Bloqueo de Datos: ")
 
-    # ==========================================
-    # SECCIÓN 8: ARQUITECTURA DE LA BASE DE DATOS RELACIONAL
-    # ==========================================
-    add_h1("8. ARQUITECTURA DE LA BASE DE DATOS RELACIONAL (`fenix_db`)")
-    add_p(
-        "El soporte de almacenamiento persistente del Sistema Fénix 2.0 es una base de datos relacional PostgreSQL 16 "
-        "alojada localmente (`localhost:5432`). Garantiza cumplimiento de propiedades ACID (Atomicidad, Consistencia, Aislamiento, Durabilidad) "
-        "y un estricto esquema relacional dividido por dominios operacionales (schemas)."
-    )
-
-    add_h2("8.1 Esquema Relacional de Tablas Maestras")
-
-    # Table 1: Diesel Scheme
-    add_h3("A) Esquema Diésel (`diesel`)")
-    add_p("Concentra la gestión de solicitudes, despachos, facturas y complementos de pago para combustible pesado.")
-    style_table(
-        doc.add_table(rows=0, cols=4),
-        [Inches(1.8), Inches(1.2), Inches(1.0), Inches(2.5)],
-        ["Nombre de Tabla", "Columna / Campo", "Tipo de Dato", "Restricciones / Descripción"],
-        [
-            ["diesel.consumos", "id", "BIGINT", "PRIMARY KEY, AUTOINCREMENT"],
-            ["diesel.consumos", "folio_conciliacion", "TEXT", "UNIQUE, NOT NULL. Identificador de cruce"],
-            ["diesel.consumos", "fecha", "DATE / TEXT", "NOT NULL. Fecha del despacho"],
-            ["diesel.consumos", "semana", "INTEGER", "NOT NULL. Semana ISO del año"],
-            ["diesel.consumos", "origen", "TEXT", "Punto de emisión (ej. Gasolinera / Tanque Pegaso)"],
-            ["diesel.consumos", "obra_destino", "TEXT", "FK -> catalogos.obras(nombre)"],
-            ["diesel.consumos", "equipo_economico", "TEXT", "FK -> catalogos.equipos(numero_economico)"],
-            ["diesel.consumos", "litros", "NUMERIC(12,2)", "NOT NULL. Cantidad suministrada"],
-            ["diesel.consumos", "costo_por_litro", "NUMERIC(10,2)", "Precio unitario del diésel"],
-            ["diesel.consumos", "importe_total", "NUMERIC(14,2)", "NOT NULL. Litros × Costo/L"],
-            ["diesel.consumos", "responsable", "TEXT", "Ingeniero a cargo de la obra"],
-            ["diesel.solicitudes", "id", "INTEGER", "PRIMARY KEY, AUTOINCREMENT"],
-            ["diesel.solicitudes", "semana", "INTEGER", "NOT NULL. Semana solicitada"],
-            ["diesel.solicitudes", "litros_solicitados", "NUMERIC(12,2)", "NOT NULL. Volumen requerido"],
-            ["diesel.solicitudes", "estatus", "TEXT", "DEFAULT 'Pendiente' (Aprobado / Rechazado)"],
-            ["diesel.facturas", "id", "INTEGER", "PRIMARY KEY, AUTOINCREMENT"],
-            ["diesel.facturas", "folio_factura", "TEXT", "NOT NULL. Folio impreso del proveedor"],
-            ["diesel.facturas", "uuid_cfdi", "TEXT", "UUID de 36 caracteres del SAT"],
-            ["diesel.facturas", "importe_total", "NUMERIC(14,2)", "NOT NULL. Monto total con IVA"]
-        ]
-    )
-
-    # Table 2: Gasolina Scheme
-    add_h3("B) Esquema Gasolina (`gasolina`)")
-    add_p("Controla la flotilla ligera, el autocompletado en 0ms y el concilio masivo desde archivos Excel.")
-    style_table(
-        doc.add_table(rows=0, cols=4),
-        [Inches(1.8), Inches(1.2), Inches(1.0), Inches(2.5)],
-        ["Nombre de Tabla", "Columna / Campo", "Tipo de Dato", "Restricciones / Descripción"],
-        [
-            ["gasolina.consumos", "id", "BIGINT", "PRIMARY KEY, AUTOINCREMENT"],
-            ["gasolina.consumos", "folio_conciliacion", "TEXT", "UNIQUE, NOT NULL"],
-            ["gasolina.consumos", "fecha", "DATE / TEXT", "NOT NULL"],
-            ["gasolina.consumos", "semana", "INTEGER", "NOT NULL. Semana ISO"],
-            ["gasolina.consumos", "placa", "TEXT", "Placa del vehículo o 'S/P'"],
-            ["gasolina.consumos", "vehiculo", "TEXT", "Marca, modelo y número económico"],
-            ["gasolina.consumos", "conductor", "TEXT", "Conductor responsable asignado"],
-            ["gasolina.consumos", "obra_destino", "TEXT", "Obra o centro de costo"],
-            ["gasolina.consumos", "litros", "NUMERIC(10,2)", "NOT NULL. Litros despachados"],
-            ["gasolina.consumos", "importe_total", "NUMERIC(12,2)", "NOT NULL. Importe cobrado"],
-            ["gasolina.autorizaciones_maestro", "placa", "TEXT", "PRIMARY KEY. Utilizada para autocompletado 0ms"],
-            ["gasolina.autorizaciones_maestro", "vehiculo", "TEXT", "Nombre registrado del vehículo"],
-            ["gasolina.autorizaciones_maestro", "conductor", "TEXT", "Conductor habitual"],
-            ["gasolina.autorizaciones_maestro", "obra_asignada", "TEXT", "Obra por defecto"]
-        ]
-    )
-
-    # Table 3: Catalogos Scheme
-    add_h3("C) Esquema Catálogos y Auditoría (`catalogos`)")
-    add_p("Mantiene el padrón maestro corporativo y la bitácora inalterable de cambios.")
-    style_table(
-        doc.add_table(rows=0, cols=4),
-        [Inches(1.8), Inches(1.2), Inches(1.0), Inches(2.5)],
-        ["Nombre de Tabla", "Columna / Campo", "Tipo de Dato", "Restricciones / Descripción"],
-        [
-            ["catalogos.responsables", "id", "INTEGER", "PRIMARY KEY, AUTOINCREMENT"],
-            ["catalogos.responsables", "nombre", "TEXT", "NOT NULL, UNIQUE. Nombre del Ingeniero"],
-            ["catalogos.responsables", "dias_trabajados", "INTEGER", "NOT NULL. Regla de negocio (6 ó 5 Días)"],
-            ["catalogos.responsables", "autorizado_diario", "NUMERIC(10,2)", "NOT NULL. Cuota diaria en Litros"],
-            ["catalogos.obras", "codigo", "TEXT", "PRIMARY KEY. Clave corta de la obra"],
-            ["catalogos.obras", "nombre", "TEXT", "NOT NULL, UNIQUE. Nombre oficial"],
-            ["catalogos.equipos", "numero_economico", "TEXT", "PRIMARY KEY. Ej. 'EX-01'"],
-            ["catalogos.equipos", "descripcion", "TEXT", "Descripción de la máquina / vehículo"],
-            ["catalogos.audit_log", "id", "BIGINT", "PRIMARY KEY, AUTOINCREMENT"],
-            ["catalogos.audit_log", "tabla_afectada", "TEXT", "Nombre de la tabla modificada"],
-            ["catalogos.audit_log", "registro_id", "TEXT", "ID del registro alterado"],
-            ["catalogos.audit_log", "usuario", "TEXT", "Usuario que ejecutó la acción"],
-            ["catalogos.audit_log", "accion", "TEXT", "'INSERT', 'UPDATE' o 'DELETE'"],
-            ["catalogos.audit_log", "valor_anterior", "TEXT / JSON", "Estado previo a la modificación"],
-            ["catalogos.audit_log", "valor_nuevo", "TEXT / JSON", "Estado posterior a la modificación"],
-            ["catalogos.audit_log", "fecha_hora", "TIMESTAMP", "DEFAULT CURRENT_TIMESTAMP. Inalterable"]
-        ]
-    )
-
-    # ==========================================
-    # SECCIÓN 9: ARQUITECTURA DE SOFTWARE Y CÓDIGO FUENTE
-    # ==========================================
-    add_h1("9. ARQUITECTURA DE SOFTWARE Y CÓDIGO FUENTE")
-    add_p(
-        "El Sistema Fénix 2.0 utiliza una arquitectura desacoplada de doble portal que separa "
-        "las tareas de alta velocidad en campo de las funciones de auditoría contable y dirección en oficina."
-    )
-
-    add_h2("9.1 Stack Tecnológico Seleccionado")
-    add_bullet("Python 3.12 como lenguaje central, elegido por su robustness, velocidad de procesamiento analítico y ecosistema de datos.", "Lenguaje de Backend: ")
-    add_bullet("Flask (micro-framework WSGI) administrando rutas REST API, renderización de plantillas y middlewares de autenticación.", "Framework Web: ")
-    add_bullet("HTML5 semántico, CSS3 con diseño 'Aesthetic Glassmorphism' (modo oscuro de alto contraste) y JavaScript puro (Vanilla JS).", "Frontend / UI: ")
-    add_bullet("Librería OpenPyXL para lectura y construcción de hojas de cálculo con fórmulas dinámicas y estilos corporativos.", "Generación Excel: ")
-    add_bullet("Librería ReportLab para la maquetación de reportes ejecutivos en PDF en formato horizontal landscape con firmas.", "Generación PDF: ")
-    add_bullet("Librería pdfplumber para la extracción inteligente de datos tabulares desde archivos PDF de bitácoras de campo.", "Lectura de Documentos: ")
-
-    add_h2("9.2 Módulos y Archivos del Código Fuente Principal")
-    add_p("Desglose de los scripts principales que integran el sistema:")
-
-    add_bullet(
-        "Servidor de Captura Operativa (Puerto 5001). Contiene 2,484 líneas de código Python. "
-        "Maneja los endpoints para la captura de Diésel, Gasolina, Jalisco, Solicitudes y Acarreos. "
-        "Incluye los algoritmos de normalización de textos y la interfaz de lectura masiva de Excel.",
-        "app_captura.py: "
-    )
-    add_bullet(
-        "Centro de Mando Administrativo (Puerto 5002). Núcleo de control de 12,954 líneas de código. "
-        "Gestiona la consolidación de dashboards, el cálculo presupuestal semanal (6D vs 5D), la validación de facturas CFDI/XML, "
-        "el módulo de telepeaje Tags, la edición de catálogos maestras y la generación de reportes ejecutivos.",
-        "app_admin.py: "
-    )
-    add_bullet(
-        "Servicio de extracción de datos en PDF de bitácoras diarias. Parsea automáticamente columnas de "
-        "obra, equipo, litros y kilometraje desde archivos PDF adjuntos, validando duplicados contra la base de datos.",
-        "bitacora_pdf_service.py: "
-    )
-    add_bullet(
-        "Motor de conciliación O(1). Carga los consumos registrados y efectúa comparativos masivos "
-        "contra los estados de cuenta presentados por los proveedores de combustible (Levet / JDJ / Mobil).",
-        "motor_agente_conciliacion.py: "
-    )
-    add_bullet(
-        "Generador especializado de reportes formales en PDF ('Acta de Conciliación Semanal') "
-        "con tablas alineadas, cabeceras en color corporativo y secciones de firmas para los auditores.",
-        "generador_acta_conciliacion.py: "
-    )
-    add_bullet(
-        "Archivos de procesamiento por lotes para el arranque simultáneo de los servicios en el servidor: "
-        "INICIAR_FENIX.bat (Lanzador principal), INICIAR_ADMIN.bat (Portal 5002), INICIAR_CAPTURA.bat (Portal 5001) e INICIAR_N8N.bat (Motor de automatización).",
-        "Lanzadores BAT: "
-    )
-
-    # ==========================================
-    # SECCIÓN 10: MANUAL OPERATIVO PASO A PASO
-    # ==========================================
-    add_h1("10. MANUAL OPERATIVO Y FUNCIONAMIENTO PASO A PASO")
-    add_p(
-        "El sistema opera bajo un entorno multimodular accesible mediante navegador web. A continuación se documenta "
-        "el funcionamiento paso a paso de cada portal y pestaña."
-    )
-
-    add_h2("10.1 Portal de Captura Operativa (`http://localhost:5001`)")
-
-    add_h3("1. Pestaña Diésel (`captura_diesel.html`)")
-    add_p("Permite el registro de despachos de diésel entregados por la pipa 'Marimba' o tanques fijos a la maquinaria.")
-    add_bullet("El usuario selecciona la fecha, la obra de destino, el equipo económico (ej. EX-01) y los litros despachados.", "Captura Individual: ")
-    add_bullet("El usuario arrastra un archivo PDF de bitácora diaria. El sistema invoca `bitacora_pdf_service.py`, lee las filas automáticamente y las muestra en pantalla pre-llenadas para su confirmación inmediata.", "Lectura Inteligente de PDF: ")
-
-    add_h3("2. Pestaña Gasolina (`captura_gasolina.html`)")
-    add_bullet("Al ingresar la placa del vehículo, un script en Vanilla JS consulta en memoria el padrón `gasolina.autorizaciones_maestro` y rellena al instante (0ms) el Vehículo, el Conductor y la Obra por defecto.", "Sub-pestaña 1 (Individual con Autocompletado 0ms): ")
-    add_bullet("Permite arrastrar archivos Excel mensuales suministrados por gasolinerías (ej. CONTROL JDJ). El sistema separa los registros en semanas ISO (Semana 26 a 31), realiza una búsqueda $O(1)$ de duplicados y marca cada fila como '✔ CONCILIADO' (ya existente) o '🆕 NUEVO' (pendiente). Al hacer clic en 'Guardar Masivo', inserta cientos de registros en lote en menos de 1 segundo.", "Sub-pestaña 2 (Captura Masiva Excel Levet/JDJ): ")
-
-    add_h3("3. Pestañas Jalisco, Solicitudes, Acarreos y Mezcla")
-    add_bullet("Captura de vales de combustible y vales de caja para obras en Jalisco con carga de evidencia fotográfica.", "Jalisco: ")
-    add_bullet("Formulario de petición de saldo en el cual los ingenieros solicitan volumen semanal antes de surtir.", "Solicitudes: ")
-    add_bullet("Registro de viajes de acarreo calculando el cubicaje ($m^3$) según el camión y material transportado.", "Acarreos: ")
-    add_bullet("Monitoreo de toneladas de mezcla asfáltica producidas en planta y aplicadas en tramos carreteros.", "Mezcla: ")
-
-    add_h2("10.2 Centro de Mando Administrativo (`http://localhost:5002`)")
-
-    add_h3("1. Pestaña Resumen / Dashboard (`admin_resumen.html`)")
-    add_p("Panel ejecutivo que consolida en tiempo real los indicadores clave (KPIs): litros totales consumidos, gasto financiero acumulado, porcentaje de facturación conciliada y desglose por obra.")
-
-    add_h3("2. Pestaña Reporte Semanal por Ingeniero (`admin_diesel.html`)")
-    add_p(
-        "Genera el reporte normado de consumo presupuestal. El sistema aplica strictly la distinción "
-        "de días trabajados según la configuración del catálogo `catalogos.responsables`:"
-    )
-
-    add_callout(
-        "Fórmula Normada de Presupuesto Semanal (Regla de Días Trabajados)",
-        "• SECCIÓN 1: INGENIEROS DE 6 DÍAS (Apolinar, Francisco Javier, Ing. Diego Carreola, Jack, Luis)\n"
-        "  Fórmula: Autorización Semanal = Autorizado Diario × 6 Días\n\n"
-        "• SECCIÓN 2: INGENIEROS DE 5 DÍAS (Dayanne, Edgar, Samuel)\n"
-        "  Fórmula: Autorización Semanal = Autorizado Diario × 5 Días\n\n"
-        "El sistema calcula el Consumo Real vs la Autorización Semanal y determina la Variación / Excedente. "
-        "Permite exportar el informe oficial en Excel con fórmulas vivas y en PDF horizontal con firmas autorizadas."
-    )
-
-    add_h3("3. Pestaña Facturas & Conciliación SAT (`admin_subir_facturas.html`)")
-    add_p("Módulo contable para la carga de archivos XML (CFDI 4.0) y PDF de facturas y Complementos de Pago del SAT (ej. Complemento Folio 58914 por $316,944.71 MXN). Actualiza automáticamente el estatus del pago a 'PAGADA', 'PARCIAL' o 'PENDIENTE'.")
-
-    add_h3("4. Pestañas Telepeaje Tags y Catálogos Maestros")
-    add_bullet("Conciliación de pases por casetas de cobro asignando el importe exacto a la obra correspondiente.", "Telepeaje Tags: ")
-    add_bullet("Gestión del padrón de Responsables (configurando cuotas y días 6D/5D), Obras, Equipos y consulta del log inalterable de auditoría catalogos.audit_log.", "Catálogos Maestros: ")
-
-    add_h2("10.3 Flujo Operativo Completo en 6 Etapas (Del WhatsApp al Martes de Conciliación)")
-    add_p("La operación regular de combustible sigue un flujo secuencial normado:")
-    add_bullet("El ingeniero o responsable de obra envía su petición en el grupo de WhatsApp o el portal de solicitudes.", "Etapa 1 (Solicitud): ")
-    add_bullet("La administración verifica en Fénix que el volumen no exceda la cuota del responsable según sus días trabajados (6D vs 5D).", "Etapa 2 (Validación Presupuestal): ")
-    add_bullet("La gasolinería surte al camión cisterna ('La Marimba') y emite la factura CFDI correspondiente.", "Etapa 3 (Surtimiento y Facturación): ")
-    add_bullet("La Marimba traslada el diésel a la obra y abastece tanque por tanque a la maquinaria pesada.", "Etapa 4 (Reparto en Obra): ")
-    add_bullet("El capturista registra en el Portal 5001 los litros recibidos por cada equipo económico.", "Etapa 5 (Captura en Fénix): ")
-    add_bullet("Todos los martes se ejecuta el cruce obligatorio de 3 columnas ('Tríptico de Diésel'): Columna A (Lo Autorizado) vs Columna B (Lo Facturado por Gasolinería) vs Columna C (Lo Repartido y Registrado en Máquinas).", "Etapa 6 (Conciliación del Martes): ")
-
-    # ==========================================
-    # SECCIÓN 11: EVOLUCIÓN HISTÓRICA Y VERSIONES
-    # ==========================================
-    add_h1("11. EVOLUCIÓN HISTÓRICA, VERSIONES Y LOGROS ALCANZADOS")
-    add_p(
-        "El proyecto ha transitado por dos etapas fundamentales de desarrollo que transformaron "
-        "un prototipo inicial en un sistema de clase empresarial."
-    )
-
-    style_table(
-        doc.add_table(rows=0, cols=3),
-        [Inches(1.5), Inches(2.2), Inches(2.8)],
-        ["Atributo / Característica", "Versión 1.0 (Prototipo Legacy)", "Versión 2.0 (Producción Actual)"],
-        [
-            ["Motor de Base de Datos", "Supabase (Cloud) / SQLite estático", "PostgreSQL 16 On-Premise (fenix_db)"],
-            ["Velocidad de Captura", "Búsqueda manual en listas desplegables", "Autocompletado instantáneo en 0ms"],
-            ["Conciliación con Proveedores", "Revisión manual renglón por renglón", "Motor de conciliación masiva Excel O(1)"],
-            ["Regla de Días Trabajados", "Tratamiento homogéneo sin distinción", "División estricta en 6 Días vs 5 Días"],
-            ["Lectura de Documentos", "Sin procesamiento de archivos", "Servicio de lectura inteligente de PDF"],
-            ["Facturación y SAT", "Manejo básico de facturas simples", "Soporte de CFDI XML y Complementos de Pago"],
-            ["Módulos Especiales", "Solo Diésel y Gasolina básica", "Integración de Jalisco, Acarreos, Mezcla y Tags"],
-            ["Normatividad y Auditoría", "Sin registro de cambios", "Log inalterable catalogos.audit_log (ISO 9001)"]
-        ]
-    )
-
-    # ==========================================
-    # SECCIÓN 12: PROBLEMAS PRESENTADOS Y SOLUCIONES
-    # ==========================================
-    add_h1("12. PROBLEMAS PRESENTADOS Y SOLUCIONES DE INGENIERÍA APLICADAS")
-    add_p(
-        "Durante el diseño, desarrollo y despliegue del Sistema Fénix 2.0 se resolvieron "
-        "desafíos complejos de software y datos. A continuación se documenta la matriz de problemas e ingeniería aplicada:"
-    )
+    add_h2("14.2 Cuestionario Estratégico para Evaluar el Sistema del Otro Equipo")
+    add_p("Preguntas clave organizadas por dominio técnico para dirigir la junta de homologación:")
 
     style_table(
         doc.add_table(rows=0, cols=3),
         [Inches(1.8), Inches(2.2), Inches(2.5)],
-        ["Problema Presentado", "Causa Raíz / Desafío", "Solución de Ingeniería Implementada"],
+        ["Categoría / Dominio", "Pregunta Estratégica Sugerida", "Propósito / Objetivo de la Pregunta"],
         [
             [
-                "Duplicidad de Cargas de Gasolina",
-                "Estados de cuenta mensuales presentaban cargas repetidas o dobles capturas de choferes.",
-                "Creación del algoritmo de hashing O(1) en 'motor_agente_conciliacion.py' que compara folios, fechas y montos en tiempo récord, bloqueando duplicados."
+                "1. Arquitectura y Stack",
+                "¿En qué stack tecnológico está construido su sistema y qué motor de base de datos utilizan (PostgreSQL, MySQL, SQL Server, Oracle)? ¿Está en la nube u On-Premise?",
+                "Determinar la facilidad de comunicación técnica e infraestructura compartida."
             ],
             [
-                "Incoherencia en Presupuestos de Ingenieros",
-                "Ingenieros con jornadas de 5 días recibían presupuesto de 6 días, generando falsos faltantes.",
-                "Parametrización del campo 'dias_trabajados' en 'catalogos.responsables' y reescritura de los generadores de Excel/PDF en 'app_admin.py'."
+                "2. Estandarización de Catálogos",
+                "¿Cómo gestionan los catálogos maestros de Obras y Equipos? ¿Manejan un código único o clave corta para cada máquina?",
+                "Identificar la necesidad de crear una tabla puente para que ambos sistemas hablen el mismo idioma."
             ],
             [
-                "Dificultad de Lectura en Bitácoras PDF",
-                "Formato de PDF escaneado con tablas desalineadas impedía la extracción de datos.",
-                "Desarrollo de 'bitacora_pdf_service.py' utilizando 'pdfplumber' y expresiones regulares adaptativas para extraer celdas desalineadas."
+                "3. Modelo de Conciliación",
+                "En la parte de combustible y acarreos, ¿cómo realizan el cruce de información? ¿Hacen conciliación de 2 o 3 vías (Factura vs Pipa vs Maquinaria)?",
+                "Evaluar el nivel de rigor en auditoría de mermas y trasvases en campo."
             ],
             [
-                "Discrepancia en Nombres de Obras y Placas",
-                "Capturistas escribían nombres con variaciones (ej. 'Toluca', 'MÉXICO-TOLUCA', 'Obra Toluca').",
-                "Implementación de funciones de normalización de cadenas ('normalizar_obra_nombre') en Python y conversión automática a mayúsculas."
+                "4. Automatización e Ingestión",
+                "¿Cómo ingresan las facturas de proveedores? ¿Tienen algún proceso automatizado para procesar XML/PDF o se capturan manualmente?",
+                "Destacar el valor del Motor n8n e IA Gemini 1.5 Flash de Fénix que automatiza este proceso."
             ],
             [
-                "Gestión de Complementos de Pago SAT",
-                "Facturas liquidadas en varios pagos no reflejaban el saldo real en la contabilidad.",
-                "Incorporación de la tabla 'diesel.complementos_pago' y parser XML para vincular UUIDs del SAT y actualizar estatus a 'PAGADA' o 'PARCIAL'."
+                "5. Conexión y APIs",
+                "¿Su sistema cuenta con servicios web, REST APIs expuestas o Webhooks? ¿Se conecta con algún ERP contable (CONTPAQi, SAP, COI)?",
+                "Definir el mecanismo de integración de datos sin necesidad de intercambiar archivos Excel manuales."
             ],
             [
-                "Lentitud en la Interfaz Web con Miles de Filas",
-                "Carga masiva de datos congelaba el navegador en la pestaña de gasolina.",
-                "Migración a renderizado eficiente en cliente con Vanilla JS y búsquedas pre-indexadas en memoria."
+                "6. Cierre y Gobierno de Datos",
+                "¿Cómo manejan el cierre contable semanal/mensual? ¿El sistema de ustedes bloquea registros pasados para evitar modificaciones?",
+                "Alinear los estándares de seguridad y auditoría ISO 9001."
+            ],
+            [
+                "7. Estrategia de Coexistencia",
+                "Viendo que ambos sistemas tienen fortalezas, ¿cuál ven como el flujo ideal? ¿Ven a Fénix como el módulo especializado de campo que envíe datos validados a su sistema central?",
+                "Posicionar a Fénix como el especialista operativo sin entrar en conflicto con el sistema de ellos."
             ]
         ]
     )
 
-    # ==========================================
-    # SECCIÓN 13: ALINEACIÓN NORMATIVA ISO 9001 E ISO 14001
-    # ==========================================
-    add_h1("13. ALINEACIÓN NORMATIVA ISO 9001 (CALIDAD) E ISO 14001 (AMBIENTAL)")
-    add_p(
-        "El Sistema Fénix 2.0 constituye la evidencia técnica y documental ante auditores externos "
-        "para sostener la certificación de Grupo Trujano en los estándares internacionales de calidad y medio ambiente."
-    )
-
-    add_h2("13.1 Puntos de Control para ISO 9001:2015 (Sistema de Gestión de Calidad)")
-    add_bullet("Validación matemática en el 'Tríptico de Diésel' asegurando cero diferencias entre lo facturado y lo suministrado.", "Sección 8.4 (Control de Procesos y Servicios Suministrados Externamente): ")
-    add_bullet("Trazabilidad total desde el folio de la gasolinería hasta la máquina individual que consumió el insumo.", "Sección 8.5.2 (Identificación y Trazabilidad): ")
-    add_bullet("Registro inalterable de auditoría en la tabla 'catalogos.audit_log' que cumple con los requerimientos de información documentada inalterable.", "Sección 7.5 (Información Documentada): ")
-
-    add_h2("13.2 Puntos de Control para ISO 14001:2015 (Sistema de Gestión Ambiental)")
-    add_bullet("Monitoreo continuo de trasvases entre tanques fijos, pipas 'Marimba' y maquinaria para detectar mermas o fugas en tuberías/mangueras.", "Sección 8.1 (Planificación y Control Operativo): ")
-    add_bullet("Control estricto de cuotas diarias de combustible por obra, promoviendo el consumo eficiente y la reducción de huella de carbono.", "Sección 6.1.2 (Aspectos Ambientales): ")
-
     # Save document with fallback for open file lock
-    output_path = r"c:\Users\JOSE\Desktop\Proyecto fenix\Documento_Tecnico_y_Operativo_Sistema_Fenix_2_0_Actualizado.docx"
+    output_path = r"c:\Users\JOSE\Desktop\Proyecto fenix\Documento_Tecnico_y_Operativo_Sistema_Fenix_v2_Completo.docx"
     try:
         doc.save(output_path)
         print(f"Document generated successfully at: {output_path}")
     except PermissionError:
-        output_path_alt = r"c:\Users\JOSE\Desktop\Proyecto fenix\Documento_Tecnico_y_Operativo_Sistema_Fenix_v2_Completo.docx"
+        output_path_alt = r"c:\Users\JOSE\Desktop\Proyecto fenix\Documento_Tecnico_y_Operativo_Sistema_Fenix_v2_Homologacion.docx"
         doc.save(output_path_alt)
         print(f"Document generated successfully at: {output_path_alt}")
 
