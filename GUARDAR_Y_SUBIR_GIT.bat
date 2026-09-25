@@ -9,14 +9,13 @@ echo.
 
 cd /d "c:\Users\JOSE\Desktop\Proyecto fenix"
 
-echo [1/3] Preparando archivos modificados...
+echo [1/3] Guardando y preparando archivos modificados...
 git add .
 
-set CURR_DATE=%date:~10,4%-%date:~4,2%-%date:~7,2%
-set CURR_TIME=%time:~0,2%:%time:~3,2%
-set COMMIT_MSG=Auto-Sync: Actualizacion de sesion %CURR_DATE% %CURR_TIME%
+for /f "tokens=*" %%a in ('powershell -Command "Get-Date -Format 'yyyy-MM-dd HH:mm:ss'"') do set STAMP=%%a
+set COMMIT_MSG=Auto-Sync: Respaldo de sesion %STAMP%
 
-echo [2/3] Creando commit local con estampa de tiempo...
+echo [2/3] Creando commit local: "%COMMIT_MSG%"...
 git commit -m "%COMMIT_MSG%"
 
 echo.
@@ -25,7 +24,7 @@ git push origin main
 
 echo.
 echo ============================================================
-echo   ✔ PROCESO COMPLETADO: Codigo y documentos subidos a Git
+echo   ✔ PROCESO COMPLETADO: Codigo y documentos subidos a GitHub
 echo ============================================================
 echo.
 pause
