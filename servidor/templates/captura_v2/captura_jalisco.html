@@ -1,0 +1,420 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Datalist para Autocompletado de Equipos del Catálogo -->
+<datalist id="listaEquiposCatalogos">
+    {% for eq in equipos %}
+        <option value="{{ eq.numero_economico }} - {{ eq.descripcion }}"></option>
+        <option value="{{ eq.descripcion }}"></option>
+    {% endfor %}
+</datalist>
+
+<div style="max-width: 1150px; margin: 0 auto; padding-bottom: 3rem;">
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem;">
+        <div>
+            <h1 class="header-title" style="text-align: left; margin-bottom: 0.2rem; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem;">Módulo Jalisco</h1>
+            <p class="header-subtitle" style="text-align: left; margin-bottom: 0; color: #94a3b8;">Control de Inventario, Despachos y Captura Masiva de Reportes</p>
+        </div>
+        
+        <!-- Tab Toggle -->
+        <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 4px; display: flex; gap: 4px;">
+            <button id="btnTabIndividual" class="tab-btn active" onclick="switchTab('individual')" style="padding: 0.6rem 1.25rem; border-radius: 8px; border: none; background: #0ea5e9; color: white; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">⚡ Despacho Individual</button>
+            <button id="btnTabMasiva" class="tab-btn" onclick="switchTab('masiva')" style="padding: 0.6rem 1.25rem; border-radius: 8px; border: none; background: transparent; color: #94a3b8; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">📄 Captura Masiva (PDF / Excel)</button>
+        </div>
+    </div>
+
+    <!-- ==================== TAB 1: DESPACHO INDIVIDUAL ==================== -->
+    <div id="tabIndividual" class="glass-card" style="padding: 2rem; max-width: 800px; margin: 0 auto; display: block;">
+        <h3 style="margin-top: 0; color: #38bdf8; margin-bottom: 1.5rem; border-bottom: 1px solid rgba(56,189,248,0.2); padding-bottom: 0.5rem; font-size: 1.2rem;">📤 Despacho Individual de Diésel a Maquinaria</h3>
+        <form id="salidaForm" onsubmit="guardarMovimiento(event, 'SALIDA')">
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; color:var(--text-muted); margin-bottom:0.5rem; font-size:0.9rem;">Fecha del Despacho <span style="color:#ef4444">*</span></label>
+                <input type="date" id="salidaFecha" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; font-size: 1.1rem;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; color:var(--text-muted); margin-bottom:0.5rem; font-size:0.9rem;">Equipo o Maquinaria Destino <span style="color:#ef4444">*</span></label>
+                <select id="salidaEquipo" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; font-size: 1.1rem;">
+                    <option value="">Seleccione equipo...</option>
+                    {% for eq in equipos %}
+                    <option value="{{ eq.numero_economico }}|{{ eq.descripcion }}">{{ eq.numero_economico }} - {{ eq.descripcion }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; color:var(--text-muted); margin-bottom:0.5rem; font-size:0.9rem;">Litros Despachados <span style="color:#ef4444">*</span></label>
+                <input type="number" id="salidaLitros" step="0.01" required style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; font-size: 1.1rem;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; color:var(--text-muted); margin-bottom:0.5rem; font-size:0.9rem;">Evidencia Fotográfica del Vale (Opcional)</label>
+                <div style="border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 2rem; text-align: center; background: rgba(0,0,0,0.15);">
+                    <input type="file" id="salidaFoto" accept="image/*" capture="environment" style="display: none;" onchange="document.getElementById('salidaFotoLabel').innerText = this.files[0] ? this.files[0].name : 'Ninguna foto capturada'">
+                    <button type="button" class="btn-secondary-action" onclick="document.getElementById('salidaFoto').click()">📷 Tomar o Subir Foto</button>
+                    <p id="salidaFotoLabel" style="margin-top: 1rem; color: #94a3b8; font-size: 0.85rem; margin-bottom: 0;">Ninguna foto capturada</p>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; color:var(--text-muted); margin-bottom:0.5rem; font-size:0.9rem;">Observaciones (Opcional)</label>
+                <textarea id="salidaObs" rows="2" style="width: 100%; padding: 0.75rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 8px; font-size: 1rem; resize: vertical;"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary-action" style="width: 100%; font-size: 1.1rem; padding: 1rem; background: linear-gradient(135deg, #0ea5e9, #0284c7);">Guardar SALIDA</button>
+        </form>
+    </div>
+
+    <!-- ==================== TAB 2: CAPTURA MASIVA (PDF / EXCEL) ==================== -->
+    <div id="tabMasiva" style="display: none;">
+        
+        <!-- DROPZONE CARD -->
+        <div class="glass-card" style="padding: 2.5rem; text-align: center; margin-bottom: 1.5rem; border: 2px dashed rgba(56,189,248,0.3); background: rgba(15,23,42,0.4); border-radius: 16px;">
+            <div style="font-size: 3.5rem; margin-bottom: 0.75rem;">📑</div>
+            <h3 style="margin: 0 0 0.5rem; color: #f8fafc; font-size: 1.4rem;">Arrastra o selecciona el Reporte Semanal de Jalisco</h3>
+            <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 1.5rem;">Soporta archivos en formato <strong>PDF</strong> (ej. <i>REPORTE COMBUSTIBLES JALISCO SEM #24.pdf</i>) o <strong>Excel</strong> (.xlsx / .xls)</p>
+            
+            <input type="file" id="archivoMasivoInput" accept=".pdf, .xlsx, .xls" style="display: none;" onchange="procesarArchivoMasivo(this.files[0])">
+            <button class="btn-primary-action" onclick="document.getElementById('archivoMasivoInput').click()" style="padding: 0.8rem 2rem; font-size: 1.05rem; background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 4px 14px rgba(99,102,241,0.4);">
+                📁 Seleccionar Reporte Semanal
+            </button>
+        </div>
+
+        <!-- RESUMEN EXTRAÍDO CARD -->
+        <div id="cardResumenDoc" class="glass-card" style="display: none; padding: 1.25rem 1.75rem; margin-bottom: 1.5rem; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(56,189,248,0.3); border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <span style="background: rgba(56,189,248,0.2); color: #38bdf8; font-size: 0.85rem; font-weight: 700; padding: 4px 10px; border-radius: 20px;" id="badgeSemana">Semana --</span>
+                    <h4 style="margin: 0.4rem 0 0; color: #fff; font-size: 1.15rem;" id="lblRangoFechas">Reporte Jalisco Extraído</h4>
+                </div>
+                <div style="display: flex; gap: 1.5rem; text-align: right;">
+                    <div>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">Precio Diésel</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #10b981;" id="lblPrecioDiesel">$27.00</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">Precio Gasolina</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #f59e0b;" id="lblPrecioGasolina">$23.97</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.8rem; color: #94a3b8;">Total Registros</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: #38bdf8;" id="lblTotalRegistros">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TABLA DE PREVISUALIZACIÓN -->
+        <div id="contenedorTablaMasiva" class="glass-card" style="display: none; padding: 1.5rem; border-radius: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; color: #38bdf8; font-size: 1.15rem;">📋 Previsualización y Vinculación con Catálogo de Equipos</h3>
+                
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn-secondary-action" onclick="filtrarTabla('TODOS')" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">Todos</button>
+                    <button class="btn-secondary-action" onclick="filtrarTabla('DIESEL')" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; color: #10b981;">Diésel</button>
+                    <button class="btn-secondary-action" onclick="filtrarTabla('GASOLINA')" style="padding: 0.4rem 0.8rem; font-size: 0.85rem; color: #f59e0b;">Gasolina</button>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;" id="tablaMasiva">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8;">
+                            <th style="padding: 0.75rem 0.5rem; width: 40px;">#</th>
+                            <th style="padding: 0.75rem 0.5rem;">Semana</th>
+                            <th style="padding: 0.75rem 0.5rem;">Fecha</th>
+                            <th style="padding: 0.75rem 0.5rem;">Día</th>
+                            <th style="padding: 0.75rem 0.5rem; min-width: 220px;">Equipo / Vehículo (Catálogo)</th>
+                            <th style="padding: 0.75rem 0.5rem;">Estatus Catálogo</th>
+                            <th style="padding: 0.75rem 0.5rem;">Tipo</th>
+                            <th style="padding: 0.75rem 0.5rem; text-align: right;">Litros</th>
+                            <th style="padding: 0.75rem 0.5rem; text-align: right;">Precio Lt</th>
+                            <th style="padding: 0.75rem 0.5rem; text-align: right;">Importe ($)</th>
+                            <th style="padding: 0.75rem 0.5rem; text-align: center; width: 50px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyTablaMasiva">
+                        <!-- Creado dinámicamente con JS -->
+                    </tbody>
+                    <tfoot style="border-top: 2px solid rgba(56,189,248,0.4); font-weight: 700; color: #fff;">
+                        <tr>
+                            <td colspan="7" style="padding: 1rem 0.5rem; text-align: right;">TOTALES ESTIMADOS:</td>
+                            <td style="padding: 1rem 0.5rem; text-align: right; color: #38bdf8;" id="footTotalLitros">0.00 Lts</td>
+                            <td></td>
+                            <td style="padding: 1rem 0.5rem; text-align: right; color: #10b981;" id="footTotalImporte">$0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- BOTONES DE ACCIÓN FINAL -->
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.25rem;">
+                <button type="button" class="btn-secondary-action" onclick="limpiarCapturaMasiva()" style="padding: 0.75rem 1.5rem;">🗑️ Limpiar Tabla</button>
+                <button type="button" class="btn-primary-action" onclick="guardarCapturaMasiva()" style="padding: 0.75rem 2rem; background: linear-gradient(135deg, #10b981, #059669); font-size: 1.05rem;">💾 Guardar Todos los Registros en Jalisco</button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+<style>
+    .btn-primary-action {
+        background: linear-gradient(135deg, #0ea5e9, #2563eb);
+        color: white; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 600;
+    }
+    .btn-primary-action:hover { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(14,165,233,0.4); }
+    .btn-secondary-action {
+        background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 600;
+    }
+    .btn-secondary-action:hover { background: rgba(255,255,255,0.1); }
+    
+    .ts-control {
+        background: rgba(0,0,0,0.3) !important; border: 1px solid rgba(255,255,255,0.1) !important; color: #fff !important; border-radius: 8px !important; padding: 0.75rem !important;
+    }
+    .ts-control input { color: #fff !important; font-size: 1.1rem !important; }
+    .ts-dropdown { background: #1e293b !important; color: #fff !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 8px !important; }
+    .ts-dropdown .active { background: #334155 !important; color: #fff !important; }
+</style>
+
+<script>
+    let datosExtraidos = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('salidaFecha').value = new Date().toISOString().split('T')[0];
+        initTomSelect("#salidaEquipo", { placeholder: "Buscar equipo..." });
+    });
+
+    function switchTab(tab) {
+        if(tab === 'individual') {
+            document.getElementById('tabIndividual').style.display = 'block';
+            document.getElementById('tabMasiva').style.display = 'none';
+            document.getElementById('btnTabIndividual').className = 'tab-btn active';
+            document.getElementById('btnTabIndividual').style.background = '#0ea5e9';
+            document.getElementById('btnTabIndividual').style.color = '#fff';
+            document.getElementById('btnTabMasiva').className = 'tab-btn';
+            document.getElementById('btnTabMasiva').style.background = 'transparent';
+            document.getElementById('btnTabMasiva').style.color = '#94a3b8';
+        } else {
+            document.getElementById('tabIndividual').style.display = 'none';
+            document.getElementById('tabMasiva').style.display = 'block';
+            document.getElementById('btnTabMasiva').className = 'tab-btn active';
+            document.getElementById('btnTabMasiva').style.background = '#6366f1';
+            document.getElementById('btnTabMasiva').style.color = '#fff';
+            document.getElementById('btnTabIndividual').className = 'tab-btn';
+            document.getElementById('btnTabIndividual').style.background = 'transparent';
+            document.getElementById('btnTabIndividual').style.color = '#94a3b8';
+        }
+    }
+
+    async function guardarMovimiento(e, tipo) {
+        e.preventDefault();
+        let formData = new FormData();
+        formData.append('tipo_movimiento', tipo);
+        formData.append('fecha', document.getElementById('salidaFecha').value);
+        
+        const eqVal = document.getElementById('salidaEquipo').value;
+        if(!eqVal) {
+            Swal.fire('Error', 'Seleccione el equipo destino', 'error');
+            return;
+        }
+        const parts = eqVal.split('|');
+        formData.append('equipo_economico', parts[0]);
+        formData.append('equipo', parts[1]);
+        formData.append('litros', document.getElementById('salidaLitros').value);
+        formData.append('observaciones', document.getElementById('salidaObs').value);
+        
+        const fotoInput = document.getElementById('salidaFoto');
+        if(fotoInput.files[0]) {
+            formData.append('foto_evidencia', fotoInput.files[0]);
+        }
+
+        try {
+            Swal.fire({ title: 'Guardando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const res = await fetch('/api/jalisco/guardar_movimiento', { method: 'POST', body: formData });
+            const json = await res.json();
+            if(json.success) {
+                Swal.fire({ icon: 'success', title: 'Guardado', text: 'Movimiento registrado correctamente', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+            } else {
+                Swal.fire('Error', json.error || 'Ocurrió un error', 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        }
+    }
+
+    // ==================== CAPTURA MASIVA JALISCO ====================
+    async function procesarArchivoMasivo(file) {
+        if(!file) return;
+
+        let formData = new FormData();
+        formData.append('archivo', file);
+
+        try {
+            Swal.fire({
+                title: 'Analizando Reporte de Jalisco...',
+                text: 'Extrayendo consumos y vinculando con catálogo...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const res = await fetch('/api/jalisco/procesar_documento_masivo', {
+                method: 'POST',
+                body: formData
+            });
+            const json = await res.json();
+
+            if(json.success) {
+                datosExtraidos = json.data.consumos || [];
+                
+                document.getElementById('badgeSemana').innerText = `Semana ${json.data.semana || '--'}`;
+                document.getElementById('lblRangoFechas').innerText = json.data.rango_fechas || `Reporte Jalisco (Semana ${json.data.semana})`;
+                document.getElementById('lblPrecioDiesel').innerText = `$${json.data.precio_diesel ? json.data.precio_diesel.toFixed(2) : '27.00'}`;
+                document.getElementById('lblPrecioGasolina').innerText = `$${json.data.precio_gasolina_magna ? json.data.precio_gasolina_magna.toFixed(2) : '23.97'}`;
+                document.getElementById('lblTotalRegistros').innerText = datosExtraidos.length;
+
+                document.getElementById('cardResumenDoc').style.display = 'block';
+                document.getElementById('contenedorTablaMasiva').style.display = 'block';
+
+                renderizarTablaMasiva(datosExtraidos);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Reporte Extraído con Éxito',
+                    text: `Se leyeron ${datosExtraidos.length} registros y se vincularon con el catálogo de equipos.`,
+                    timer: 2500,
+                    showConfirmButton: false
+                });
+            } else {
+                Swal.fire('Error de Extracción', json.error || 'No se pudieron extraer los consumos del archivo.', 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Fallo al comunicarse con el servidor.', 'error');
+        }
+    }
+
+    function renderizarTablaMasiva(filas) {
+        const tbody = document.getElementById('bodyTablaMasiva');
+        tbody.innerHTML = '';
+
+        let sumLitros = 0;
+        let sumImporte = 0;
+
+        filas.forEach((f, idx) => {
+            sumLitros += f.litros;
+            sumImporte += f.importe_total;
+
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+
+            const badgeComb = f.tipo_combustible === 'GASOLINA' 
+                ? `<span style="background: rgba(245,158,11,0.2); color: #f59e0b; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight:700;">GASOLINA</span>`
+                : `<span style="background: rgba(16,185,129,0.2); color: #10b981; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight:700;">DIÉSEL</span>`;
+
+            const badgeCat = f.en_catalogo
+                ? `<span style="background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight:600;">✓ En Catálogo</span>`
+                : `<span style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); padding: 2px 8px; border-radius: 12px; font-size: 0.78rem; font-weight:600;">+ Nuevo Equipo</span>`;
+
+            tr.innerHTML = `
+                <td style="padding: 0.6rem 0.5rem; color: #94a3b8;">${idx + 1}</td>
+                <td style="padding: 0.6rem 0.5rem;">${f.semana || '--'}</td>
+                <td style="padding: 0.6rem 0.5rem;">${f.fecha}</td>
+                <td style="padding: 0.6rem 0.5rem; color: #94a3b8;">${f.dia || ''}</td>
+                <td style="padding: 0.6rem 0.5rem;">
+                    <input type="text" list="listaEquiposCatalogos" value="${f.equipo}" onchange="actualizarEquipoFila(${idx}, this.value)" style="width: 100%; padding: 0.4rem 0.6rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.15); color: #fff; border-radius: 6px; font-size: 0.9rem; font-weight: 600;">
+                </td>
+                <td style="padding: 0.6rem 0.5rem;">${badgeCat}</td>
+                <td style="padding: 0.6rem 0.5rem;">${badgeComb}</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: right; font-weight: 700; color: #38bdf8;">${f.litros.toFixed(2)} Lts</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: right; color: #94a3b8;">$${f.costo_por_litro.toFixed(2)}</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: right; font-weight: 700; color: #10b981;">$${f.importe_total.toFixed(2)}</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: center;">
+                    <button onclick="eliminarFilaMasiva(${idx})" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 1rem;">❌</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('footTotalLitros').innerText = `${sumLitros.toFixed(2)} Lts`;
+        document.getElementById('footTotalImporte').innerText = `$${sumImporte.toFixed(2)}`;
+    }
+
+    function actualizarEquipoFila(idx, nuevoValor) {
+        if(datosExtraidos[idx]) {
+            datosExtraidos[idx].equipo = nuevoValor;
+            if(nuevoValor.includes(' - ')) {
+                const parts = nuevoValor.split(' - ');
+                datosExtraidos[idx].equipo_economico = parts[0].strip ? parts[0].strip() : parts[0];
+                datosExtraidos[idx].equipo = parts[1] || parts[0];
+            }
+        }
+    }
+
+    function eliminarFilaMasiva(idx) {
+        datosExtraidos.splice(idx, 1);
+        renderizarTablaMasiva(datosExtraidos);
+    }
+
+    function filtrarTabla(tipo) {
+        if(tipo === 'TODOS') {
+            renderizarTablaMasiva(datosExtraidos);
+        } else {
+            const filtrados = datosExtraidos.filter(f => f.tipo_combustible === tipo);
+            renderizarTablaMasiva(filtrados);
+        }
+    }
+
+    function limpiarCapturaMasiva() {
+        datosExtraidos = [];
+        document.getElementById('cardResumenDoc').style.display = 'none';
+        document.getElementById('contenedorTablaMasiva').style.display = 'none';
+        document.getElementById('archivoMasivoInput').value = '';
+    }
+
+    async function guardarCapturaMasiva() {
+        if(datosExtraidos.length === 0) {
+            Swal.fire('Atención', 'No hay registros para guardar.', 'warning');
+            return;
+        }
+
+        try {
+            Swal.fire({
+                title: 'Guardando Consumos de Jalisco...',
+                text: `Insertando ${datosExtraidos.length} registros y actualizando catálogo...`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const res = await fetch('/api/jalisco/guardar_masivo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ consumos: datosExtraidos })
+            });
+
+            const json = await res.json();
+
+            if(json.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Consumos Guardados Con Éxito!',
+                    text: `Se registraron ${json.insertados} cargas de combustible en Jalisco (${json.equipos_creados} nuevos equipos vinculados al catálogo).`,
+                    confirmButtonText: 'Aceptar'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', json.error || 'Fallo al guardar los consumos.', 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Error de conexión con el servidor.', 'error');
+        }
+    }
+</script>
+{% endblock %}

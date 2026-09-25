@@ -1,0 +1,107 @@
+# ============================================================
+# Proyecto Fénix - Stack completo (Dev / Prod)
+# Grupo Trujano
+# ============================================================
+# INSTRUCCIONES:
+#   1. Crea la carpeta  C:\fenix\  en el servidor
+#   2. Coloca este archivo ahí como  docker-compose.yml
+#   3. Crea el archivo  .env  en la misma carpeta (ver .env.example)
+#   4. Copia la carpeta  sql\  con los scripts de la BD
+#   5. Abre PowerShell como Administrador en esa carpeta y ejecuta:
+#        docker compose up -d
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  # ----------------------------------------------------------
+  # BASE DE DATOS: PostgreSQL 15
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: fenix_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB}
+      POSTGRES_USER:     ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - fenix_pgdata:/var/lib/postgresql/data
+      # Los archivos .sql en ./sql/ se ejecutan al crear la BD por primera vez
+      - ./sql:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - fenix_net
+
+  # ----------------------------------------------------------
+  # ORQUESTADOR + AGENTES IA: n8n
+  # ----------------------------------------------------------
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: fenix_n8n
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # PostgreSQL como backend de n8n (schema separado)
+      DB_TYPE:                        postgresdb
+      DB_POSTGRESDB_HOST:             postgres
+      DB_POSTGRESDB_PORT:             5432
+      DB_POSTGRESDB_DATABASE:         ${POSTGRES_DB}
+      DB_POSTGRESDB_USER:             ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD:         ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_SCHEMA:           n8n_internal
+
+      # URL pública (Cloudflare Tunnel en dev / dominio propio en prod)
+      N8N_HOST:                       ${N8N_HOST}
+      N8N_PORT:                       5678
+      N8N_PROTOCOL:                   https
+      WEBHOOK_URL:                    https://${N8N_HOST}/
+
+      # Seguridad básica
+      N8N_BASIC_AUTH_ACTIVE:          "true"
+      N8N_BASIC_AUTH_USER:            ${N8N_ADMIN_USER}
+      N8N_BASIC_AUTH_PASSWORD:        ${N8N_ADMIN_PASSWORD}
+
+      # Gemini API para los agentes de IA
+      GEMINI_API_KEY:                 ${GEMINI_API_KEY}
+
+      # Zona horaria México
+      GENERIC_TIMEZONE:               America/Mexico_City
+      TZ:                             America/Mexico_City
+
+      # Habilitar nodos de comunidad (LangChain, etc.)
+      N8N_COMMUNITY_PACKAGES_ENABLED: "true"
+
+    volumes:
+      - fenix_n8ndata:/home/node/.n8n
+      # Montaje para guardar las imágenes y evidencias físicas en el servidor
+      - ./evidencias:/home/node/evidencias
+    ports:
+      - "5678:5678"     # Cloudflare Tunnel apunta a este puerto
+    networks:
+      - fenix_net
+
+# ----------------------------------------------------------
+# Volúmenes persistentes
+# ----------------------------------------------------------
+volumes:
+  fenix_pgdata:
+    driver: local
+  fenix_n8ndata:
+    driver: local
+
+# ----------------------------------------------------------
+# Red interna
+# ----------------------------------------------------------
+networks:
+  fenix_net:
+    driver: bridge

@@ -1,0 +1,71 @@
+{% extends "layout_admin.html" %}
+
+{% block content %}
+<div class="panel-header" style="border:none; margin-bottom: 30px;">
+    <div>
+        <h1 style="margin:0; font-size: 1.8rem; font-weight: 700;">Bandeja de Entrada Global</h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">Registros capturados pendientes de validación y conciliación.</p>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px;">
+    <!-- DIESEL CARD -->
+    <div class="admin-panel" style="border-top: 4px solid #3b82f6;">
+        <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">🛢 Módulo Diesel</h3>
+        
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <span style="color: var(--text-muted);">Consumos Pendientes</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: {% if kpis.diesel_consumos > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ kpis.diesel_consumos }}</span>
+        </div>
+        
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid var(--admin-border); padding-top: 10px;">
+            <span style="color: var(--text-muted);">Facturas Pendientes</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: {% if kpis.diesel_facturas > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ kpis.diesel_facturas }}</span>
+        </div>
+        
+        <a href="/admin/diesel" style="display: block; text-align: center; background: rgba(59, 130, 246, 0.1); color: #3b82f6; text-decoration: none; padding: 10px; border-radius: 6px; margin-top: 20px; font-weight: 500;">
+            Revisar Diesel →
+        </a>
+    </div>
+
+    <!-- GASOLINA CARD -->
+    <div class="admin-panel" style="border-top: 4px solid #f43f5e;">
+        <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">⛽ Módulo Gasolina</h3>
+        
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <span style="color: var(--text-muted);">Consumos Pendientes</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: {% if kpis.gasolina_consumos > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ kpis.gasolina_consumos }}</span>
+        </div>
+        
+        <div style="display:flex; justify-content: space-between; align-items: center; margin-top: 10px; border-top: 1px solid var(--admin-border); padding-top: 10px;">
+            <span style="color: var(--text-muted);">Facturas Pendientes</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: {% if kpis.gasolina_facturas > 0 %}#ef4444{% else %}#10b981{% endif %};">{{ kpis.gasolina_facturas }}</span>
+        </div>
+        
+        <a href="/admin/gasolina" style="display: block; text-align: center; background: rgba(244, 63, 94, 0.1); color: #f43f5e; text-decoration: none; padding: 10px; border-radius: 6px; margin-top: 20px; font-weight: 500;">
+            Revisar Gasolina →
+        </a>
+    </div>
+    
+    <!-- ACARREOS PLACEHOLDER -->
+    <div class="admin-panel" style="border-top: 4px solid #8b5cf6; opacity: 0.5;">
+        <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">🚛 Módulo Acarreos</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Próximamente. Se revisarán boletas de viaje vs facturas.</p>
+    </div>
+    
+    <!-- MEZCLA PLACEHOLDER -->
+    <div class="admin-panel" style="border-top: 4px solid #f59e0b; opacity: 0.5;">
+        <h3 style="margin-top:0; display:flex; align-items:center; gap:8px;">🏗 Módulo Mezcla</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Próximamente. Se auditará materia prima vs producción.</p>
+    </div>
+</div>
+
+<div class="admin-panel">
+    <div class="panel-header">
+        <span>📋 Registro de Actividad (Log)</span>
+    </div>
+    <div style="color: var(--text-muted); text-align: center; padding: 40px;">
+        Aquí aparecerá el historial de quién aprobó o rechazó qué registro próximamente.
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfdi:Comprobante xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd http://www.sat.gob.mx/Pagos20 http://www.sat.gob.mx/sitio_internet/cfd/Pagos/Pagos20.xsd" Version="4.0" Fecha="2026-09-11T16:56:50" Sello="DotbM69PbU4/qHGPZPAUSB469l9YopguAQJYExAC6j6o4jPiQM/52Ktg+I592OCEmeIG+L4+rNhPWrUK5ZWKJ8MCJxBYg0Dy4x6BUqsUAAYwZYahC4O0vQR1belh7bx7PqsbXrQ1Kyx0UKjFEVjK5QQebE8rCLerULpR6SoDYt1It6X65qDpUa4FeGOAQv73miyPi20VvFjULYNt50pg/WVlsXFdZEFpYBluTFYciPR5o1IKvg/hZJ5j4NJ7JG99+H/l5sSsD9Mq70QOqcLka1h+a7/vywzZ5FSdQWHPvj2ZwwIl22OKv2o4SFF14rMj5xdnLHfGGResj1hvRh8YFw==" NoCertificado="00001000000715042858" Certificado="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" SubTotal="0" Moneda="XXX" Total="0" TipoDeComprobante="P" Exportacion="01" LugarExpedicion="52760" xmlns:cfdi="http://www.sat.gob.mx/cfd/4" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pago20="http://www.sat.gob.mx/Pagos20">
+  <cfdi:Emisor Rfc="DPC180725R47" Nombre="DERIVADOS DE PETROLEO CASTILLA" RegimenFiscal="601" />
+  <cfdi:Receptor Rfc="JEC040429LS4" Nombre="J.D.J. EQUIPO Y CONSTRUCCIONES" DomicilioFiscalReceptor="52790" RegimenFiscalReceptor="601" UsoCFDI="CP01" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="84111506" Cantidad="1" ClaveUnidad="ACT" Descripcion="Pago" ValorUnitario="0" Importe="0" ObjetoImp="01" />
+  </cfdi:Conceptos>
+  <cfdi:Complemento>
+    <pago20:Pagos Version="2.0">
+      <pago20:Totales TotalTrasladosBaseIVA16="422977.92" TotalTrasladosImpuestoIVA16="67676.58" MontoTotalPagos="500000.00" />
+      <pago20:Pago FechaPago="2026-08-27T12:00:00" FormaDePagoP="03" MonedaP="MXN" TipoCambioP="1" Monto="500000.00" NumOperacion="100367">
+        <pago20:DoctoRelacionado IdDocumento="A460BB4C-7DA8-470A-8737-42BEF3F0A020" Serie="A" Folio="11093" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="3" ImpSaldoAnt="49512.08" ImpPagado="49512.03" ImpSaldoInsoluto="0.05" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="41906.880000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="6705.100800" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="F04C37AC-FC79-48D4-82F2-E29872150517" Serie="A" Folio="11214" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="108000.36" ImpPagado="108000.36" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="91411.240000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="14625.820000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="79A39F82-F8C9-438D-8EE4-7C7EBCCE808A" Serie="A" Folio="11216" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="12150.08" ImpPagado="12150.08" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="10283.800000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="1645.410000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="76F52AA1-540E-427A-81CC-8957327EA296" Serie="A" Folio="11221" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="5535.00" ImpPagado="5535.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="4684.810000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="749.570000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="5BD81470-D2FA-4964-8258-A1AF6463198D" Serie="A" Folio="11222" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="2700.08" ImpPagado="2700.08" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="2285.340000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="365.660000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="85FF21F0-51D9-4725-83F5-CF40B19F2896" Serie="A" Folio="11223" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="8100.05" ImpPagado="8100.05" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="6855.860000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="1096.940000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="0D2AF94C-DF7C-4A7D-8546-F1F49CEE64B1" Serie="A" Folio="11231" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="108000.35" ImpPagado="108000.35" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="91411.260000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="14625.840000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="443A28C2-84BF-427A-8949-520F779E5296" Serie="A" Folio="11235" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="24840.06" ImpPagado="24840.06" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="21024.560000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="3363.940000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="3FDED0E2-924E-415C-8783-CAC0922F2F5F" Serie="A" Folio="11242" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="21600.15" ImpPagado="21600.15" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="18282.310000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="2925.180000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="7BC302D4-17A2-4BA2-8CF6-874B52A62692" Serie="A" Folio="11244" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="11340.00" ImpPagado="11340.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="9598.160000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="1535.700000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="FD0158C7-3378-498E-81DA-1335BC8E0586" Serie="A" Folio="11245" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="9180.03" ImpPagado="9180.03" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="7769.960000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="1243.190000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="40A160A1-1D2C-4C73-865D-98484A9D1689" Serie="A" Folio="11252" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="16200.10" ImpPagado="16200.10" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="13711.720000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="2193.880000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="A723ED9E-F9FB-411D-855F-81AC80E180B0" Serie="A" Folio="11258" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="14580.08" ImpPagado="14580.08" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="12340.550000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="1974.490000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="C32910DB-AF13-4B1A-8228-55F32F0CB879" Serie="A" Folio="11259" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="11610.05" ImpPagado="11610.05" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="9826.720000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="1572.280000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="2A6C1CB7-6230-4AEA-8D7B-BB75ACBF80A2" Serie="A" Folio="11274" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="12825.10" ImpPagado="12825.10" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="10855.140000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="1736.820000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="7DBCF3C6-E334-4898-844F-522036CC67B0" Serie="A" Folio="11275" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="21600.09" ImpPagado="21600.09" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="18282.270000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="2925.170000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="B0A4E611-4E3D-4537-89B7-2E01B47EE5B4" Serie="A" Folio="11276" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="54000.22" ImpPagado="23014.36" ImpSaldoInsoluto="30985.86" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="19479.310000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="3116.689600" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="96FD7E61-8F3A-4122-8CBF-E6C57E7ABEF5" Serie="A" Folio="10454" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1800.02" ImpPagado="1800.02" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1513.660000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="242.180000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="702FEC5D-5103-49C4-8F0F-3692CCE49190" Serie="A" Folio="10850" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1500.00" ImpPagado="1500.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1261.100000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="201.780000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="9F3F72B6-2AC5-4954-8E57-57C4CFA4E01B" Serie="A" Folio="10954" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="FA5A606F-0C5C-42EE-8302-26F6C0B428F1" Serie="A" Folio="10970" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1200.00" ImpPagado="1200.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1008.890000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="161.420000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="7FAF7C18-7CE4-4AB5-822F-8100BB043814" Serie="A" Folio="10971" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="3230.61" ImpPagado="3230.61" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="2716.090000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="434.580000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="75F9F17E-6A4B-460E-8CF1-EFFED86D900E" Serie="A" Folio="10977" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1200.00" ImpPagado="1200.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1008.890000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="161.420000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="2DE76139-FA0F-43C7-8032-D1F31DB7E066" Serie="A" Folio="10900" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="600.00" ImpPagado="600.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="504.440000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="80.710000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="DD5D02C7-D73B-4BC2-8710-E323D5359FF4" Serie="A" Folio="10994" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1500.00" ImpPagado="1500.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1261.100000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="201.780000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="80E39129-E67F-4813-8B9A-FAD6805872BA" Serie="A" Folio="11001" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1500.14" ImpPagado="1500.14" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1261.220000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="201.800000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="ED974379-0D4E-43D4-80CE-E066C15C4885" Serie="A" Folio="11015" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="800.00" ImpPagado="800.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="672.720000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="107.640000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="F2EE57FE-F94D-4942-8A0E-96C88BA1B886" Serie="A" Folio="11021" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.920000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.540000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="65021352-7228-4BCF-8D9F-2614151586CC" Serie="A" Folio="11026" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="700.00" ImpPagado="700.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="588.520000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="94.160000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="E33C3D63-0AE5-4A8A-80E8-1CA3C125A86C" Serie="A" Folio="11043" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="ADCEB52A-8FD2-428C-861F-A1718D2F7FD2" Serie="A" Folio="11057" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1500.00" ImpPagado="1500.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1261.100000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="201.780000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="7C83C51C-7779-4DEF-860D-7EE16A79F347" Serie="A" Folio="11059" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="EED6B39B-6ACC-4470-8C12-F5B4B187B1E8" Serie="A" Folio="11060" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="3403.24" ImpPagado="3403.24" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="2861.230000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="457.800000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="0A5CF518-EC1B-482C-83E8-C6DCF1DFD5BC" Serie="A" Folio="11082" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="93C5742E-ED93-44D5-8D78-DCEB48E80986" Serie="A" Folio="11091" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="FE84D955-E61E-44E9-8480-1E17A135B955" Serie="A" Folio="11097" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1500.00" ImpPagado="1500.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1261.100000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="201.780000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="ACA1DB4E-048B-445D-8D3C-3A461EB8F72A" Serie="A" Folio="11100" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1300.00" ImpPagado="1300.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1092.960000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="174.870000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="44F42679-C328-4F91-870F-ACA007950FD1" Serie="A" Folio="11104" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="2177.57" ImpPagado="2177.57" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1831.140000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="292.980000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="079D1F35-A4A2-4D52-8416-BC43F7D0E536" Serie="A" Folio="11115" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1300.00" ImpPagado="1300.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="1092.960000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="174.870000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="879FF958-CCE5-4A06-8D52-0996851A36EE" Serie="A" Folio="11165" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="8BF04376-BBBE-4451-8876-40EE4E29B120" Serie="A" Folio="11183" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="C6725D29-D96A-4B2A-8FA0-CB11710A3D7E" Serie="A" Folio="11217" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="3200.45" ImpPagado="3200.45" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="2690.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="430.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="6ED024C8-6C26-4DBE-8ABD-F759A5DC5CB0" Serie="A" Folio="11234" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="877828E3-1D97-4E12-88E8-84F71A55A4A1" Serie="A" Folio="11237" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="1000.00" ImpPagado="1000.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="840.740000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="134.520000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:DoctoRelacionado IdDocumento="9AB26CAD-EACB-482A-8574-E7A11A954ED9" Serie="A" Folio="11248" MonedaDR="MXN" EquivalenciaDR="1" NumParcialidad="1" ImpSaldoAnt="800.00" ImpPagado="800.00" ImpSaldoInsoluto="0.00" ObjetoImpDR="02">
+          <pago20:ImpuestosDR>
+            <pago20:TrasladosDR>
+              <pago20:TrasladoDR BaseDR="672.590000" ImpuestoDR="002" TipoFactorDR="Tasa" TasaOCuotaDR="0.160000" ImporteDR="107.610000" />
+            </pago20:TrasladosDR>
+          </pago20:ImpuestosDR>
+        </pago20:DoctoRelacionado>
+        <pago20:ImpuestosP>
+          <pago20:TrasladosP>
+            <pago20:TrasladoP BaseP="422977.920000" ImpuestoP="002" TipoFactorP="Tasa" TasaOCuotaP="0.160000" ImporteP="67676.580400" />
+          </pago20:TrasladosP>
+        </pago20:ImpuestosP>
+      </pago20:Pago>
+    </pago20:Pagos>
+    <tfd:TimbreFiscalDigital xmlns:tfd="http://www.sat.gob.mx/TimbreFiscalDigital" xsi:schemaLocation="http://www.sat.gob.mx/TimbreFiscalDigital http://www.sat.gob.mx/sitio_internet/cfd/TimbreFiscalDigital/TimbreFiscalDigitalv11.xsd" Version="1.1" UUID="CF595D57-B344-4700-BC1D-F885ECB62D95" FechaTimbrado="2026-09-11T16:57:15" RfcProvCertif="SAT970701NN3" SelloCFD="DotbM69PbU4/qHGPZPAUSB469l9YopguAQJYExAC6j6o4jPiQM/52Ktg+I592OCEmeIG+L4+rNhPWrUK5ZWKJ8MCJxBYg0Dy4x6BUqsUAAYwZYahC4O0vQR1belh7bx7PqsbXrQ1Kyx0UKjFEVjK5QQebE8rCLerULpR6SoDYt1It6X65qDpUa4FeGOAQv73miyPi20VvFjULYNt50pg/WVlsXFdZEFpYBluTFYciPR5o1IKvg/hZJ5j4NJ7JG99+H/l5sSsD9Mq70QOqcLka1h+a7/vywzZ5FSdQWHPvj2ZwwIl22OKv2o4SFF14rMj5xdnLHfGGResj1hvRh8YFw==" NoCertificadoSAT="00001000000705250068" SelloSAT="LJBK8ZReiIu0v25bUifqK/qQdllP62ubRC41CbS5jSkSj7FjCa4qlPkSUmtSLC3mpDnuebnH5wZRK/T4ZVjMP/MFRdjJGYJBQv13ZEkoXazRWnIjhqt6Sc/7/IRh6W2Ahbmp398Tu6T0ej4ykoDKhIuRpf28EY4xD2k57G5HHoWG9Qhjvfobndbu+NUM2mEyAwG10ImmsIrXUea+tnJlIIUMbTGBnbvraGhBzYYY94Gbd9qN5pFVfn4BogAHK/gK/tPlnhsXigxU3Zs5daK1u1NZeJh4i7Y/79l+Kq0AI/+lOEwvo5Vu7aW+d/2/gciI42Pre+vw1t5nYvpkarrMyQ==" />
+  </cfdi:Complemento>
+</cfdi:Comprobante>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fénix 2.0 — Módulo Mezcla</title>
+    <meta name="description" content="Dashboard Fénix 2.0 — Módulo de Mezcla Asfáltica. Próximamente disponible.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020817; --bg2: #0f172a; --bg3: #1e293b;
+            --purple: #8b5cf6; --accent: #38bdf8;
+            --primary: #6366f1; --pink: #ec4899;
+            --text: #f1f5f9; --muted: #64748b;
+            --border: rgba(255,255,255,0.08);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 60% -10%, rgba(139,92,246,0.13), transparent),
+                radial-gradient(ellipse 60% 40% at 10% 100%, rgba(236,72,153,0.07), transparent);
+        }
+        nav {
+            background: rgba(15,23,42,0.92);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-left { display: flex; align-items: center; gap: 1rem; }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 0.4rem 0.85rem;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s, border-color 0.2s, background 0.2s;
+        }
+        .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.09); }
+        .brand {
+            font-size: 1.1rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.03em;
+        }
+        .nav-right { display: flex; align-items: center; gap: 0.85rem; }
+        .semana-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.45rem 1rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.84rem;
+            cursor: pointer;
+        }
+        .semana-select option { background: var(--bg3); color: var(--text); }
+        .captura-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; border: none;
+            padding: 0.45rem 1.1rem; border-radius: 10px;
+            font-size: 0.84rem; font-weight: 700; cursor: pointer; text-decoration: none;
+        }
+        main {
+            padding: 4rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .hero-icon {
+            font-size: 5rem;
+            line-height: 1;
+            margin-bottom: 1.5rem;
+            animation: float 3.5s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-14px) rotate(2deg); }
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.75rem;
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--muted);
+            max-width: 480px;
+            line-height: 1.6;
+            margin-bottom: 2.5rem;
+        }
+        .placeholder-card {
+            width: 100%;
+            max-width: 560px;
+            background: rgba(139,92,246,0.05);
+            border: 1px solid rgba(139,92,246,0.2);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .placeholder-card .pc-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .placeholder-card h3 { font-size: 1rem; font-weight: 800; color: #8b5cf6; margin-bottom: 0.5rem; }
+        .placeholder-card p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            width: 100%;
+            max-width: 700px;
+            margin-bottom: 2.5rem;
+        }
+        .feat-card {
+            background: rgba(15,23,42,0.6);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.25rem;
+            text-align: left;
+        }
+        .feat-card .fi { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .feat-card h4 { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .feat-card p  { font-size: 0.78rem; color: var(--muted); }
+        .coming-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(139,92,246,0.1);
+            border: 1px solid rgba(139,92,246,0.25);
+            color: #8b5cf6;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 0.45rem 1.2rem;
+            border-radius: 99px;
+        }
+        .dot-anim {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #8b5cf6;
+            animation: blink 1.4s ease-in-out infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-left">
+        <a href="/" class="back-btn">← Inicio</a>
+        <span class="brand">🏗 Mezcla</span>
+    </div>
+    <div class="nav-right">
+        <select class="semana-select" id="globalSemana" onchange="onSemanaChange()">
+            <option value="">Todas las Semanas</option>
+        </select>
+        <a href="http://127.0.0.1:5001/diesel" target="_blank" class="captura-btn">Ir a Captura</a>
+    </div>
+</nav>
+
+<main>
+    <div class="hero-icon">🏗</div>
+    <h1>Módulo de Mezcla</h1>
+    <p class="subtitle">Control de producción y consumo de mezcla asfáltica por planta y frente de trabajo</p>
+
+    <div class="placeholder-card">
+        <div class="pc-icon">📋</div>
+        <h3>Sin datos capturados aún</h3>
+        <p>Este módulo estará disponible próximamente. Los datos de mezcla asfáltica se cargarán desde los reportes de producción de planta y formatos de captura por semana y frente.</p>
+    </div>
+
+    <div class="features-grid">
+        <div class="feat-card">
+            <div class="fi">🏭</div>
+            <h4>Control por Planta</h4>
+            <p>Toneladas producidas por planta asfáltica y turno</p>
+        </div>
+        <div class="feat-card">
+            <div class="fi">📐</div>
+            <h4>Rendimiento</h4>
+            <p>Toneladas colocadas vs proyecto por frente y tipo de mezcla</p>
+        </div>
+        <div class="feat-card">
+            <div class="fi">💰</div>
+            <h4>Costo por Tonelada</h4>
+            <p>Análisis de costo de producción y colocación por tipo de mezcla</p>
+        </div>
+        <div class="feat-card">
+            <div class="fi">📊</div>
+            <h4>Comparativo Semanal</h4>
+            <p>Producción real vs programa semanal autorizado</p>
+        </div>
+    </div>
+
+    <div class="coming-badge">
+        <span class="dot-anim"></span>
+        Próximamente disponible
+    </div>
+</main>
+
+<script>
+    function getSemana() { return localStorage.getItem('fenix_semana') || ''; }
+    function setSemana(v) { localStorage.setItem('fenix_semana', v); }
+    function onSemanaChange() {
+        setSemana(document.getElementById('globalSemana').value);
+    }
+    async function loadSemanas() {
+        const res  = await fetch('/api/semanas');
+        const sems = await res.json();
+        const sel  = document.getElementById('globalSemana');
+        sems.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s; o.text = s; sel.appendChild(o);
+        });
+        const saved = getSemana();
+        if (saved) { sel.value = saved; if (!sel.value) { setSemana(''); sel.value = ''; } }
+    }
+    loadSemanas();
+</script>
+</body>
+</html>

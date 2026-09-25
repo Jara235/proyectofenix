@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<h1 class="header-title">Catálogos</h1>
+<p class="header-subtitle">Gestiona Obras, Equipos y Operadores.</p>
+
+<div class="glass-card" style="margin-bottom: 2rem;">
+    <h3>Obras Activas</h3>
+    <div style="overflow-x: auto; margin-top: 1rem;">
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="padding: 1rem;">Código</th>
+                <th style="padding: 1rem;">Nombre de Obra</th>
+            </tr>
+            {% for o in obras %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 1rem;">{{ o['codigo'] }}</td>
+                <td style="padding: 1rem;">{{ o['nombre'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+<div class="glass-card" style="margin-bottom: 2rem;">
+    <h3>Equipos y Maquinaria</h3>
+    <div style="overflow-x: auto; margin-top: 1rem;">
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <th style="padding: 1rem;">No. Económico</th>
+                <th style="padding: 1rem;">Descripción</th>
+                <th style="padding: 1rem;">Tipo</th>
+            </tr>
+            {% for eq in equipos %}
+            <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 1rem; font-weight: bold; color: var(--primary);">{{ eq['numero_economico'] }}</td>
+                <td style="padding: 1rem;">{{ eq['descripcion'] }}</td>
+                <td style="padding: 1rem;">{{ eq['tipo_equipo'] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,4098 @@
+{
+  "tables": {
+    "acarreos": {
+      "facturas": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('acarreos.facturas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_viaje",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "folio_factura",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_factura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "sindicato_proveedor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "viajes_amparados",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "uuid_cfdi",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_xml",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          }
+        ]
+      },
+      "viajes": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('acarreos.viajes_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_viaje",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "sindicato",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "material",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "origen",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa_camion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "capacidad_m3",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "precio_unitario",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          }
+        ]
+      }
+    },
+    "catalogos": {
+      "audit_log": {
+        "type": "BASE TABLE",
+        "count": 3,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.audit_log_id_seq'::regclass)"
+          },
+          {
+            "column_name": "tabla_afectada",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "registro_id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'SISTEMA'::character varying"
+          },
+          {
+            "column_name": "accion",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "valor_anterior",
+            "data_type": "jsonb",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "valor_nuevo",
+            "data_type": "jsonb",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "ip_origen",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_hora",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "autorizaciones": {
+        "type": "BASE TABLE",
+        "count": 636,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.autorizaciones_id_seq'::regclass)"
+          },
+          {
+            "column_name": "tipo",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "referencia",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "litros_autorizados",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          }
+        ]
+      },
+      "bitacora_maquinaria": {
+        "type": "BASE TABLE",
+        "count": 5,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.bitacora_maquinaria_id_seq'::regclass)"
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "codigo_cuadrilla",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "turno",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'MAÑANA'::character varying"
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo_maquinaria",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "horometro_inicial",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "horometro_final",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "horas_trabajadas",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "litros_diesel_est",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "operador",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'EN OPERACION'::character varying"
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "registrado_por",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'Mesa de Control'::character varying"
+          },
+          {
+            "column_name": "fecha_registro",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "cuadrillas": {
+        "type": "BASE TABLE",
+        "count": 6,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.cuadrillas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "codigo_cuadrilla",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "nombre_cuadrilla",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "descripcion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "activo",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "true"
+          },
+          {
+            "column_name": "fecha_creacion",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "equipo_obra_mapping": {
+        "type": "BASE TABLE",
+        "count": 305,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.equipo_obra_mapping_id_seq'::regclass)"
+          },
+          {
+            "column_name": "equipo_eco",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_nombre",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "operador",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "equipos": {
+        "type": "BASE TABLE",
+        "count": 180,
+        "columns": [
+          {
+            "column_name": "numero_economico",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "descripcion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_equipo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "operador_default",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "obras": {
+        "type": "BASE TABLE",
+        "count": 36,
+        "columns": [
+          {
+            "column_name": "codigo",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "nombre",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "ingeniero_responsable",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable_default",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'OBRA'::text"
+          }
+        ]
+      },
+      "operaciones": {
+        "type": "BASE TABLE",
+        "count": 4,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.operaciones_id_seq'::regclass)"
+          },
+          {
+            "column_name": "tipo_operacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "codigo_operacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "operadores": {
+        "type": "BASE TABLE",
+        "count": 24,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.operadores_id_seq'::regclass)"
+          },
+          {
+            "column_name": "nombre",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          }
+        ]
+      },
+      "responsables": {
+        "type": "BASE TABLE",
+        "count": 14,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.responsables_id_seq'::regclass)"
+          },
+          {
+            "column_name": "nombre",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "dias_trabajados",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": "6"
+          },
+          {
+            "column_name": "autorizado_diario",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          }
+        ]
+      },
+      "usuarios_admin": {
+        "type": "BASE TABLE",
+        "count": 8,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('catalogos.usuarios_admin_id_seq'::regclass)"
+          },
+          {
+            "column_name": "usuario",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "password",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "rol",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "nombre_completo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_creacion",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      }
+    },
+    "diesel": {
+      "complementos_pago": {
+        "type": "BASE TABLE",
+        "count": 1,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.complementos_pago_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_complemento",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_pago",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "proveedor",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "monto_total",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_xml",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_registro",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "conciliaciones_semanales": {
+        "type": "BASE TABLE",
+        "count": 14,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.conciliaciones_semanales_id_seq'::regclass)"
+          },
+          {
+            "column_name": "modulo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'diesel'::character varying"
+          },
+          {
+            "column_name": "semana",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "obra",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "solicitado_lts",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "facturado_lts",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "consumido_lts",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "delta_sol_fac",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "delta_fac_con",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "total_cargas",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "cargas_con_foto",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "cargas_con_horometro",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "dictamen_ia",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semaforo_ia",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'VERDE'::character varying"
+          },
+          {
+            "column_name": "banderas_rojas",
+            "data_type": "jsonb",
+            "is_nullable": "YES",
+            "column_default": "'[]'::jsonb"
+          },
+          {
+            "column_name": "filtro1_aprobado",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "true"
+          },
+          {
+            "column_name": "filtro1_fecha",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "aprobado_residente",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "residente_nombre",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "residente_usuario",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_residente",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "firma_img_residente",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "firma_hash_residente",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obs_residente",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "aprobado_gobierno_corp",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "directivo_nombre",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "directivo_usuario",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_gobierno_corp",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "firma_img_gobierno_corp",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "sello_digital_final",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obs_gobierno_corp",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_global",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE_RESIDENTE'::character varying"
+          },
+          {
+            "column_name": "bloqueado",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "false"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      "consumos": {
+        "type": "BASE TABLE",
+        "count": 1318,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.consumos_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "origen",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_movimiento",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo_economico",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_por_litro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "operador",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "solicitud_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "equipo_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "horometro_inicial",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable_maquinaria",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_captura",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'MARIMBA'::character varying"
+          },
+          {
+            "column_name": "conciliado_con_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "medio_suministro",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'MARIMBA'::character varying"
+          },
+          {
+            "column_name": "conductor_distribuidor",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "unidad_reparto",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_filtro1",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'VERIFICADO'::character varying"
+          },
+          {
+            "column_name": "observaciones_ia",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "control_vales_jalisco": {
+        "type": "BASE TABLE",
+        "count": 8,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.control_vales_jalisco_id_seq'::regclass)"
+          },
+          {
+            "column_name": "semana",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "ajuste_semanal",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "creado_en",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          },
+          {
+            "column_name": "tipo_combustible",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'DIESEL'::character varying"
+          },
+          {
+            "column_name": "saldo_inicial_vales",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          }
+        ]
+      },
+      "facturas": {
+        "type": "BASE TABLE",
+        "count": 327,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.facturas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "folio_factura",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_factura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "proveedor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "punto_de_carga",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros_facturados",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "precio_unitario",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "iva",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "uuid_cfdi",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_xml",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_pago",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "equipo_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "motivo_cancelacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_cancelacion",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_cancelacion",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_gasolina",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "facturas_respaldo": {
+        "type": "BASE TABLE",
+        "count": 102,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.facturas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "folio_factura",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_factura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "proveedor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "punto_de_carga",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros_facturados",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "precio_unitario",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "iva",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "uuid_cfdi",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_xml",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "motivo_cancelacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_cancelacion",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_cancelacion",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_pago",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_gasolina",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "jalisco_movimientos": {
+        "type": "BASE TABLE",
+        "count": 242,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.jalisco_movimientos_id_seq'::regclass)"
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "date",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_movimiento",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo_economico",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_por_litro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "saldo_teorico",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "creado_en",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          },
+          {
+            "column_name": "tipo_combustible",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'DIESEL'::character varying"
+          }
+        ]
+      },
+      "jalisco_vales_ajustes": {
+        "type": "BASE TABLE",
+        "count": 9,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.jalisco_vales_ajustes_id_seq'::regclass)"
+          },
+          {
+            "column_name": "semana",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "monto",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "recibo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "pagos_facturas": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.pagos_facturas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "complemento_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "monto_aplicado",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "solicitudes": {
+        "type": "BASE TABLE",
+        "count": 200,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('diesel.solicitudes_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_solicitud",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "solicitante",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_movimiento",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo_economico",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_por_litro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "operador",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_conciliacion",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      }
+    },
+    "gasolina": {
+      "autorizaciones": {
+        "type": "BASE TABLE",
+        "count": 502,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.autorizaciones_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "origen",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "vehiculo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros_autorizados",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_autorizado",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_autorizacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "equipo_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "autorizaciones_maestro": {
+        "type": "BASE TABLE",
+        "count": 46,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.autorizaciones_maestro_id_seq'::regclass)"
+          },
+          {
+            "column_name": "empresa",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "num_renglon",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "centro_trabajo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "unidad_equipo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placas",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_semanal",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0.00"
+          },
+          {
+            "column_name": "activo",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "true"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "autorizaciones_semanal": {
+        "type": "BASE TABLE",
+        "count": 779,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.autorizaciones_semanal_id_seq'::regclass)"
+          },
+          {
+            "column_name": "semana",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "maestro_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "empresa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "num_renglon",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "centro_trabajo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "unidad_equipo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placas",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_semanal",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0.00"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "consumos": {
+        "type": "BASE TABLE",
+        "count": 740,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.consumos_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "origen",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "vehiculo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "kilometraje",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_por_litro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "conductor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "equipo_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "gasolineria",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "estados_cuenta": {
+        "type": "BASE TABLE",
+        "count": 104,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.estados_cuenta_id_seq'::regclass)"
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "vehiculo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "gasolinera",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_autorizado",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "consumo_real",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "litros_reales",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": "0"
+          },
+          {
+            "column_name": "diferencia",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "equipo_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "facturas": {
+        "type": "BASE TABLE",
+        "count": 158,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.facturas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "folio_factura",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_factura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "proveedor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros_facturados",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "uuid_cfdi",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_xml",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "equipo_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "motivo_cancelacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_cancelacion",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_cancelacion",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_gasolina",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_pago",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "facturas_respaldo": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.facturas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "folio_factura",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_factura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "proveedor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros_facturados",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "uuid_cfdi",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_xml",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "motivo_cancelacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_cancelacion",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_cancelacion",
+            "data_type": "timestamp with time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_pago",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_gasolina",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "solicitudes": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('gasolina.solicitudes_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_solicitud",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "solicitante",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "gasolinera",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "vehiculo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "precio_unitario",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_conciliacion",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "v_resumen_semanal": {
+        "type": "VIEW",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "vehiculo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "monto_autorizado",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "consumo_real",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "remanente",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "excedido",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      }
+    },
+    "mezcla": {
+      "materia_prima": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('mezcla.materia_prima_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "mina_origen",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "planta_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "material",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "camion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "toneladas",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_material",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "flete",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          }
+        ]
+      },
+      "produccion": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('mezcla.produccion_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "planta",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_mezcla",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "toneladas_producidas",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "emulsion_consumida_lts",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "agregados_consumidos_m3",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_total_produccion",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          }
+        ]
+      },
+      "tendido": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('mezcla.tendido_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "planta_origen",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "viajes_enviados",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "toneladas_tendidas",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "metros_cuadrados_tendidos",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "rendimiento_obra",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          }
+        ]
+      }
+    },
+    "tags": {
+      "autorizaciones": {
+        "type": "BASE TABLE",
+        "count": 48,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('tags.autorizaciones_id_seq'::regclass)"
+          },
+          {
+            "column_name": "empresa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tag",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "no_economico",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placas",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_unidad",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "monto_autorizado",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0.0"
+          },
+          {
+            "column_name": "estatus",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'Activo'::character varying"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "conciliaciones": {
+        "type": "BASE TABLE",
+        "count": 3,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('tags.conciliaciones_id_seq'::regclass)"
+          },
+          {
+            "column_name": "empresa",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_detalle",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_resumen",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "total_detalle",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0.0"
+          },
+          {
+            "column_name": "total_resumen",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0.0"
+          },
+          {
+            "column_name": "diferencia",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0.0"
+          },
+          {
+            "column_name": "estatus",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "detalles_items",
+            "data_type": "jsonb",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "movimientos": {
+        "type": "BASE TABLE",
+        "count": 6218,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('tags.movimientos_id_seq'::regclass)"
+          },
+          {
+            "column_name": "empresa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "mes",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tag",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "no_economico",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_unidad",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placas",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_asignada",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "hora",
+            "data_type": "time without time zone",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "caseta",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "saldo",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_origen",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      }
+    },
+    "transportes": {
+      "balance_tanque_semanal": {
+        "type": "BASE TABLE",
+        "count": 2,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('transportes.balance_tanque_semanal_id_seq'::regclass)"
+          },
+          {
+            "column_name": "empresa",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'JDJ'::character varying"
+          },
+          {
+            "column_name": "semana",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "periodo",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "diesel_inicial",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "diesel_final",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "cuentalitros_inicial",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "cuentalitros_final",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "litros_tanque",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "litros_despacho_directo",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "litros_totales",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "costo_por_litro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "27.00"
+          },
+          {
+            "column_name": "costo_total",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "archivo_origen",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "detalles_vehiculos",
+            "data_type": "jsonb",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "propuesta_autorizaciones",
+            "data_type": "jsonb",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_registro",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'SISTEMA'::character varying"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "consumos_diesel": {
+        "type": "BASE TABLE",
+        "count": 49,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('transportes.consumos_diesel_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "origen",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable_unidad",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "equipo_economico",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_por_litro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "27.00"
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "odometro_km",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "horometro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_url",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'SISTEMA_CAPTURA'::text"
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'APROBADO'::character varying"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          },
+          {
+            "column_name": "tipo_despacho",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "cuentalitros_inicial",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "cuentalitros_final",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "flejes_viejos",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "flejes_nuevos",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_referencia",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "km_recorridos",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "rendimiento_km_l",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "consumos_gasolina": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('transportes.consumos_gasolina_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "gasolineria",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable_unidad",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "vehiculo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placa",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "costo_por_litro",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "23.90"
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "kilometraje",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": "0"
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_evidencia",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "foto_url",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "usuario_captura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'SISTEMA_CAPTURA'::text"
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'APROBADO'::character varying"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "equipos": {
+        "type": "BASE TABLE",
+        "count": 67,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('transportes.equipos_id_seq'::regclass)"
+          },
+          {
+            "column_name": "numero_economico",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "descripcion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_equipo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'DIESEL'::text"
+          },
+          {
+            "column_name": "placas",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "responsable_default",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "activo",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "true"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          },
+          {
+            "column_name": "numero_consecutivo",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "categoria",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tipo_unidad",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "serie_vin",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "marca",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "modelo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "anio",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_tipo",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_autenticidad",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_uuid",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_folio",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_fecha",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_receptor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "factura_emisor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placas_estatales",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "placas_federales",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tarjeta_circulacion_estatal",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "tarjeta_circulacion_federal",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "vigencia_placas",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "pago_derechos_2025",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "cotejo_estatal",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "permiso_sct_carga",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "cotejo_federal",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "verif_fisico_mecanica",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "cotejo_fisico_mecanica",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "verif_ambiental",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "poliza_seguro",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "poliza_cis",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "poliza_vencimiento",
+            "data_type": "date",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "poliza_estatus_pago",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "poliza_flotilla",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "propietario_asegurado",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "ubicacion_ct_default",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "observaciones",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "updated_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "now()"
+          }
+        ]
+      },
+      "facturas": {
+        "type": "BASE TABLE",
+        "count": 4,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('transportes.facturas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "folio_factura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "fecha_factura",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "semana",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "proveedor",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "litros_facturados",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe_total",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "uuid_cfdi",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_pdf",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "archivo_xml",
+            "data_type": "bytea",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_pago",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::text"
+          },
+          {
+            "column_name": "estatus_revision",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": "'PENDIENTE'::character varying"
+          },
+          {
+            "column_name": "tipo_combustible",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'DIESEL'::text"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          },
+          {
+            "column_name": "folio_conciliacion",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "obra_destino",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'TRANSPORTES'::text"
+          },
+          {
+            "column_name": "precio_unitario",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "importe",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "iva",
+            "data_type": "numeric",
+            "is_nullable": "YES",
+            "column_default": null
+          }
+        ]
+      },
+      "operadores": {
+        "type": "BASE TABLE",
+        "count": 5,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('transportes.operadores_id_seq'::regclass)"
+          },
+          {
+            "column_name": "nombre",
+            "data_type": "text",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "puesto",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": "'OPERADOR DE TRANSPORTE'::text"
+          },
+          {
+            "column_name": "telefono",
+            "data_type": "text",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "activo",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "true"
+          },
+          {
+            "column_name": "created_at",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      }
+    },
+    "usuarios": {
+      "cuentas": {
+        "type": "BASE TABLE",
+        "count": 8,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('usuarios.cuentas_id_seq'::regclass)"
+          },
+          {
+            "column_name": "usuario",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "password",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "nombre_completo",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "puesto_area",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "rol_principal",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "modulo_principal",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "email",
+            "data_type": "character varying",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "estatus_activo",
+            "data_type": "boolean",
+            "is_nullable": "YES",
+            "column_default": "true"
+          },
+          {
+            "column_name": "fecha_creacion",
+            "data_type": "timestamp without time zone",
+            "is_nullable": "YES",
+            "column_default": "CURRENT_TIMESTAMP"
+          }
+        ]
+      },
+      "permisos_modulos": {
+        "type": "BASE TABLE",
+        "count": 0,
+        "columns": [
+          {
+            "column_name": "id",
+            "data_type": "integer",
+            "is_nullable": "NO",
+            "column_default": "nextval('usuarios.permisos_modulos_id_seq'::regclass)"
+          },
+          {
+            "column_name": "usuario_id",
+            "data_type": "integer",
+            "is_nullable": "YES",
+            "column_default": null
+          },
+          {
+            "column_name": "modulo",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          },
+          {
+            "column_name": "nivel_permiso",
+            "data_type": "character varying",
+            "is_nullable": "NO",
+            "column_default": null
+          }
+        ]
+      }
+    }
+  },
+  "foreign_keys": [
+    {
+      "table_schema": "diesel",
+      "table_name": "pagos_facturas",
+      "column_name": "complemento_id",
+      "foreign_table_schema": "diesel",
+      "foreign_table_name": "complementos_pago",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_schema": "diesel",
+      "table_name": "pagos_facturas",
+      "column_name": "factura_id",
+      "foreign_table_schema": "diesel",
+      "foreign_table_name": "facturas",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_schema": "gasolina",
+      "table_name": "autorizaciones_semanal",
+      "column_name": "maestro_id",
+      "foreign_table_schema": "gasolina",
+      "foreign_table_name": "autorizaciones_maestro",
+      "foreign_column_name": "id"
+    },
+    {
+      "table_schema": "usuarios",
+      "table_name": "permisos_modulos",
+      "column_name": "usuario_id",
+      "foreign_table_schema": "usuarios",
+      "foreign_table_name": "cuentas",
+      "foreign_column_name": "id"
+    }
+  ]
+}

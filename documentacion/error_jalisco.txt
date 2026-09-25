@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "c:\Users\JOSE\Desktop\Proyecto fenix\app_admin.py", line 573, in api_jalisco_vales
+    semanas_db = db.fetchall()
+                 ^^^^^^^^^^^
+AttributeError: 'DbProxy' object has no attribute 'fetchall'

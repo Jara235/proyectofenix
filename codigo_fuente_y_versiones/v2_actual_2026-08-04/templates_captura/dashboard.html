@@ -1,0 +1,197 @@
+﻿{% extends "layout.html" %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1 class="header-title">Resumen General</h1>
+    <p class="header-subtitle" style="margin-bottom: 0;">Vision general de todos los modulos de Fenix 2.0</p>
+</div>
+
+<!-- MODULOS - KPI CARDS -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+
+    <a href="/diesel" style="text-decoration: none;">
+        <div class="glass-card" style="padding: 1.25rem; border-left: 4px solid #3b82f6; cursor: pointer; display: flex; flex-direction: column; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div style="font-size: 2rem;">&#128738;</div>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Diesel</p>
+            <h2 id="kpi-diesel-lts" style="margin: 0; font-size: 1.6rem; color: #3b82f6;">&#8212;</h2>
+            <p id="kpi-diesel-imp" style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">Cargando...</p>
+            <p id="kpi-diesel-reg" style="margin: 0; color: var(--text-muted); font-size: 0.8rem;"></p>
+        </div>
+    </a>
+
+    <a href="/gasolina" style="text-decoration: none;">
+        <div class="glass-card" style="padding: 1.25rem; border-left: 4px solid #f59e0b; display: flex; flex-direction: column; gap: 0.5rem; opacity: 0.6;">
+            <div style="font-size: 2rem;">&#9981;</div>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Gasolina</p>
+            <h2 style="margin: 0; font-size: 1.6rem; color: #f59e0b;">&#8212; Lts</h2>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">Modulo en desarrollo</p>
+        </div>
+    </a>
+
+    <a href="/acarreos" style="text-decoration: none;">
+        <div class="glass-card" style="padding: 1.25rem; border-left: 4px solid #10b981; display: flex; flex-direction: column; gap: 0.5rem; opacity: 0.6;">
+            <div style="font-size: 2rem;">&#128667;</div>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Acarreos</p>
+            <h2 style="margin: 0; font-size: 1.6rem; color: #10b981;">&#8212; Viajes</h2>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">Modulo en desarrollo</p>
+        </div>
+    </a>
+
+    <a href="/mezcla" style="text-decoration: none;">
+        <div class="glass-card" style="padding: 1.25rem; border-left: 4px solid #8b5cf6; display: flex; flex-direction: column; gap: 0.5rem; opacity: 0.6;">
+            <div style="font-size: 2rem;">&#127959;</div>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Mezcla Asfaltica</p>
+            <h2 style="margin: 0; font-size: 1.6rem; color: #8b5cf6;">&#8212; Ton</h2>
+            <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">Modulo en desarrollo</p>
+        </div>
+    </a>
+
+    <div class="glass-card" style="padding: 1.25rem; border-left: 4px solid #ec4899; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="font-size: 2rem;">&#129534;</div>
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Facturas</p>
+        <h2 id="kpi-facturas-total" style="margin: 0; font-size: 1.6rem; color: #ec4899;">&#8212;</h2>
+        <p id="kpi-facturas-imp" style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">Cargando...</p>
+    </div>
+
+</div>
+
+<!-- DIESEL DETALLE -->
+<div class="glass-card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="margin: 0; color: #3b82f6;">Diesel &mdash; Detalle por Semana</h2>
+            <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.9rem;">Consumos vs Facturacion</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+            <select id="filtro-obra" onchange="loadDieselDetail()" style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.85rem;">
+                <option value="">Todas las Obras</option>
+                {% for o in obras %}
+                <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                {% endfor %}
+            </select>
+            <select id="filtro-mov" onchange="loadDieselDetail()" style="background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.4rem 0.75rem; border-radius: 8px; font-size: 0.85rem;">
+                <option value="">Todos los Movimientos</option>
+                {% for op in operaciones %}
+                <option value="{{ op['tipo_operacion'] }}">{{ op['tipo_operacion'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- KPIs Diesel -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div style="background: rgba(59,130,246,0.1); padding: 1rem; border-radius: 10px; border: 1px solid rgba(59,130,246,0.3);">
+            <p style="margin:0; color: var(--text-muted); font-size: 0.8rem;">LITROS CONSUMIDOS</p>
+            <h3 id="d-kpi-lts-cons" style="margin:0.25rem 0 0; color: #3b82f6; font-size: 1.5rem;">&#8212;</h3>
+        </div>
+        <div style="background: rgba(16,185,129,0.1); padding: 1rem; border-radius: 10px; border: 1px solid rgba(16,185,129,0.3);">
+            <p style="margin:0; color: var(--text-muted); font-size: 0.8rem;">LITROS FACTURADOS</p>
+            <h3 id="d-kpi-lts-fact" style="margin:0.25rem 0 0; color: #10b981; font-size: 1.5rem;">&#8212;</h3>
+        </div>
+        <div style="background: rgba(234,179,8,0.1); padding: 1rem; border-radius: 10px; border: 1px solid rgba(234,179,8,0.3);">
+            <p style="margin:0; color: var(--text-muted); font-size: 0.8rem;">IMPORTE CONSUMIDO</p>
+            <h3 id="d-kpi-imp-cons" style="margin:0.25rem 0 0; color: #eab308; font-size: 1.5rem;">&#8212;</h3>
+        </div>
+        <div style="background: rgba(139,92,246,0.1); padding: 1rem; border-radius: 10px; border: 1px solid rgba(139,92,246,0.3);">
+            <p style="margin:0; color: var(--text-muted); font-size: 0.8rem;">IMPORTE FACTURADO</p>
+            <h3 id="d-kpi-imp-fact" style="margin:0.25rem 0 0; color: #8b5cf6; font-size: 1.5rem;">&#8212;</h3>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+                <tr style="background: rgba(255,255,255,0.05);">
+                    <th style="padding: 0.75rem 1rem; text-align: left; color: var(--text-muted); font-weight: 600;">Semana</th>
+                    <th style="padding: 0.75rem 1rem; text-align: right; color: #3b82f6;">Lts. Consumidos</th>
+                    <th style="padding: 0.75rem 1rem; text-align: right; color: #10b981;">Lts. Facturados</th>
+                    <th style="padding: 0.75rem 1rem; text-align: right; color: #eab308;">Imp. Consumido</th>
+                    <th style="padding: 0.75rem 1rem; text-align: right; color: #8b5cf6;">Imp. Facturado</th>
+                    <th style="padding: 0.75rem 1rem; text-align: right; color: var(--text-muted);">Dif. Lts</th>
+                </tr>
+            </thead>
+            <tbody id="diesel-table-body">
+                <tr><td colspan="6" style="text-align:center; padding:2rem; color:var(--text-muted);">Cargando datos...</td></tr>
+            </tbody>
+            <tfoot id="diesel-table-foot"></tfoot>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const numFmt = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const curFmt = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+
+    async function loadSummaryCards() {
+        try {
+            const res = await fetch('/api/dashboard/resumen');
+            const data = await res.json();
+            if (!data.success) return;
+            const d = data.diesel;
+            document.getElementById('kpi-diesel-lts').innerText = numFmt.format(d.litros_consumidos) + ' Lts';
+            document.getElementById('kpi-diesel-imp').innerText = curFmt.format(d.importe_consumido);
+            document.getElementById('kpi-diesel-reg').innerText = d.registros + ' registros';
+            document.getElementById('kpi-facturas-total').innerText = data.facturas.total + ' facturas';
+            document.getElementById('kpi-facturas-imp').innerText = curFmt.format(data.facturas.importe_total);
+        } catch(e) { console.error('Error tarjetas', e); }
+    }
+
+    async function loadDieselDetail() {
+        const obra = document.getElementById('filtro-obra').value;
+        const mov = document.getElementById('filtro-mov').value;
+        try {
+            const res = await fetch('/api/diesel/dashboard?obra=' + encodeURIComponent(obra) + '&movimiento=' + encodeURIComponent(mov));
+            const data = await res.json();
+            if (!data.success) return;
+
+            document.getElementById('d-kpi-lts-cons').innerText = numFmt.format(data.kpis.litros_consumidos) + ' Lts';
+            document.getElementById('d-kpi-lts-fact').innerText = numFmt.format(data.kpis.litros_facturados) + ' Lts';
+            document.getElementById('d-kpi-imp-cons').innerText = curFmt.format(data.kpis.importe_consumido);
+            document.getElementById('d-kpi-imp-fact').innerText = curFmt.format(data.kpis.importe_facturado);
+
+            const tbody = document.getElementById('diesel-table-body');
+            const tfoot = document.getElementById('diesel-table-foot');
+            tbody.innerHTML = '';
+
+            if (data.table.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:1.5rem;color:var(--text-muted);">Sin datos.</td></tr>';
+                return;
+            }
+
+            let tLC=0,tLF=0,tIC=0,tIF=0;
+            data.table.forEach(r => {
+                const dif = r.litros_facturados - r.litros_consumidos;
+                const difColor = dif >= 0 ? '#10b981' : '#ef4444';
+                tLC+=r.litros_consumidos; tLF+=r.litros_facturados;
+                tIC+=r.importe_consumido; tIF+=r.importe_facturado;
+                tbody.innerHTML += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">' +
+                    '<td style="padding:0.75rem 1rem;color:var(--accent);font-weight:600;">' + r.semana + '</td>' +
+                    '<td style="padding:0.75rem 1rem;text-align:right;color:#3b82f6;">' + numFmt.format(r.litros_consumidos) + '</td>' +
+                    '<td style="padding:0.75rem 1rem;text-align:right;color:#10b981;">' + numFmt.format(r.litros_facturados) + '</td>' +
+                    '<td style="padding:0.75rem 1rem;text-align:right;">' + curFmt.format(r.importe_consumido) + '</td>' +
+                    '<td style="padding:0.75rem 1rem;text-align:right;">' + curFmt.format(r.importe_facturado) + '</td>' +
+                    '<td style="padding:0.75rem 1rem;text-align:right;font-weight:700;color:' + difColor + ';">' + (dif >= 0 ? '+' : '') + numFmt.format(dif) + '</td>' +
+                    '</tr>';
+            });
+
+            const td = tLF-tLC;
+            const tc = td >= 0 ? '#10b981' : '#ef4444';
+            tfoot.innerHTML = '<tr style="background:rgba(255,255,255,0.05);font-weight:700;border-top:2px solid rgba(255,255,255,0.1);">' +
+                '<td style="padding:0.75rem 1rem;color:white;">TOTAL</td>' +
+                '<td style="padding:0.75rem 1rem;text-align:right;color:#3b82f6;">' + numFmt.format(tLC) + '</td>' +
+                '<td style="padding:0.75rem 1rem;text-align:right;color:#10b981;">' + numFmt.format(tLF) + '</td>' +
+                '<td style="padding:0.75rem 1rem;text-align:right;">' + curFmt.format(tIC) + '</td>' +
+                '<td style="padding:0.75rem 1rem;text-align:right;">' + curFmt.format(tIF) + '</td>' +
+                '<td style="padding:0.75rem 1rem;text-align:right;color:' + tc + ';font-weight:bold;">' + (td>=0?'+':'') + numFmt.format(td) + '</td>' +
+                '</tr>';
+        } catch(e) { console.error('Error detalle diesel', e); }
+    }
+
+    loadSummaryCards();
+    loadDieselDetail();
+</script>
+{% endblock %}

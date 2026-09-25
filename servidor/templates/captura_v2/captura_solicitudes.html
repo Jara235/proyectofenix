@@ -1,0 +1,310 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem;">
+    <div>
+        <h1 class="header-title">📋 Solicitudes de Combustible</h1>
+        <p class="header-subtitle" style="margin-bottom: 0;">Registro de pedidos semanales a la gasolinería.</p>
+    </div>
+    <!-- Tab Toggle -->
+    <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 4px; display: flex; gap: 4px;">
+        <button id="btnTabDiesel" class="tab-btn active" onclick="switchTipo('diesel')"
+            style="padding: 0.5rem 1.2rem; border-radius: 8px; border: none; background: var(--primary); color: white; cursor: pointer; font-weight: 600;">
+            ⛽ Diésel
+        </button>
+        <button id="btnTabGasolina" class="tab-btn" onclick="switchTipo('gasolina')"
+            style="padding: 0.5rem 1.2rem; border-radius: 8px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600;">
+            🚗 Gasolina
+        </button>
+    </div>
+</div>
+
+<!-- ===== INFO BOX ===== -->
+<div id="infoBox" class="glass-card" style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.3); padding: 1rem 1.5rem; margin-bottom: 1.5rem; font-size: 0.875rem; color: #a5b4fc; line-height: 1.8;">
+    <strong style="color: var(--primary);">⛽ Solicitudes de Diésel</strong><br>
+    Registra aquí los <strong>pedidos de litros de diésel</strong> que se hacen a la gasolinería al inicio de cada semana.
+    Estos datos se usarán en la conciliación contra las facturas y consumos reales.
+</div>
+
+<!-- ===== FORMULARIO ===== -->
+<div class="glass-card" id="formContainer">
+    <form id="solicitudForm">
+        <div class="form-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="form-group">
+                <label>Fecha de Solicitud</label>
+                <input type="date" name="fecha" id="fechaSol" value="{{ current_date }}" required>
+            </div>
+            <div class="form-group">
+                <label>Semana</label>
+                <input type="number" name="semana" id="semanaSol" value="{{ current_week }}" min="1" max="53" required>
+            </div>
+            <div class="form-group">
+                <label>Solicitante</label>
+                <input type="text" name="solicitante" id="solicitanteSol" placeholder="Nombre de quien solicita" required>
+            </div>
+        </div>
+
+        <div class="form-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 1rem;">
+            <div class="form-group">
+                <label>Obra / Centro de Trabajo</label>
+                <select name="obra_destino" id="obraSelect" required>
+                    <option value="">Selecciona la obra...</option>
+                    {% for o in obras %}
+                        <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" id="gasolineraGroup" style="display:none;">
+                <label>Gasolinería</label>
+                <select name="gasolinera" id="gasolineraSelect">
+                    <option value="LEVET">Levet</option>
+                    <option value="MOBILE">Huixquilucan (Mobile)</option>
+                    <option value="SIVALE">Si Vale</option>
+                    <option value="OTRA">Otra</option>
+                </select>
+            </div>
+            <div class="form-group" id="equipoGroup">
+                <label>Equipo / Maquinaria</label>
+                <input type="text" value="Todos los equipos / General" readonly style="width: 100%; padding: 0.75rem 1rem; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0; border-radius: 12px; font-size: 1rem; font-weight: 500; cursor: not-allowed;">
+                <input type="hidden" name="equipo_economico" id="equipoSelect" value="Todos los equipos / General">
+            </div>
+            <div class="form-group" id="vehiculoGroup" style="display:none;">
+                <label>Vehículo / Placa</label>
+                <input type="text" name="vehiculo" id="vehiculoInput" placeholder="Ej. RAM 1200 / PAT8298" style="text-transform:uppercase;">
+            </div>
+        </div>
+
+        <div class="form-grid" style="grid-template-columns: repeat(3, 1fr); margin-top: 1rem;">
+            <div class="form-group">
+                <label style="color: var(--primary);">Litros Solicitados</label>
+                <input type="number" step="0.001" name="litros" id="litrosSol" placeholder="Ej. 4000.000" required oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+                <label>Precio por Litro ($)</label>
+                <input type="number" step="0.0001" name="precio_unitario" id="precioSol" placeholder="Ej. 27.0000" value="27.00" oninput="calcTotal()">
+            </div>
+            <div class="form-group">
+                <label>Importe Total ($) <small style="color:var(--text-muted);">(Autocálculo)</small></label>
+                <input type="number" step="0.01" name="importe_total" id="importeSol" placeholder="0.00" readonly
+                    style="background: rgba(99,102,241,0.1); border-color: rgba(99,102,241,0.4); color: #a5b4fc; cursor: not-allowed;">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label>Observaciones</label>
+            <input type="text" name="observaciones" placeholder="Notas adicionales sobre la solicitud (opcional)">
+        </div>
+
+        <div id="alertSolicitud" style="display:none; margin-top:1rem; padding: 0.75rem 1rem; border-radius:8px; font-size:0.875rem;"></div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; flex-wrap: wrap;">
+            <button type="button" class="btn-secondary-action" onclick="limpiarForm()">🗑️ Limpiar</button>
+            <button type="submit" id="btnGuardar" class="btn-primary-action">📋 Guardar Solicitud</button>
+        </div>
+    </form>
+</div>
+
+<!-- ===== HISTORIAL ===== -->
+<div class="glass-card" style="margin-top: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h3 style="margin:0; font-size: 1rem; font-weight: 600;">📋 Últimas Solicitudes Registradas</h3>
+        <span id="tipoLabel" style="background: rgba(99,102,241,0.2); color: #a5b4fc; border-radius: 6px; padding: 2px 10px; font-size: 0.78rem; font-weight: 600;">⛽ DIÉSEL</span>
+    </div>
+    <div style="overflow-x: auto;">
+        <table id="tablaSolicitudes" style="width:100%; border-collapse:collapse; font-size:0.84rem;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted);">
+                    <th style="text-align:left; padding: 8px 10px;">Folio</th>
+                    <th style="text-align:left; padding: 8px 10px;">Fecha</th>
+                    <th style="text-align:left; padding: 8px 10px;">Semana</th>
+                    <th style="text-align:left; padding: 8px 10px;">Obra</th>
+                    <th style="text-align:right; padding: 8px 10px;">Litros</th>
+                    <th style="text-align:right; padding: 8px 10px;">Importe</th>
+                    <th style="text-align:center; padding: 8px 10px;">Estatus</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoTabla">
+                <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem;">Cargando...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.btn-primary-action {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white; border: none; padding: 0.75rem 1.5rem;
+    border-radius: 10px; font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px rgba(99,102,241,0.4);
+}
+.btn-primary-action:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,102,241,0.6); }
+.btn-secondary-action {
+    background: rgba(255,255,255,0.05); color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.1); padding: 0.75rem 1.5rem;
+    border-radius: 10px; font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-secondary-action:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+.badge-pendiente { background: rgba(245,158,11,0.2); color: #f59e0b; border-radius: 6px; padding: 2px 8px; font-size:0.75rem; font-weight:600; }
+.badge-aprobada  { background: rgba(16,185,129,0.2);  color: #10b981; border-radius: 6px; padding: 2px 8px; font-size:0.75rem; font-weight:600; }
+.badge-rechazada { background: rgba(239,68,68,0.2);   color: #ef4444; border-radius: 6px; padding: 2px 8px; font-size:0.75rem; font-weight:600; }
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let tipoActual = 'diesel';
+
+function switchTipo(tipo) {
+    tipoActual = tipo;
+    const btnD = document.getElementById('btnTabDiesel');
+    const btnG = document.getElementById('btnTabGasolina');
+    const infoBox = document.getElementById('infoBox');
+    const equipoGroup = document.getElementById('equipoGroup');
+    const vehiculoGroup = document.getElementById('vehiculoGroup');
+    const gasolineraGroup = document.getElementById('gasolineraGroup');
+    const tipoLabel = document.getElementById('tipoLabel');
+
+    if (tipo === 'diesel') {
+        btnD.style.background = 'var(--primary)'; btnD.style.color = 'white';
+        btnG.style.background = 'transparent'; btnG.style.color = 'var(--text-muted)';
+        infoBox.innerHTML = `<strong style="color: var(--primary);">⛽ Solicitudes de Diésel</strong><br>
+            Registra aquí los <strong>pedidos de litros de diésel</strong> que se hacen a la gasolinería al inicio de cada semana.
+            Estos datos se usarán en la conciliación contra las facturas y consumos reales.`;
+        equipoGroup.style.display = '';
+        vehiculoGroup.style.display = 'none';
+        gasolineraGroup.style.display = 'none';
+        tipoLabel.textContent = '⛽ DIÉSEL';
+        tipoLabel.style.color = '#a5b4fc';
+    } else {
+        btnG.style.background = 'var(--primary)'; btnG.style.color = 'white';
+        btnD.style.background = 'transparent'; btnD.style.color = 'var(--text-muted)';
+        infoBox.innerHTML = `<strong style="color: #10b981;">🚗 Solicitudes de Gasolina</strong><br>
+            Registra aquí los <strong>pedidos de gasolina</strong> para los vehículos de la empresa por semana.
+            Se vinculará con la factura de la gasolinería correspondiente.`;
+        equipoGroup.style.display = 'none';
+        vehiculoGroup.style.display = '';
+        gasolineraGroup.style.display = '';
+        tipoLabel.textContent = '🚗 GASOLINA';
+        tipoLabel.style.color = '#10b981';
+    }
+    cargarHistorial();
+    limpiarForm();
+}
+
+function calcTotal() {
+    const litros = parseFloat(document.getElementById('litrosSol').value) || 0;
+    const precio = parseFloat(document.getElementById('precioSol').value) || 0;
+    document.getElementById('importeSol').value = (litros * precio).toFixed(2);
+}
+
+function limpiarForm() {
+    document.getElementById('solicitudForm').reset();
+    document.getElementById('fechaSol').value = '{{ current_date }}';
+    document.getElementById('semanaSol').value = '{{ current_week }}';
+    document.getElementById('importeSol').value = '';
+    mostrarAlerta('', '');
+}
+
+function mostrarAlerta(msg, tipo) {
+    const el = document.getElementById('alertSolicitud');
+    if (!msg) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.style.background = tipo === 'success' ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+    el.style.border = `1px solid ${tipo === 'success' ? '#10b981' : '#ef4444'}`;
+    el.style.color = tipo === 'success' ? '#10b981' : '#ef4444';
+    calcTotal();
+}
+
+document.getElementById('fechaSol').addEventListener('change', function() {
+    if(!this.value) return;
+    const parts = this.value.split('-');
+    if(parts.length === 3) {
+        const d = new Date(Date.UTC(parts[0], parts[1]-1, parts[2]));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        document.getElementById('semanaSol').value = weekNo;
+    }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    calcTotal();
+});
+
+document.getElementById('solicitudForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true;
+    btn.textContent = '⏳ Guardando...';
+
+    const form = e.target;
+    const data = {};
+    new FormData(form).forEach((v, k) => data[k] = v);
+    data.tipo = tipoActual;
+    data.semana = 'Semana ' + data.semana;
+
+    try {
+        const res = await fetch('/api/solicitudes/guardar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        const resp = await res.json();
+        if (resp.success) {
+            showToast(`✅ Solicitud guardada — ${resp.folio}`, 'success');
+            mostrarAlerta(`✅ Guardada con folio: ${resp.folio}`, 'success');
+            limpiarForm();
+            cargarHistorial();
+        } else {
+            mostrarAlerta('❌ Error: ' + resp.error, 'error');
+        }
+    } catch(err) {
+        mostrarAlerta('❌ Error de conexión con el servidor', 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '📋 Guardar Solicitud';
+    }
+});
+
+async function cargarHistorial() {
+    const tbody = document.getElementById('cuerpoTabla');
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:1rem;">Cargando...</td></tr>';
+    try {
+        const res = await fetch(`/api/solicitudes/historial?tipo=${tipoActual}`);
+        const rows = await res.json();
+        if (!rows.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">Sin solicitudes registradas aún.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = rows.map(r => {
+            const estatus = r.estatus || 'PENDIENTE';
+            const badgeClass = estatus === 'APROBADA' ? 'badge-aprobada' : estatus === 'RECHAZADA' ? 'badge-rechazada' : 'badge-pendiente';
+            const litros = parseFloat(r.litros||0).toLocaleString('es-MX', {minimumFractionDigits:2});
+            const importe = parseFloat(r.importe||0).toLocaleString('es-MX', {minimumFractionDigits:2, style:'currency', currency:'MXN'});
+            return `<tr style="border-bottom:1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+                <td style="padding:10px 10px; font-family:monospace; color:#a5b4fc;">${r.folio || '—'}</td>
+                <td style="padding:10px 10px;">${r.fecha || '—'}</td>
+                <td style="padding:10px 10px;">${r.semana || '—'}</td>
+                <td style="padding:10px 10px;">${r.obra || '—'}</td>
+                <td style="padding:10px 10px; text-align:right; color:#fbbf24; font-weight:600;">${litros} L</td>
+                <td style="padding:10px 10px; text-align:right;">${importe}</td>
+                <td style="padding:10px 10px; text-align:center;"><span class="${badgeClass}">${estatus}</span></td>
+            </tr>`;
+        }).join('');
+    } catch(e) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:1rem;">Error al cargar historial.</td></tr>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    cargarHistorial();
+    // Searchable dropdowns with keyboard Tab & Enter selection
+    if (document.getElementById('obraSelect')) initTomSelect('#obraSelect');
+    if (document.getElementById('gasolineraSelect')) initTomSelect('#gasolineraSelect');
+    if (document.getElementById('equipoSelect') && document.getElementById('equipoSelect').tagName === 'SELECT') initTomSelect('#equipoSelect');
+});
+</script>
+{% endblock %}

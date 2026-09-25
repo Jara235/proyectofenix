@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Captura de Combustible — Operadores Fénix</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent-diesel: #2563eb;
+            --accent-diesel-hover: #1d4ed8;
+            --accent-gas: #059669;
+            --accent-gas-hover: #047857;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-light); min-height: 100vh; padding: 12px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--card-bg); border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border-color); }
+        .header h1 { font-size: 1.1rem; font-weight: 700; color: #60a5fa; }
+        .header .user-info { font-size: 0.82rem; color: var(--text-muted); text-align: right; }
+        .btn-logout { background: #374151; color: #f87171; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 0.8rem; cursor: pointer; text-decoration: none; }
+        .tab-selector { display: flex; gap: 8px; margin-bottom: 14px; }
+        .tab-btn { flex: 1; padding: 12px 8px; border: none; border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: 0.2s; background: #1e293b; color: var(--text-muted); border: 2px solid var(--border-color); text-align: center; }
+        .tab-btn.active-diesel { background: var(--accent-diesel); color: white; border-color: #60a5fa; box-shadow: 0 4px 12px rgba(37,99,235,0.4); }
+        .tab-btn.active-gas { background: var(--accent-gas); color: white; border-color: #34d399; box-shadow: 0 4px 12px rgba(5,150,105,0.4); }
+        .form-card { background: var(--card-bg); border-radius: 14px; padding: 18px 16px; border: 1px solid var(--border-color); margin-bottom: 18px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+        .form-control { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border-color); background: #0f172a; color: white; font-size: 1rem; outline: none; }
+        .form-control:focus { border-color: #60a5fa; }
+        .quick-btns { display: flex; gap: 8px; margin-top: 6px; }
+        .btn-quick { flex: 1; padding: 6px 0; background: #334155; border: 1px solid #475569; color: #e2e8f0; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; }
+        .btn-submit { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-diesel-submit { background: var(--accent-diesel); color: white; }
+        .btn-diesel-submit:hover { background: var(--accent-diesel-hover); }
+        .btn-gas-submit { background: var(--accent-gas); color: white; }
+        .btn-gas-submit:hover { background: var(--accent-gas-hover); }
+        .ocr-assist-box { background: rgba(5,150,105,0.1); border: 1px dashed var(--accent-gas); border-radius: 8px; padding: 12px; margin-bottom: 14px; }
+        .ocr-assist-box p { font-size: 0.82rem; color: #a7f3d0; margin-bottom: 8px; }
+        .today-card { background: var(--card-bg); border-radius: 14px; padding: 16px; border: 1px solid var(--border-color); }
+        .today-card h2 { font-size: 0.95rem; color: #cbd5e1; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .record-item { background: #0f172a; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; border-left: 4px solid var(--accent-diesel); font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .record-item.gas { border-left-color: var(--accent-gas); }
+        .badge-litros { font-size: 1rem; font-weight: 700; color: #60a5fa; }
+        .alert-box { padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 14px; display: none; }
+        .alert-success { background: rgba(16,185,129,0.2); border: 1px solid var(--success); color: #6ee7b7; }
+        .alert-error { background: rgba(239,68,68,0.2); border: 1px solid var(--danger); color: #fca5a5; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>🚜 Fénix Móvil</h1>
+            <span style="font-size:0.75rem; color:#38bdf8;">Captura en Obra</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div class="user-info">
+                <strong>{{ session.get('user_name', 'Operador') }}</strong><br>
+                <span>Operador de Campo</span>
+            </div>
+            <a href="/logout" class="btn-logout">Salir</a>
+        </div>
+    </div>
+
+    <div class="tab-selector">
+        <button class="tab-btn active-diesel" id="btnTabDiesel" onclick="switchModo('diesel')">
+            🏗️ Diésel (Obra)
+            <div style="font-size:0.7rem; font-weight:normal; opacity:0.8;">Captura Manual Directa</div>
+        </button>
+        <button class="tab-btn" id="btnTabGasolina" onclick="switchModo('gasolina')">
+            ⛽ Gasolina
+            <div style="font-size:0.7rem; font-weight:normal; opacity:0.8;">Ticket + Asistencia</div>
+        </button>
+    </div>
+
+    <div id="alerta" class="alert-box"></div>
+
+    <div id="form-diesel-container" class="form-card">
+        <form id="formDiesel" onsubmit="guardarDiesel(event)">
+            <div class="form-group">
+                <label for="diesel_obra">🏗️ Obra / Frente de Trabajo *</label>
+                <select id="diesel_obra" class="form-control" required>
+                    <option value="">Selecciona la obra...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="diesel_equipo">🚜 Maquinaria / Equipo *</label>
+                <select id="diesel_equipo" class="form-control" required>
+                    <option value="">Selecciona la máquina...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="diesel_litros">⛽ Litros Despachados *</label>
+                <input type="number" step="0.01" id="diesel_litros" class="form-control" placeholder="Ej. 150.00" required style="font-size:1.3rem; font-weight:bold; color:#60a5fa;">
+                <div class="quick-btns">
+                    <button type="button" class="btn-quick" onclick="addLitros(50)">+50 L</button>
+                    <button type="button" class="btn-quick" onclick="addLitros(100)">+100 L</button>
+                    <button type="button" class="btn-quick" onclick="addLitros(200)">+200 L</button>
+                    <button type="button" class="btn-quick" onclick="addLitros(500)">+500 L</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="diesel_horometro">⏱️ Horómetro u Odómetro Actual (Opcional)</label>
+                <input type="number" step="0.1" id="diesel_horometro" class="form-control" placeholder="Lectura del tablero">
+            </div>
+
+            <div class="form-group">
+                <label for="diesel_fecha">📅 Fecha del Despacho</label>
+                <input type="date" id="diesel_fecha" class="form-control" required>
+            </div>
+
+            <div class="ocr-assist-box" style="margin-bottom: 1.2rem; background: rgba(56, 189, 248, 0.08); border-color: rgba(56, 189, 248, 0.3);">
+                <p style="color: #7dd3fc; margin-bottom: 4px;">📸 <strong>Fotos de Evidencia Obligatorias:</strong></p>
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px;">1. Foto del Horómetro en tablero | 2. Foto del Cuenta Litros / Medidor (si aplica).</div>
+                <input type="file" id="diesel_foto" accept="image/*" capture="environment" multiple class="form-control">
+            </div>
+
+            <button type="submit" class="btn-submit btn-diesel-submit" id="btnGuardarDiesel">
+                💾 Registrar Carga de Diésel
+            </button>
+        </form>
+    </div>
+
+    <div id="form-gasolina-container" class="form-card" style="display:none;">
+        <form id="formGasolina" onsubmit="guardarGasolina(event)">
+            <div class="ocr-assist-box">
+                <p>📸 <strong>Foto del Ticket (Asistencia visual):</strong></p>
+                <input type="file" id="gas_foto" accept="image/*" capture="environment" class="form-control" onchange="procesarFotoTicket(event)">
+                <small style="color:#94a3b8; display:block; margin-top:4px;">Los campos abajo son 100% editables si el ticket está poco legible.</small>
+            </div>
+
+            <div class="form-group">
+                <label for="gas_vehiculo">🚗 Vehículo / Placas / Responsable *</label>
+                <input type="text" id="gas_vehiculo" class="form-control" placeholder="Ej. Hilux Blanca / Placas NW-1234" required>
+            </div>
+
+            <div class="form-group">
+                <label for="gas_estacion">🏪 Estación de Gasolina / Gasolinera *</label>
+                <input type="text" id="gas_estacion" class="form-control" placeholder="Ej. Mobil Pino Suárez / G500" required>
+            </div>
+
+            <div class="form-group">
+                <label for="gas_litros">⛽ Litros Facturados / Ticket *</label>
+                <input type="number" step="0.01" id="gas_litros" class="form-control" placeholder="Ej. 65.40" required style="font-size:1.3rem; font-weight:bold; color:#34d399;">
+            </div>
+
+            <div class="form-group">
+                <label for="gas_importe">💵 Importe Total en Pesos ($) *</label>
+                <input type="number" step="0.01" id="gas_importe" class="form-control" placeholder="Ej. 1500.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="gas_odometro">⏱️ Odómetro / Kilometraje</label>
+                <input type="number" id="gas_odometro" class="form-control" placeholder="Ej. 124500">
+            </div>
+
+            <div class="form-group">
+                <label for="gas_fecha">📅 Fecha del Ticket</label>
+                <input type="date" id="gas_fecha" class="form-control" required>
+            </div>
+
+            <button type="submit" class="btn-submit btn-gas-submit" id="btnGuardarGasolina">
+                💾 Registrar Ticket de Gasolina
+            </button>
+        </form>
+    </div>
+
+    <div class="today-card">
+        <h2>
+            <span>📋 Mis Registros de Hoy</span>
+            <span id="tot-hoy" style="color:#60a5fa; font-weight:bold;">0 L</span>
+        </h2>
+        <div id="lista-cargas-hoy">
+            <p style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:10px;">Cargando registros...</p>
+        </div>
+    </div>
+
+    <script>
+        let modoActual = 'diesel';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const hoy = new Date().toISOString().slice(0, 10);
+            document.getElementById('diesel_fecha').value = hoy;
+            document.getElementById('gas_fecha').value = hoy;
+            cargarCatalogos();
+            cargarMisCargasHoy();
+        });
+
+        function switchModo(modo) {
+            modoActual = modo;
+            const btnD = document.getElementById('btnTabDiesel');
+            const btnG = document.getElementById('btnTabGasolina');
+            const contD = document.getElementById('form-diesel-container');
+            const contG = document.getElementById('form-gasolina-container');
+
+            if (modo === 'diesel') {
+                btnD.className = 'tab-btn active-diesel';
+                btnG.className = 'tab-btn';
+                contD.style.display = 'block';
+                contG.style.display = 'none';
+            } else {
+                btnD.className = 'tab-btn';
+                btnG.className = 'tab-btn active-gas';
+                contD.style.display = 'none';
+                contG.style.display = 'block';
+            }
+        }
+
+        function addLitros(val) {
+            const input = document.getElementById('diesel_litros');
+            const cur = parseFloat(input.value || 0);
+            input.value = (cur + val).toFixed(2);
+        }
+
+        async function cargarCatalogos() {
+            try {
+                const res = await fetch('/api/operador/catalogo_obras_equipos');
+                const data = await res.json();
+                
+                const selObra = document.getElementById('diesel_obra');
+                selObra.innerHTML = '<option value="">Selecciona la obra...</option>';
+                data.obras.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o;
+                    opt.textContent = o;
+                    selObra.appendChild(opt);
+                });
+
+                const selEq = document.getElementById('diesel_equipo');
+                selEq.innerHTML = '<option value="">Selecciona la máquina...</option>';
+                data.equipos.forEach(eq => {
+                    const opt = document.createElement('option');
+                    opt.value = eq.numero_economico;
+                    opt.textContent = `${eq.numero_economico} - ${eq.descripcion}`;
+                    selEq.appendChild(opt);
+                });
+            } catch(e) {
+                console.error("Error al cargar catálogos:", e);
+            }
+        }
+
+        function mostrarAlerta(msg, tipo='success') {
+            const al = document.getElementById('alerta');
+            al.className = `alert-box alert-${tipo}`;
+            al.innerHTML = msg;
+            al.style.display = 'block';
+            setTimeout(() => { al.style.display = 'none'; }, 4000);
+        }
+
+        async function guardarDiesel(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnGuardarDiesel');
+            btn.disabled = true;
+            btn.textContent = '⏳ Guardando...';
+
+            const formData = new FormData();
+            formData.append('obra_destino', document.getElementById('diesel_obra').value);
+            formData.append('equipo', document.getElementById('diesel_equipo').value);
+            formData.append('litros', document.getElementById('diesel_litros').value);
+            formData.append('horometro', document.getElementById('diesel_horometro').value);
+            formData.append('fecha', document.getElementById('diesel_fecha').value);
+
+            const fotoInput = document.getElementById('diesel_foto');
+            if (fotoInput && fotoInput.files.length > 0) {
+                for (let i = 0; i < fotoInput.files.length; i++) {
+                    formData.append('foto_evidencia', fotoInput.files[i]);
+                }
+            }
+
+            try {
+                const res = await fetch('/api/operador/diesel/guardar', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    mostrarAlerta(`✅ Carga registrada con éxito (Folio: ${data.folio})`, 'success');
+                    document.getElementById('diesel_litros').value = '';
+                    document.getElementById('diesel_horometro').value = '';
+                    if (fotoInput) fotoInput.value = '';
+                    cargarMisCargasHoy();
+                } else {
+                    mostrarAlerta(`❌ Error: ${data.error || 'No se pudo registrar'}`, 'error');
+                }
+            } catch(err) {
+                mostrarAlerta('❌ Error de conexión al guardar.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Registrar Carga de Diésel';
+            }
+        }
+
+        function procesarFotoTicket(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            mostrarAlerta('📸 Foto cargada. Puedes revisar y editar cualquier dato si el ticket está poco legible.', 'success');
+        }
+
+        async function guardarGasolina(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnGuardarGasolina');
+            btn.disabled = true;
+            btn.textContent = '⏳ Guardando...';
+
+            const formData = new FormData();
+            formData.append('vehiculo', document.getElementById('gas_vehiculo').value);
+            formData.append('estacion', document.getElementById('gas_estacion').value);
+            formData.append('litros', document.getElementById('gas_litros').value);
+            formData.append('importe', document.getElementById('gas_importe').value);
+            formData.append('odometro', document.getElementById('gas_odometro').value);
+            formData.append('fecha', document.getElementById('gas_fecha').value);
+            
+            const foto = document.getElementById('gas_foto').files[0];
+            if (foto) formData.append('foto_ticket', foto);
+
+            try {
+                const res = await fetch('/api/operador/gasolina/guardar', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                if (data.success) {
+                    mostrarAlerta(`✅ Ticket guardado exitosamente (Folio: ${data.folio})`, 'success');
+                    document.getElementById('gas_litros').value = '';
+                    document.getElementById('gas_importe').value = '';
+                    document.getElementById('gas_odometro').value = '';
+                    document.getElementById('gas_foto').value = '';
+                    cargarMisCargasHoy();
+                } else {
+                    mostrarAlerta(`❌ Error: ${data.error || 'No se pudo registrar'}`, 'error');
+                }
+            } catch(err) {
+                mostrarAlerta('❌ Error de conexión al guardar ticket.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '💾 Registrar Ticket de Gasolina';
+            }
+        }
+
+        async function cargarMisCargasHoy() {
+            try {
+                const res = await fetch('/api/operador/mis_cargas_hoy');
+                const data = await res.json();
+                const cont = document.getElementById('lista-cargas-hoy');
+                cont.innerHTML = '';
+
+                let tot = 0;
+                if (!data || data.length === 0) {
+                    cont.innerHTML = '<p style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:10px;">Aún no has registrado cargas hoy.</p>';
+                    document.getElementById('tot-hoy').textContent = '0 L';
+                    return;
+                }
+
+                data.forEach(item => {
+                    tot += parseFloat(item.litros || 0);
+                    const div = document.createElement('div');
+                    div.className = `record-item ${item.tipo === 'GASOLINA' ? 'gas' : ''}`;
+                    div.innerHTML = `
+                        <div>
+                            <strong>${item.tipo === 'GASOLINA' ? '⛽ Gasolina' : '🏗️ Diésel'}: ${item.destino}</strong><br>
+                            <span style="color:#94a3b8; font-size:0.75rem;">${item.equipo_vehiculo} &bull; ${item.hora || item.fecha}</span>
+                        </div>
+                        <div class="badge-litros">${parseFloat(item.litros).toFixed(2)} L</div>
+                    `;
+                    cont.appendChild(div);
+                });
+                document.getElementById('tot-hoy').textContent = `${tot.toFixed(2)} L`;
+            } catch(e) {
+                console.error("Error al cargar historial:", e);
+            }
+        }
+    </script>
+</body>
+</html>

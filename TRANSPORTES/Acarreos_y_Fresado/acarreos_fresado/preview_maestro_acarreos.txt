@@ -1,0 +1,94 @@
+HOJAS: ['Dash_Mezcla', 'Dash_Fresado', 'Dash_Total', 'Base_Datos']
+
+=== Dash_Mezcla (primeras 20 filas) ===
+    0                 1                    2               3       4              5   6   7   8               9               10             11
+0  NaN  MEZCLA ASFÁLTICA                  NaN             NaN     NaN            NaN NaN NaN NaN             NaN             NaN            NaN
+1  NaN               NaN                  NaN             NaN     NaN            NaN NaN NaN NaN             NaN             NaN            NaN
+2  NaN            SEMANA                   26             NaN     NaN            NaN NaN NaN NaN          SEMANA              26            NaN
+3  NaN         CATEGORIA               MEZCLA             NaN     NaN            NaN NaN NaN NaN       CATEGORIA          MEZCLA            NaN
+4  NaN               NaN                  NaN             NaN     NaN            NaN NaN NaN NaN             NaN             NaN            NaN
+5  NaN             FECHA                 OBRA       SINDICATO  Viajes  Costo Surtido NaN NaN NaN       SINDICATO  Viajes Totales  Total a Pagar
+6  NaN        22/06/2026        BACHEO TOLUCA    COSUM-TOLUCA       5          14250 NaN NaN NaN    COSUM-TOLUCA              26          74100
+7  NaN               NaN                  NaN  OBRAS PUBLICAS       4          11400 NaN NaN NaN  OBRAS PUBLICAS              22          62700
+8  NaN               NaN  Total BACHEO TOLUCA             NaN       9          25650 NaN NaN NaN   Total general              48         136800
+9  NaN  Total 22/06/2026                  NaN             NaN       9          25650 NaN NaN NaN             NaN             NaN            NaN
+10 NaN        23/06/2026        BACHEO TOLUCA    COSUM-TOLUCA       5          14250 NaN NaN NaN             NaN             NaN            NaN
+11 NaN               NaN                  NaN  OBRAS PUBLICAS       5          14250 NaN NaN NaN             NaN             NaN            NaN
+12 NaN               NaN  Total BACHEO TOLUCA             NaN      10          28500 NaN NaN NaN             NaN             NaN            NaN
+13 NaN  Total 23/06/2026                  NaN             NaN      10          28500 NaN NaN NaN             NaN             NaN            NaN
+14 NaN        24/06/2026        BACHEO TOLUCA    COSUM-TOLUCA       4          11400 NaN NaN NaN             NaN             NaN            NaN
+15 NaN               NaN                  NaN  OBRAS PUBLICAS       4          11400 NaN NaN NaN             NaN             NaN            NaN
+16 NaN               NaN  Total BACHEO TOLUCA             NaN       8          22800 NaN NaN NaN             NaN             NaN            NaN
+17 NaN  Total 24/06/2026                  NaN             NaN       8          22800 NaN NaN NaN             NaN             NaN            NaN
+18 NaN        25/06/2026        BACHEO TOLUCA    COSUM-TOLUCA       5          14250 NaN NaN NaN             NaN             NaN            NaN
+19 NaN               NaN                  NaN  OBRAS PUBLICAS       5          14250 NaN NaN NaN             NaN             NaN            NaN
+
+=== Dash_Fresado (primeras 20 filas) ===
+    0                 1                          2                            3        4               5   6   7   8                            9                10              11
+0  NaN           FRESADO                        NaN                          NaN      NaN             NaN NaN NaN NaN                          NaN              NaN             NaN
+1  NaN               NaN                        NaN                          NaN      NaN             NaN NaN NaN NaN                          NaN              NaN             NaN
+2  NaN            SEMANA                    (Todas)                          NaN      NaN             NaN NaN NaN NaN                       SEMANA               25             NaN
+3  NaN         CATEGORIA                    FRESADO                          NaN      NaN             NaN NaN NaN NaN                    CATEGORIA          FRESADO             NaN
+4  NaN               NaN                        NaN                          NaN      NaN             NaN NaN NaN NaN                          NaN              NaN             NaN
+5  NaN             FECHA                       OBRA                    SINDICATO  Viajes    Costo Surtido NaN NaN NaN                    SINDICATO  Viajes Totales   Total a Pagar 
+6  NaN        15/06/2026        Lerma - Tres Marías  EMULSIONES Y ASFALTOS JORGE       10           70000 NaN NaN NaN                 COSUM-TOLUCA               71          142000
+7  NaN               NaN  Total Lerma - Tres Marías                          NaN       10           70000 NaN NaN NaN  EMULSIONES Y ASFALTOS JORGE               45          315000
+8  NaN               NaN              MEXICO-TOLUCA                 COSUM-TOLUCA       17           34000 NaN NaN NaN              JDJ TRANSPORTES                1               0
+9  NaN               NaN        Total MEXICO-TOLUCA                          NaN       17           34000 NaN NaN NaN                  (en blanco)                3               0
+10 NaN  Total 15/06/2026                        NaN                          NaN       27          104000 NaN NaN NaN                Total general              120          457000
+11 NaN        16/06/2026        Lerma - Tres Marías  EMULSIONES Y ASFALTOS JORGE        9           63000 NaN NaN NaN                          NaN              NaN             NaN
+12 NaN               NaN                        NaN              JDJ TRANSPORTES        1               0 NaN NaN NaN                          NaN              NaN             NaN
+13 NaN               NaN  Total Lerma - Tres Marías                          NaN       10           63000 NaN NaN NaN                          NaN              NaN             NaN
+14 NaN               NaN              MEXICO-TOLUCA                 COSUM-TOLUCA       15           30000 NaN NaN NaN                          NaN              NaN             NaN
+15 NaN               NaN        Total MEXICO-TOLUCA                          NaN       15           30000 NaN NaN NaN                          NaN              NaN             NaN
+16 NaN  Total 16/06/2026                        NaN                          NaN       25           93000 NaN NaN NaN                          NaN              NaN             NaN
+17 NaN        17/06/2026        Lerma - Tres Marías  EMULSIONES Y ASFALTOS JORGE       11           77000 NaN NaN NaN                          NaN              NaN             NaN
+18 NaN               NaN  Total Lerma - Tres Marías                          NaN       11           77000 NaN NaN NaN                          NaN              NaN             NaN
+19 NaN               NaN              MEXICO-TOLUCA                 COSUM-TOLUCA       20           40000 NaN NaN NaN                          NaN              NaN             NaN
+
+=== Dash_Total (primeras 20 filas) ===
+    0                       1                    2          3               4                 5   6   7   8                            9               10             11
+0  NaN  TOTAL GENERAL ACARREOS                  NaN        NaN             NaN               NaN NaN NaN NaN                          NaN             NaN            NaN
+1  NaN                     NaN                  NaN        NaN             NaN               NaN NaN NaN NaN                          NaN             NaN            NaN
+2  NaN                     NaN                  NaN        NaN             NaN               NaN NaN NaN NaN                          NaN             NaN            NaN
+3  NaN                  SEMANA              (Todas)        NaN             NaN               NaN NaN NaN NaN                       SEMANA         (Todas)            NaN
+4  NaN                     NaN                  NaN        NaN             NaN               NaN NaN NaN NaN                          NaN             NaN            NaN
+5  NaN                   FECHA                 OBRA  SINDICATO  Viajes Totales  Costo Total Obra NaN NaN NaN                    SINDICATO  Viajes Global   Pagar Global 
+6  NaN              15/06/2026        BACHEO TOLUCA        NaN               3              8550 NaN NaN NaN                   CANCELADAS               5              0
+7  NaN                     NaN  Lerma - Tres Marías        NaN              19            126520 NaN NaN NaN           COSUM-HUIXQUILUCAN              42         119700
+8  NaN                     NaN        MEXICO-TOLUCA        NaN              30             68200 NaN NaN NaN                 COSUM-TOLUCA             145         352900
+9  NaN        Total 15/06/2026                  NaN        NaN              52            203270 NaN NaN NaN  EMULSIONES Y ASFALTOS JORGE              84         559920
+10 NaN              16/06/2026        BACHEO TOLUCA        NaN               8             22800 NaN NaN NaN              JDJ TRANSPORTES               1              0
+11 NaN                     NaN  Lerma - Tres Marías        NaN              19            119520 NaN NaN NaN               OBRAS PUBLICAS              40         114000
+12 NaN                     NaN        MEXICO-TOLUCA        NaN              31             75600 NaN NaN NaN                  (en blanco)               5              0
+13 NaN        Total 16/06/2026                  NaN        NaN              58            217920 NaN NaN NaN                Total general             322        1146520
+14 NaN              17/06/2026        BACHEO TOLUCA        NaN              10             28500 NaN NaN NaN                          NaN             NaN            NaN
+15 NaN                     NaN  Lerma - Tres Marías        NaN              20            133520 NaN NaN NaN                          NaN             NaN            NaN
+16 NaN                     NaN        MEXICO-TOLUCA        NaN              35             74200 NaN NaN NaN                          NaN             NaN            NaN
+17 NaN        Total 17/06/2026                  NaN        NaN              65            236220 NaN NaN NaN                          NaN             NaN            NaN
+18 NaN              18/06/2026        BACHEO TOLUCA        NaN               8             22800 NaN NaN NaN                          NaN             NaN            NaN
+19 NaN                     NaN  Lerma - Tres Marías        NaN              18            120240 NaN NaN NaN                          NaN             NaN            NaN
+
+=== Base_Datos (primeras 20 filas) ===
+        0           1      2             3              4              5          6                   7          8              9     10        11   12     13         14
+0   SEMANA       FECHA  FOLIO     SINDICATO           OBRA       MATERIAL      PLACA            OPERADOR  CAPACIDAD  OBSERVACIONES    PU  SUBTOTAL  IVA  TOTAL  CATEGORIA
+1       25  15/06/2026   5704  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA   22-BC-9R           REY DAVID      14 M3            NaN  2850      2850  456   3306     MEZCLA
+2       25  15/06/2026   5705  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  HE-4281-J         DANIEL CRUZ      14 M3            NaN  2850      2850  456   3306     MEZCLA
+3       25  15/06/2026   5706  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  NJ-66-440    RAMIRO HERNANDEZ      14 M3            NaN  2850      2850  456   3306     MEZCLA
+4       25  15/06/2026   5707  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  HD-57-440    RAMIRO HERNANDEZ      14 M3            NaN  2850      2850  456   3306     MEZCLA
+5       25  15/06/2026   5708  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  MY-7967-B     ENRRIQUE TORRES      14 M3            NaN  2850      2850  456   3306     MEZCLA
+6       25  15/06/2026   5709  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  LD-58-235  CARLOS GUADAARRAMA      14 M3            NaN  2850      2850  456   3306     MEZCLA
+7       25  15/06/2026   5710  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  NB-1258-D       SANTOS SOTERO      14 M3            NaN  2850      2850  456   3306     MEZCLA
+8       25  15/06/2026   5711  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  NR-0950-C    ALEJANDRO FLORES      14 M3            NaN  2850      2850  456   3306     MEZCLA
+9       25  15/06/2026   5712  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  LF-544-30      CARLOS JOAQUIN      14 M3            NaN  2850      2850  456   3306     MEZCLA
+10      25  15/06/2026   5713  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  HE-4281-J         DANIEL CRUZ      14 M3            NaN  2850      2850  456   3306     MEZCLA
+11      25  15/06/2026   5714  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA   22-BC-9R           REY DAVID      14 M3            NaN  2850      2850  456   3306     MEZCLA
+12      25  15/06/2026   5715  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  MY-7967-B     ENRRIQUE TORRES       8 M3            NaN  2850      2850  456   3306     MEZCLA
+13      25  16/06/2026   5719  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  NJ-66-440    RAMIRO HERNANDEZ      14 M3            NaN  2850      2850  456   3306     MEZCLA
+14      25  16/06/2026   5720  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA   HS-74-40    RAMIRO HERNANDEZ      14 M3            NaN  2850      2850  456   3306     MEZCLA
+15      25  16/06/2026   5721  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  NB-1258-D       SANTOS SOTERO      14 M3            NaN  2850      2850  456   3306     MEZCLA
+16      25  19/06/2026   5722  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  NR-0950-C    ALEJANDRO FLORES      14 M3            NaN  2850      2850  456   3306     MEZCLA
+17      25  16/06/2026   5723  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  MY-7967-B     ENRRIQUE TORRES      14 M3            NaN  2850      2850  456   3306     MEZCLA
+18      25  16/06/2026   5724  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA  HE-4281-J         DANIEL CRUZ      14 M3            NaN  2850      2850  456   3306     MEZCLA
+19      25  16/06/2026   5725  COSUM-TOLUCA  MEXICO-TOLUCA  CARPETA DENSA   22-BC-9R           REY DAVID      14 M3            NaN  2850      2850  456   3306     MEZCLA
+

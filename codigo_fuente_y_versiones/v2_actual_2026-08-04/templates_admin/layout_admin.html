@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Mando Administrativo - Fénix 2.0</title>
+    <!-- Mismos estilos base que el resto del sistema -->
+    <link rel="stylesheet" href="/static/styles.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Colores específicos del admin para diferenciarlo */
+            --admin-bg: #0b0f19;
+            --admin-panel: #111827;
+            --admin-primary: #8b5cf6; /* Morado en lugar de fucsia/azul */
+            --admin-primary-glow: rgba(139, 92, 246, 0.4);
+            --admin-border: rgba(255, 255, 255, 0.08);
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+        }
+        
+        body {
+            background-color: var(--admin-bg);
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Topbar Admin */
+        .admin-nav {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--admin-primary);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .admin-nav-logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .admin-nav-logo span {
+            color: var(--admin-primary);
+        }
+        
+        .admin-badge {
+            background: var(--admin-primary);
+            color: white;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .admin-nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .admin-nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .admin-nav-links a:hover, .admin-nav-links a.active {
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        /* Contenedor principal para vistas divididas (lista vs detalle/visor) */
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .admin-panel {
+            background: var(--admin-panel);
+            border: 1px solid var(--admin-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        .panel-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--admin-border);
+            padding-bottom: 12px;
+        }
+        
+        /* Botones Admin */
+        .btn-aprobar {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid #10b981;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-aprobar:hover { background: #10b981; color: white; }
+        
+        .btn-rechazar {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-rechazar:hover { background: #ef4444; color: white; }
+        
+        /* Data Tables style overrrides */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .admin-table th {
+            background: #1e293b;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-align: left;
+            padding: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--admin-border);
+            color: #e5e7eb;
+        }
+        .admin-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .admin-table tr.selected {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 3px solid var(--admin-primary);
+        }
+        
+        /* Visor de evidencia */
+        .visor-container {
+            width: 100%;
+            height: 500px;
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .visor-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .visor-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .visor-empty {
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Dropdown Revision */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 110%;
+            background-color: var(--admin-panel);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+            z-index: 200;
+            border-radius: 8px;
+            border: 1px solid var(--admin-border);
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: white !important;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.2s;
+        }
+        .dropdown-content a:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .dropdown-content.show {
+            display: block;
+        }
+
+
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <nav class="admin-nav">
+        <a href="/" class="admin-nav-logo">
+            🛡️ <span>FÉNIX 2.0</span> 
+            <div class="admin-badge">Centro de Mando</div>
+        </a>
+        <div class="admin-nav-links">
+            <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Inicio</a>
+            <a href="/admin/resumen" {% if '/resumen' in request.path %}class="active"{% endif %}>📊 Resumen General</a>
+            <a href="/admin/diesel" {% if '/diesel' in request.path %}class="active"{% endif %}>🛢 Diesel</a>
+            <a href="/admin/gasolina" {% if '/gasolina' in request.path %}class="active"{% endif %}>⛽ Gasolina</a>
+            <a href="/admin/facturas" {% if '/facturas' in request.path %}class="active"{% endif %}>🧾 Facturas</a>
+            <a href="/admin/tags" {% if '/tags' in request.path %}class="active"{% endif %} style="color: #a855f7;">🏷️ Tags</a>
+            <a href="/admin/jalisco" {% if '/jalisco' in request.path %}class="active"{% endif %} style="color: #0ea5e9;">🇲🇽 Base Jalisco</a>
+            <a href="#" style="opacity:0.5; pointer-events:none;">🚛 Acarreos</a>
+            <a href="#" style="opacity:0.5; pointer-events:none;">🏗 Mezcla</a>
+            <a href="/admin/catalogos" {% if '/catalogos' in request.path %}class="active"{% endif %}>📑 Catálogos</a>
+        </div>
+        <div style="position: relative;" class="dropdown-revision">
+            <!-- Access to other portals -->
+            <button style="color: #fff; background: var(--admin-primary); padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="document.getElementById('revisionMenu').classList.toggle('show')">
+                🔍 Revisión <span style="font-size: 0.7rem;">▼</span>
+            </button>
+            <div id="revisionMenu" class="dropdown-content">
+                <a href="http://127.0.0.1:5000" target="_blank" style="color: #10b981;">↗ Ver Dashboard</a>
+                <a href="http://127.0.0.1:5001" target="_blank" style="color: #3b82f6;">↗ Ir a Captura</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="admin-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Script de utilidad global para admin -->
+    <script>
+        // Cerrar dropdown al clickear fuera
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown-revision button') && !event.target.matches('.dropdown-revision button span')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        async function cambiarEstatus(tabla, id, estatus) {
+            try {
+                const res = await fetch('/api/admin/actualizar_estatus', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tabla, id, estatus})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Refrescar o quitar fila
+                    const row = document.getElementById(`row-${id}`);
+                    if(row) {
+                        row.style.opacity = '0.5';
+                        setTimeout(() => row.remove(), 300);
+                    }
+                    return true;
+                } else {
+                    alert("Error: " + data.error);
+                    return false;
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Error de conexión");
+                return false;
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

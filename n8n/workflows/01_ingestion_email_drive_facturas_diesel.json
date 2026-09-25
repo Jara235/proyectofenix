@@ -1,0 +1,213 @@
+{
+  "name": "01_Ingestion_Email_Drive_Facturas_Diesel",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {
+          "readStatus": "unread",
+          "hasAttachment": true,
+          "customEmailConfig": "=FROM facturaciondpc2@gmail.com"
+        },
+        "options": {
+          "downloadAttachments": true
+        }
+      },
+      "id": "e44d5c92-3c81-4b6e-a890-1cfa97600001",
+      "name": "Trigger: Correo Facturas Diésel (Castilla)",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "credentials": {
+        "imap": {
+          "id": "IMAP_CREDENTIAL_ID",
+          "name": "Correo Facturas Fénix"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ ($json.from && $json.from.text ? $json.from.text : ($json.from || '')) + ' ' + ($json.subject || '') }}",
+              "operation": "regex",
+              "value2": "(facturaciondpc2@gmail\\.com|derivados de petroleo castilla|castilla|cfdi|factura|j\\.d\\.j\\. equipo y construcciones)"
+            }
+          ]
+        }
+      },
+      "id": "e44d5c92-3c81-4b6e-a890-1cfa97600002",
+      "name": "Filtro: Derivados de Petróleo Castilla",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        480,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extraer y clasificar adjuntos (XML y PDF de Castilla)\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const binary = item.binary || {};\n  let xmlAttachment = null;\n  let pdfAttachment = null;\n  \n  for (const key of Object.keys(binary)) {\n    const file = binary[key];\n    const filename = (file.fileName || '').toLowerCase();\n    if (filename.endsWith('.xml')) {\n      xmlAttachment = { key, data: file, name: file.fileName };\n    } else if (filename.endsWith('.pdf')) {\n      pdfAttachment = { key, data: file, name: file.fileName };\n    }\n  }\n  \n  const emailDate = item.json.date ? new Date(item.json.date) : new Date();\n  // Calcular número de semana ISO\n  const target = new Date(emailDate.valueOf());\n  const dayNr = (emailDate.getDay() + 6) % 7;\n  target.setDate(target.getDate() - dayNr + 3);\n  const firstThursday = target.valueOf();\n  target.setMonth(0, 1);\n  if (target.getDay() !== 4) {\n    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);\n  }\n  const semanaCalculada = 1 + Math.ceil((firstThursday - target) / 604800000);\n\n  const senderText = item.json.from?.text || item.json.from || 'facturaciondpc2@gmail.com';\n\n  results.push({\n    json: {\n      email_from: senderText,\n      email_subject: item.json.subject || '',\n      email_date: emailDate.toISOString(),\n      semana: semanaCalculada,\n      tiene_xml: !!xmlAttachment,\n      tiene_pdf: !!pdfAttachment,\n      xml_key: xmlAttachment ? xmlAttachment.key : null,\n      pdf_key: pdfAttachment ? pdfAttachment.key : null,\n      pdf_filename: pdfAttachment ? pdfAttachment.name : 'factura_castilla.pdf'\n    },\n    binary: item.binary\n  });\n}\n\nreturn results;"
+      },
+      "id": "e44d5c92-3c81-4b6e-a890-1cfa97600003",
+      "name": "Identificar Adjuntos y Semana",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "fileContent": "={{ $json.pdf_key ? $binary[$json.pdf_key] : '' }}",
+        "name": "=SEM_{{ $json.semana }}_{{ $json.pdf_filename }}",
+        "parents": [
+          "CARPETA_GOOGLE_DRIVE_FACTURAS_ID"
+        ],
+        "options": {}
+      },
+      "id": "e44d5c92-3c81-4b6e-a890-1cfa97600004",
+      "name": "Google Drive: Guardar PDF en Carpeta Diésel",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        920,
+        200
+      ],
+      "credentials": {
+        "googleDriveOAuth2": {
+          "id": "GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive Fénix"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parser de Factura XML (CFDI 4.0 / 3.3 de DERIVADOS DE PETROLEO CASTILLA)\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const xmlKey = item.json.xml_key;\n  let xmlString = '';\n  \n  if (xmlKey && item.binary && item.binary[xmlKey]) {\n    const buffer = Buffer.from(item.binary[xmlKey].data, 'base64');\n    xmlString = buffer.toString('utf-8');\n  }\n  \n  let folio = 'S/F';\n  let uuid = '';\n  let proveedor = 'DERIVADOS DE PETROLEO CASTILLA';\n  let rfcEmisor = 'DPC180725R47';\n  let fechaFactura = item.json.email_date ? item.json.email_date.split('T')[0] : '';\n  let litrosFacturados = 0;\n  let precioUnitario = 0;\n  let subtotal = 0;\n  let iva = 0;\n  let importeTotal = 0;\n\n  if (xmlString) {\n    // Extracción de Folio y Serie\n    const folioMatch = xmlString.match(/Folio=\"([^\"]+)\"/i);\n    const serieMatch = xmlString.match(/Serie=\"([^\"]+)\"/i);\n    const serie = serieMatch ? serieMatch[1].trim() : '';\n    const numFolio = folioMatch ? folioMatch[1].trim() : '';\n    folio = serie + numFolio;\n    if (!folio) folio = 'FAC-' + Date.now().toString().slice(-6);\n\n    // Extracción de UUID CFDI\n    const uuidMatch = xmlString.match(/UUID=\"([^\"]+)\"/i);\n    if (uuidMatch) uuid = uuidMatch[1];\n\n    // Extracción de Emisor\n    const emisorMatch = xmlString.match(/<cfdi:Emisor[^>]*Nombre=\"([^\"]+)\"/i);\n    const rfcMatch = xmlString.match(/<cfdi:Emisor[^>]*Rfc=\"([^\"]+)\"/i);\n    if (emisorMatch && emisorMatch[1]) proveedor = emisorMatch[1];\n    if (rfcMatch && rfcMatch[1]) rfcEmisor = rfcMatch[1];\n\n    // Extracción de Fecha\n    const fechaMatch = xmlString.match(/Fecha=\"([^\"]+)\"/i);\n    if (fechaMatch) fechaFactura = fechaMatch[1].split('T')[0];\n\n    // Extracción de Importes Totales\n    const totalMatch = xmlString.match(/Total=\"([^\"]+)\"/i);\n    const subtotalMatch = xmlString.match(/SubTotal=\"([^\"]+)\"/i);\n    if (totalMatch) importeTotal = parseFloat(totalMatch[1]) || 0;\n    if (subtotalMatch) subtotal = parseFloat(subtotalMatch[1]) || 0;\n    iva = Math.round((importeTotal - subtotal) * 100) / 100;\n\n    // Extracción de Concepto de Diésel / Litros\n    const conceptoRegex = /<cfdi:Concepto[^>]*Cantidad=\"([^\"]+)\"[^>]*ValorUnitario=\"([^\"]+)\"[^>]*Importe=\"([^\"]+)\"/gi;\n    let match;\n    while ((match = conceptoRegex.exec(xmlString)) !== null) {\n      litrosFacturados += parseFloat(match[1]) || 0;\n      precioUnitario = parseFloat(match[2]) || precioUnitario;\n    }\n    \n    // Fallback de extracción de cantidad\n    if (litrosFacturados === 0) {\n      const cantMatch = xmlString.match(/Cantidad=\"([^\"]+)\"/i);\n      if (cantMatch) litrosFacturados = parseFloat(cantMatch[1]) || 0;\n      const puMatch = xmlString.match(/ValorUnitario=\"([^\"]+)\"/i);\n      if (puMatch) precioUnitario = parseFloat(puMatch[1]) || 0;\n    }\n  }\n\n  // Estimación de litros si no se leyó cantidad y hay importe\n  if (litrosFacturados === 0 && importeTotal > 0) {\n    litrosFacturados = Math.round((importeTotal / 27.00) * 100) / 100;\n    precioUnitario = 27.00;\n  }\n\n  results.push({\n    json: {\n      ...item.json,\n      folio_factura: folio,\n      uuid_cfdi: uuid,\n      proveedor: proveedor,\n      rfc_emisor: rfcEmisor,\n      fecha_factura: fechaFactura,\n      litros_facturados: litrosFacturados,\n      precio_unitario: precioUnitario,\n      subtotal: subtotal,\n      iva: iva,\n      importe_total: importeTotal,\n      estatus: 'PENDIENTE_OBRA',\n      folio_conciliacion: 'FAC-' + folio.replace(/[^a-zA-Z0-9]/g, '')\n    }\n  });\n}\n\nreturn results;"
+      },
+      "id": "e44d5c92-3c81-4b6e-a890-1cfa97600005",
+      "name": "Parsear CFDI XML Diésel (Castilla)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO diesel.facturas (\n  folio_conciliacion,\n  folio_factura,\n  fecha_factura,\n  semana,\n  proveedor,\n  litros_facturados,\n  precio_unitario,\n  importe,\n  iva,\n  importe_total,\n  uuid_cfdi,\n  estatus_revision,\n  obra_destino\n)\nVALUES (\n  '{{ $json.folio_conciliacion }}',\n  '{{ $json.folio_factura }}',\n  '{{ $json.fecha_factura }}',\n  {{ $json.semana }},\n  '{{ $json.proveedor }}',\n  {{ $json.litros_facturados }},\n  {{ $json.precio_unitario }},\n  {{ $json.subtotal }},\n  {{ $json.iva }},\n  {{ $json.importe_total }},\n  '{{ $json.uuid_cfdi }}',\n  'PENDIENTE_OBRA',\n  NULL\n)\nON CONFLICT (folio_conciliacion) DO UPDATE SET\n  litros_facturados = EXCLUDED.litros_facturados,\n  importe_total = EXCLUDED.importe_total;\n"
+      },
+      "id": "e44d5c92-3c81-4b6e-a890-1cfa97600006",
+      "name": "Insertar en Postgres Fénix (Inbox Admin)",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1140,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Fen1xPostgres01q",
+          "name": "Postgres Fenix Local (fenix_db)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5002/api/admin/diesel/webhook_nueva_factura",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"evento\": \"FACTURA_INGESTADA\",\n  \"folio_factura\": \"{{ $json.folio_factura }}\",\n  \"proveedor\": \"{{ $json.proveedor }}\",\n  \"rfc\": \"{{ $json.rfc_emisor }}\",\n  \"litros_facturados\": {{ $json.litros_facturados }},\n  \"importe_total\": {{ $json.importe_total }},\n  \"semana\": {{ $json.semana }},\n  \"requiere_clasificacion\": true\n}"
+      },
+      "id": "e44d5c92-3c81-4b6e-a890-1cfa97600007",
+      "name": "Notificar a Fénix Admin (Puerto 5002)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1360,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Trigger: Correo Facturas Diésel (Castilla)": {
+      "main": [
+        [
+          {
+            "node": "Filtro: Derivados de Petróleo Castilla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro: Derivados de Petróleo Castilla": {
+      "main": [
+        [
+          {
+            "node": "Identificar Adjuntos y Semana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identificar Adjuntos y Semana": {
+      "main": [
+        [
+          {
+            "node": "Google Drive: Guardar PDF en Carpeta Diésel",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parsear CFDI XML Diésel (Castilla)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear CFDI XML Diésel (Castilla)": {
+      "main": [
+        [
+          {
+            "node": "Insertar en Postgres Fénix (Inbox Admin)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar en Postgres Fénix (Inbox Admin)": {
+      "main": [
+        [
+          {
+            "node": "Notificar a Fénix Admin (Puerto 5002)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

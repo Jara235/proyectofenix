@@ -1,0 +1,1335 @@
+{% extends "layout_admin.html" %}
+
+{% block content %}
+<style>
+    .tab-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size: 1rem; padding-bottom: 5px; border-bottom: 2px solid transparent; }
+    .tab-btn.active { color: white; border-bottom: 2px solid var(--admin-primary); font-weight: bold; }
+</style>
+<div class="panel-header" style="border:none; margin-bottom: 20px;">
+    <div>
+        <h1 style="margin:0; font-size: 1.8rem; font-weight: 700; color: #3b82f6;">🛢 Módulo Diesel - Conciliación</h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">Verifica los vales de diesel de campo vs la información capturada.</p>
+    </div>
+</div>
+
+<div class="split-view">
+    <!-- Lista de Pendientes -->
+    <div class="admin-panel">
+        <div class="panel-header" style="flex-direction: column; align-items: stretch; gap: 10px;">
+            <div style="display:flex; gap:15px; border-bottom: 1px solid var(--admin-border); padding-bottom: 10px;">
+                <button id="btnTabConsumos" class="tab-btn active" onclick="switchTab('consumos')">📝 Consumos</button>
+                <button id="btnTabFacturas" class="tab-btn" onclick="switchTab('facturas')">🧾 Facturas</button>
+                <button id="btnTabAutorizaciones" class="tab-btn" onclick="switchTab('autorizaciones')">✅ Autorizaciones</button>
+                <button id="btnTabSolicitudes" class="tab-btn" onclick="switchTab('solicitudes')">📥 Solicitudes a Gasolinera</button>
+            </div>
+            <div style="display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 8px;">
+                <span id="tabla-titulo">📝 Consumos de Diesel</span>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <!-- Buscador dinámico -->
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:14px;">🔍</span>
+                        <input type="text" id="buscador" placeholder="Buscar por obra..." oninput="filtrarTabla()"
+                            style="padding:6px 10px 6px 30px; border-radius:6px; background:rgba(0,0,0,0.3); color:white; border:1px solid var(--admin-border); width:200px; outline:none; font-size:0.85rem;">
+                    </div>
+                    <select id="filtro-semana" onchange="cargarDatos()" style="padding: 6px; border-radius: 6px; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--admin-border);">
+                        <option value="">Todas las Semanas</option>
+                    </select>
+                    <select id="filtro-estatus" onchange="cargarDatos()" style="padding: 6px; border-radius: 6px; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--admin-border);">
+                        <option value="PENDIENTE" selected>Pendientes</option>
+                        <option value="APROBADO">Aprobados</option>
+                        <option value="RECHAZADO">Rechazados</option>
+                        <option value="OBSERVACION">En Observación 🔍</option>
+                        <option value="CANCELADA">Facturas Canceladas 🚫</option>
+                        <option value="TODOS">Todos</option>
+                    </select>
+                    <button id="btn-aprobar-batch" style="display:none; margin-left:10px; background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-weight: bold;" onclick="aprobarBatch()">✅ Aprobar Seleccionados</button>
+
+                    <button onclick="cargarDatos()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">🔄 Refrescar</button>
+                </div>
+            </div>
+        </div>
+        
+        <div style="overflow-x: auto; max-height: calc(100vh - 250px); overflow-y: auto;">
+            <table class="admin-table" id="tabla-consumos">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" onchange="toggleAll(this)"></th>
+                          <th>Folio</th>
+                        <th>Fecha <select id="filtro-col-fecha" onchange="filtrarTabla()" style="background:transparent; border:none; color:#60a5fa; outline:none; cursor:pointer; font-size:0.8rem; margin-left:4px;"><option value="">▼</option></select></th>
+                        <th>Obra <select id="filtro-col-obra" onchange="filtrarTabla()" style="background:transparent; border:none; color:#60a5fa; outline:none; cursor:pointer; font-size:0.8rem; margin-left:4px;"><option value="">▼</option></select></th>
+                        <th>Equipo</th>
+                        <th>Litros</th>
+                        <th>Importe</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-consumos">
+                    <tr><td colspan="7" style="text-align:center;">Cargando...</td></tr>
+                </tbody>
+            </table>
+
+            <table class="admin-table" id="tabla-facturas" style="display:none;">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" onchange="toggleAll(this)"></th>
+                          <th>Folio Factura</th>
+                        <th>Fecha <select id="filtro-col-fecha-fac" onchange="filtrarTabla()" style="background:transparent; border:none; color:#60a5fa; outline:none; cursor:pointer; font-size:0.8rem; margin-left:4px;"><option value="">▼</option></select></th>
+                        <th>Proveedor</th>
+                        <th>Litros</th>
+                        <th>Importe</th>
+                        <th>UUID</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-facturas">
+                    <tr><td colspan="7" style="text-align:center;">Cargando...</td></tr>
+                </tbody>
+            </table>
+            
+            <table class="admin-table" id="tabla-autorizaciones" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>Responsable / Ingeniero</th>
+                        <th>Tope Diario (L)</th>
+                        <th>Tope Sem. Calc. (x7)</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-autorizaciones">
+                    <tr><td colspan="3" style="text-align:center;">Cargando...</td></tr>
+                </tbody>
+            </table>
+
+            <table class="admin-table" id="tabla-solicitudes" style="display:none;">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" onchange="toggleAll(this)"></th>
+                          <th>Folio</th>
+                        <th>Fecha</th>
+                        <th>Obra Destino</th>
+                        <th>Solicitante</th>
+                        <th>Litros</th>
+                        <th>Importe Total</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-solicitudes">
+                    <tr><td colspan="7" style="text-align:center;">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Visor Panel -->
+    <div class="admin-panel" style="position: sticky; top: 100px;">
+        <div class="panel-header">
+            <span>👁 Visor de Evidencia</span>
+            <span id="visor-folio" style="color: var(--admin-primary); font-size: 0.9rem;">Ningún registro seleccionado</span>
+        </div>
+        
+        <div class="visor-container" id="visor-evidencia">
+            <div class="visor-empty">👈 Selecciona un registro de la tabla para ver su foto o PDF aquí.</div>
+        </div>
+        
+        <div id="visor-acciones" style="display: none; margin-top: 20px; gap: 10px; flex-direction: column;">
+            <button class="btn-aprobar" style="width: 100%; padding: 12px; font-size: 1rem;" onclick="accionAprobar()">✅ Aprobar Registro (Es Correcto)</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-rechazar" style="flex: 1;" onclick="accionRechazar()">❌ Rechazar</button>
+                <button type="button" style="flex: 1; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;" onclick="accionObservacion()">🔍 Observación</button>
+                <button style="flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer;" onclick="abrirModalEditar()">✏️ Editar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR DIESEL -->
+<div class="modal-overlay" id="modalEditar" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000;">
+    <div class="modal-box" style="background: var(--admin-panel); border: 1px solid var(--admin-border); border-radius: 12px; padding: 24px; width: 500px; max-width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: white;">✏️ Editar Consumo Diésel</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Fecha</label>
+                <input type="date" id="editFecha" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border); background: rgba(0,0,0,0.3); color: white;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Semana</label>
+                <input type="number" id="editSemana" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border); background: rgba(0,0,0,0.3); color: white;">
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Obra Destino</label>
+            <select id="editObra" style="width: 100%;">
+                <option value="">Seleccione obra...</option>
+                {% for o in obras %}
+                    <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Equipo / Maquinaria</label>
+            <select id="editEquipo" style="width: 100%;">
+                <option value="">Seleccione equipo...</option>
+                {% for e in equipos %}
+                    <option value="{{ e['descripcion'] }}">{{ e['descripcion'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">👷 Responsable / Ingeniero</label>
+            <select id="editResponsable" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border); background: rgba(0,0,0,0.3); color: white;">
+                <option value="">— Sin asignar —</option>
+                {% for r in responsables %}
+                    <option value="{{ r['nombre'] }}">{{ r['nombre'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+            <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Litros</label>
+                <input type="number" step="0.1" id="editLitros" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border); background: rgba(0,0,0,0.3); color: white;">
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Importe</label>
+                <input type="number" step="0.1" id="editImporte" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border); background: rgba(0,0,0,0.3); color: white;">
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Subir nueva evidencia (Opcional)</label>
+            <div id="dz-consumo" style="border: 2px dashed var(--admin-primary); border-radius: 8px; background: rgba(139,92,246,0.1); padding: 30px; text-align: center; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('editEvidencia').click()">
+                <span id="lbl-editEvidencia" style="color: var(--text-muted); font-size: 0.9rem;"><span style="font-size: 1.5rem; display:block; margin-bottom:5px;">📁</span>Arrastra aquí tus archivos, haz clic, o pega (Ctrl+V)</span>
+            </div>
+            <input type="file" id="editEvidencia" multiple accept="image/*,.pdf" style="display:none;">
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: wrap; gap: 10px;">
+            <button class="btn-rechazar" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="borrarRegistroActual()">🗑️ Borrar</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="guardarEdicion('OBSERVACION')">🔍 En Observación</button>
+                <button class="btn-rechazar" onclick="document.getElementById('modalEditar').style.display='none'">Cancelar</button>
+                <button class="btn-aprobar" onclick="guardarEdicion()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL EDITAR AUTORIZACION -->
+<div class="modal-overlay" id="modalAuth" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000;">
+    <div class="modal-box" style="background: var(--admin-panel); border: 1px solid var(--admin-border); border-radius: 12px; padding: 24px; width: 400px; max-width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <h3 style="margin-top: 0; margin-bottom: 20px; color: white;">✏️ Editar Tope Diario</h3>
+        <input type="hidden" id="editAuthId">
+        <p id="editAuthRef" style="color:var(--admin-primary); margin-bottom: 15px; font-weight:bold;"></p>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Tope Diario (L)</label>
+            <input type="number" step="0.1" id="editAuthLitros" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border); background: rgba(0,0,0,0.3); color: white;">
+        </div>
+        
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px;">
+            <button class="btn-rechazar" onclick="document.getElementById('modalAuth').style.display='none'">Cancelar</button>
+            <button class="btn-aprobar" onclick="guardarAuth()">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR FACTURA DIESEL -->
+<div id="modalEditarFactura" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center; z-index:1000;">
+    <div style="background:var(--admin-panel); border:1px solid var(--admin-border); border-radius:12px; padding:24px; width:560px; max-width:92%; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+        <h3 style="margin-top:0; margin-bottom:20px; color:white;">✏️ Editar Factura Diésel</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div>
+                <label style="display:block; margin-bottom:6px; color:var(--text-muted); font-size:0.85rem;">Folio Factura</label>
+                <input type="text" id="editFacFolio" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--admin-border); background:rgba(0,0,0,0.3); color:white;">
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:var(--text-muted); font-size:0.85rem;">Fecha Factura</label>
+                <input type="date" id="editFacFecha" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--admin-border); background:rgba(0,0,0,0.3); color:white;">
+            </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div>
+                <label style="display:block; margin-bottom:6px; color:var(--text-muted); font-size:0.85rem;">Proveedor</label>
+                <input type="text" id="editFacProveedor" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--admin-border); background:rgba(0,0,0,0.3); color:white;">
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:var(--text-muted); font-size:0.85rem;">Semana (número)</label>
+                <input type="number" id="editFacSemana" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--admin-border); background:rgba(0,0,0,0.3); color:white;">
+            </div>
+        </div>
+        <div style="margin-bottom:15px;">
+            <label style="display:block; margin-bottom:6px; color:var(--text-muted); font-size:0.85rem;">Obra / Destino</label>
+            <select id="editFacObra" style="width: 100%;">
+                <option value="">Seleccione obra...</option>
+                {% for o in obras %}
+                    <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+            <div>
+                <label style="display:block; margin-bottom:6px; color:var(--text-muted); font-size:0.85rem;">Litros Facturados</label>
+                <input type="number" step="0.001" id="editFacLitros" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--admin-border); background:rgba(0,0,0,0.3); color:white;">
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:6px; color:var(--text-muted); font-size:0.85rem;">Importe Total ($)</label>
+                <input type="number" step="0.01" id="editFacImporte" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--admin-border); background:rgba(0,0,0,0.3); color:white;">
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem;">Subir nueva evidencia (Opcional)</label>
+            <div id="dz-factura" style="border: 2px dashed var(--admin-primary); border-radius: 8px; background: rgba(139,92,246,0.1); padding: 30px; text-align: center; cursor: pointer; transition: 0.2s;" onclick="document.getElementById('editFacEvidencia').click()">
+                <span id="lbl-editFacEvidencia" style="color: var(--text-muted); font-size: 0.9rem;"><span style="font-size: 1.5rem; display:block; margin-bottom:5px;">📁</span>Arrastra aquí tus archivos, haz clic, o pega (Ctrl+V)</span>
+            </div>
+            <input type="file" id="editFacEvidencia" multiple accept="image/*,.pdf,.xml" style="display:none;">
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; flex-wrap: wrap; gap: 10px;">
+            <button class="btn-rechazar" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border-color: rgba(239, 68, 68, 0.4);" onclick="borrarRegistroActual()">🗑️ Borrar</button>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="guardarEdicionFactura('OBSERVACION')">🔍 En Observación</button>
+                <button class="btn-rechazar" onclick="document.getElementById('modalEditarFactura').style.display='none'">Cancelar</button>
+                <button class="btn-aprobar" onclick="guardarEdicionFactura()">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR SOLICITUD -->
+<div id="modalEditarSolicitud" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center; z-index:1000;">
+    <div style="background:var(--admin-panel); border:1px solid var(--admin-border); border-radius:12px; padding:24px; width:560px; max-width:92%; box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+        <h3 style="margin-top:0; margin-bottom:20px; color:white;">✏️ Editar Solicitud Diésel</h3>
+        
+        <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#94a3b8;">Litros Solicitados</label>
+                <input type="number" step="0.01" id="edit-sol-litros" oninput="calcImporteSol()" style="width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:white; font-family:monospace;">
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#94a3b8;">Precio Unitario</label>
+                <input type="number" step="0.01" id="edit-sol-precio" oninput="calcImporteSol()" style="width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:white; font-family:monospace;">
+            </div>
+        </div>
+        
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#94a3b8;">Importe Total</label>
+                <input type="number" step="0.01" id="edit-sol-importe" style="width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background:#1e293b; color:#10b981; font-weight:bold; font-family:monospace;" readonly>
+            </div>
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#94a3b8;">Obra Destino</label>
+                <input type="text" id="edit-sol-obra" style="width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:white;">
+            </div>
+        </div>
+        
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+            <div style="flex:1;">
+                <label style="display:block; margin-bottom:5px; font-size:0.9rem; color:#94a3b8;">Semana</label>
+                <input type="number" id="edit-sol-semana" style="width:100%; padding:10px; border-radius:6px; border:1px solid #334155; background:#0f172a; color:white;">
+            </div>
+        </div>
+
+        <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+            <button class="btn-rechazar" onclick="borrarRegistroActual()" style="margin-right:auto; background:rgba(239,68,68,0.1); color:#ef4444; border:1px solid rgba(239,68,68,0.3);">🗑️ Borrar</button>
+            <button type="button" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 8px 14px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;" onclick="guardarEdicionSolicitud('OBSERVACION')">🔍 En Observación</button>
+            <button class="btn-rechazar" onclick="document.getElementById('modalEditarSolicitud').style.display='none'">Cancelar</button>
+            <button class="btn-aprobar" onclick="guardarEdicionSolicitud()">💾 Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<!-- TomSelect CSS/JS para Admin -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentRowId = null;
+    let datosTabla = {};
+    let currentTab = 'consumos';
+    let isProcessing = false;
+    let archivosConsumoAccum = [];
+    let archivosFacturaAccum = [];
+
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('btnTabConsumos').classList.remove('active');
+        document.getElementById('btnTabFacturas').classList.remove('active');
+        document.getElementById('btnTabAutorizaciones').classList.remove('active');
+        document.getElementById('btnTabSolicitudes').classList.remove('active');
+
+        document.getElementById('tabla-consumos').style.display = 'none';
+        document.getElementById('tabla-facturas').style.display = 'none';
+        document.getElementById('tabla-autorizaciones').style.display = 'none';
+        document.getElementById('tabla-solicitudes').style.display = 'none';
+        
+        // Reset buscador
+        const buscador = document.getElementById('buscador');
+        buscador.value = '';
+        
+        if (tab === 'consumos') {
+            document.getElementById('btnTabConsumos').classList.add('active');
+            document.getElementById('tabla-consumos').style.display = 'table';
+            document.getElementById('tabla-titulo').textContent = '📝 Consumos de Diesel';
+            document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">👈 Selecciona un consumo para ver su foto.</div>';
+            buscador.placeholder = '🔍 Buscar por obra...';
+        } else if (tab === 'facturas') {
+            document.getElementById('btnTabFacturas').classList.add('active');
+            document.getElementById('tabla-facturas').style.display = 'table';
+            document.getElementById('tabla-titulo').textContent = '🧭 Facturas de Diesel';
+            document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">👈 Selecciona una factura para ver su PDF.</div>';
+            buscador.placeholder = '🔍 Buscar por folio...';
+        } else if (tab === 'autorizaciones') {
+            document.getElementById('btnTabAutorizaciones').classList.add('active');
+            document.getElementById('tabla-autorizaciones').style.display = 'table';
+            document.getElementById('tabla-titulo').textContent = '✅ Autorizaciones de Diesel';
+            document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">👈 Modo Autorizaciones. Usa el botón editar para cambiar el tope semanal.</div>';
+            buscador.placeholder = '🔍 Buscar por obra...';
+        } else if (tab === 'solicitudes') {
+            document.getElementById('btnTabSolicitudes').classList.add('active');
+            document.getElementById('tabla-solicitudes').style.display = 'table';
+            document.getElementById('tabla-titulo').textContent = '📥 Solicitudes a Gasolinera (Diesel)';
+            document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">👈 Selecciona una solicitud para ver detalles.</div>';
+            buscador.placeholder = '🔍 Buscar por obra...';
+        }
+        document.getElementById('visor-acciones').style.display = 'none';
+        document.getElementById('visor-folio').textContent = 'Ningún registro seleccionado';
+        checkSelection();
+        cargarDatos();
+    }
+
+    // Filtrado en tiempo real sobre las filas ya cargadas
+    function filtrarTabla() {
+        const q = document.getElementById('buscador').value.toLowerCase().trim();
+        const tbodyId = `tbody-${currentTab}`;
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        const fFecha = document.getElementById(currentTab === 'facturas' ? 'filtro-col-fecha-fac' : 'filtro-col-fecha');
+        const vFecha = fFecha ? fFecha.value : '';
+        const fObra = document.getElementById('filtro-col-obra');
+        const vObra = fObra ? fObra.value : '';
+
+        const rows = tbody.querySelectorAll('tr');
+        let visibles = 0;
+        rows.forEach(tr => {
+            if(tr.className === 'no-results-row') return;
+            
+            // Checkbox column shifted indexes by 1 for consumos/facturas/solicitudes
+            let colIdxBuscador = 3; // Obra (consumos/sol)
+            let colIdxFecha = 2;    // Fecha
+            let colIdxObra = 3;     // Obra
+            
+            if (currentTab === 'facturas') {
+                colIdxBuscador = 1; // Folio
+                colIdxObra = -1;
+            } else if (currentTab === 'autorizaciones') {
+                colIdxBuscador = 0; // Obra
+                colIdxObra = 0;
+                colIdxFecha = -1;
+            }
+
+            const textBuscador = colIdxBuscador >= 0 && tr.cells[colIdxBuscador] ? tr.cells[colIdxBuscador].textContent.toLowerCase() : tr.textContent.toLowerCase();
+            const textFecha = colIdxFecha >= 0 && tr.cells[colIdxFecha] ? tr.cells[colIdxFecha].textContent.trim() : '';
+            const textObra = colIdxObra >= 0 && tr.cells[colIdxObra] ? tr.cells[colIdxObra].textContent.trim() : '';
+            
+            let mostrar = true;
+            if (q && !textBuscador.includes(q)) mostrar = false;
+            if (vFecha && textFecha !== vFecha) mostrar = false;
+            if (vObra && colIdxObra >= 0 && textObra !== vObra) mostrar = false;
+            
+            tr.style.display = mostrar ? '' : 'none';
+            if (mostrar) visibles++;
+        });
+        // Mostrar mensaje si no hay resultados
+        const existing = tbody.querySelector('.no-results-row');
+        if (existing) existing.remove();
+        if (visibles === 0 && q) {
+            const noResult = document.createElement('tr');
+            noResult.className = 'no-results-row';
+            noResult.innerHTML = `<td colspan="7" style="text-align:center; color:#f59e0b; padding:1rem;">🔍 Sin resultados para "${q}"</td>`;
+            tbody.appendChild(noResult);
+        }
+    }
+
+    async function cargarDatos() {
+        const estatus = document.getElementById('filtro-estatus').value;
+        const semana  = document.getElementById('filtro-semana').value;
+        const semanaParam = semana ? `&semana=${encodeURIComponent(semana)}` : '';
+        const semanaNumParam = semana ? `&semana=${encodeURIComponent(semana.replace('Semana ','').trim())}` : '';
+        let url = '';
+        if (currentTab === 'consumos') url = `/api/admin/pendientes/diesel_consumos?estatus=${estatus}${semanaNumParam}`;
+        else if (currentTab === 'facturas') url = `/api/admin/pendientes/diesel_facturas?estatus=${estatus}${semanaNumParam}`;
+        else if (currentTab === 'autorizaciones') url = `/api/admin/autorizaciones?tipo=DIESEL${semanaNumParam}`;
+        else if (currentTab === 'solicitudes') url = `/api/admin/pendientes/diesel_solicitudes?estatus=${estatus}${semanaNumParam}`;
+        
+        const tbodyId = `tbody-${currentTab}`;
+        const tbody = document.getElementById(tbodyId);
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Cargando...</td></tr>';
+        
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if(!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: #10b981;">No hay registros encontrados.</td></tr>`;
+                return;
+            }
+            
+            // Populate filters
+            const fechas = new Set();
+            const obras = new Set();
+            data.forEach(r => {
+                if(r.fecha) fechas.add(r.fecha);
+                if(r.fecha_factura) fechas.add(r.fecha_factura);
+                if(r.obra_destino) obras.add(r.obra_destino);
+            });
+            const selFecha = document.getElementById(currentTab === 'facturas' ? 'filtro-col-fecha-fac' : 'filtro-col-fecha');
+            const selObra = document.getElementById('filtro-col-obra');
+            if(selFecha) {
+                const prev = selFecha.value;
+                selFecha.innerHTML = '<option value="">▼</option>';
+                Array.from(fechas).sort().forEach(f => selFecha.innerHTML += `<option value="${f}">${f}</option>`);
+                selFecha.value = prev;
+            }
+            if(selObra) {
+                const prev = selObra.value;
+                selObra.innerHTML = '<option value="">▼</option>';
+                Array.from(obras).sort().forEach(o => selObra.innerHTML += `<option value="${o}">${o}</option>`);
+                selObra.value = prev;
+            }
+            
+            const master = document.querySelector('#tabla-' + currentTab + ' thead input[type="checkbox"]');
+              if(master) master.checked = false;
+              tbody.innerHTML = '';
+            data.forEach(r => {
+                datosTabla[r.id] = r; 
+                const tr = document.createElement('tr');
+                
+                if (currentTab === 'consumos' || currentTab === 'facturas') {
+                    tr.style.cursor = 'pointer';
+                    const mainFolio = currentTab === 'consumos' ? r.folio_conciliacion : r.folio_factura;
+                    tr.onclick = () => verEvidencia(r.id, mainFolio, tr, r.estatus_revision);
+                    
+                    const estatusLabel = r.estatus_revision === 'APROBADO'
+                        ? `<span style="color:#10b981;font-size:0.8rem;">✅</span>`
+                        : r.estatus_revision === 'RECHAZADO'
+                        ? `<span style="color:#ef4444;font-size:0.8rem;">❌</span>`
+                        : `<span style="color:#f59e0b;font-size:0.8rem;">⏳</span>`;
+
+                    if (currentTab === 'consumos') {
+                        tr.innerHTML = `
+                            <td><input type="checkbox" class="chk-row" value="${r.id}" onchange="checkSelection()"></td>
+                              <td style="color: #3b82f6; font-family: monospace;">${r.folio_conciliacion}</td>
+                            <td>${r.fecha}</td>
+                            <td>${r.obra_destino}</td>
+                            <td><strong>${r.equipo || 'N/A'}</strong></td>
+                            <td>${r.litros} L</td>
+                            <td>$${r.importe_total}</td>
+                            <td style="white-space:nowrap;">
+                                ${estatusLabel}
+                                <button style="margin-left:4px; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:0.8rem;" onclick="event.stopPropagation(); abrirModalEditar(${r.id})">✏️</button>
+                            </td>
+                        `;
+                    } else {
+                        const cancBtn = (r.estatus_revision === 'CANCELADA')
+                            ? `<button style="margin-left:4px; background:rgba(6,182,212,0.2); border:1px solid rgba(6,182,212,0.4); color:#22d3ee; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:0.8rem;" title="Ver Acuse Cancelación" onclick="event.stopPropagation(); window.open('/api/admin/ver_archivo_cancelacion?modulo=diesel&id=${r.id}', '_blank')">📎 Acuse</button>`
+                            : `<button style="margin-left:4px; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:0.8rem;" title="Cancelar Factura" onclick="event.stopPropagation(); abrirModalCancelarFactura(${r.id}, 'diesel')">🚫</button>`;
+
+                        tr.innerHTML = `
+                            <td><input type="checkbox" class="chk-row" value="${r.id}" onchange="checkSelection()"></td>
+                              <td style="color: #3b82f6; font-family: monospace;">${r.folio_factura}</td>
+                            <td>${r.fecha_factura}</td>
+                            <td>${r.proveedor}</td>
+                            <td>${r.litros_facturados} L</td>
+                            <td>$${r.importe_total}</td>
+                            <td style="font-size: 0.8rem; font-family: monospace; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${r.uuid_cfdi}">${r.uuid_cfdi||'—'}</td>
+                            <td style="white-space:nowrap;">
+                                ${estatusLabel}
+                                <button style="margin-left:4px; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:0.8rem;" onclick="event.stopPropagation(); abrirModalEditarFactura(${r.id})">✏️</button>
+                                ${cancBtn}
+                            </td>
+                        `;
+                    }
+                    tbody.appendChild(tr);
+                } else if (currentTab === 'autorizaciones') {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="color: #3b82f6; font-family: monospace;">${r.referencia}</td>
+                        <td><strong>${r.litros_autorizados} L</strong></td>
+                        <td><strong style="color: #a78bfa;">${(r.litros_autorizados * 7).toFixed(1)} L</strong></td>
+                        <td><button style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; padding: 4px 10px; cursor: pointer;" onclick="abrirModalAuth(${r.id}, '${r.referencia}', ${r.litros_autorizados})">✏️ Editar Tope</button></td>
+                    `;
+                    tbody.appendChild(tr);
+                } else if (currentTab === 'solicitudes') {
+                    const tr = document.createElement('tr');
+                    tr.style.cursor = 'pointer';
+                    tr.onclick = () => verEvidencia(r.id, r.folio_solicitud, tr, r.estatus_conciliacion);
+                    
+                    const estatusSol = r.estatus_conciliacion;
+                    const estatusBadge = estatusSol === 'APROBADO'
+                        ? `<span style="color:#10b981;font-size:0.8rem;">✅</span>`
+                        : estatusSol === 'RECHAZADO'
+                        ? `<span style="color:#ef4444;font-size:0.8rem;">❌</span>`
+                        : `<span style="color:#f59e0b;font-size:0.8rem;">⏳</span>`;
+
+                    tr.innerHTML = `
+                        <td><input type="checkbox" class="chk-row" value="${r.id}" onchange="checkSelection()"></td>
+                          <td style="color: #3b82f6; font-family: monospace;">${r.folio_solicitud}</td>
+                        <td>${r.fecha}</td>
+                        <td>${r.obra_destino}</td>
+                        <td>${r.solicitante}</td>
+                        <td>${r.litros} L</td>
+                        <td>$${parseFloat(r.importe_total || 0).toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                        <td style="white-space:nowrap;">
+                            ${estatusBadge}
+                            <button style="margin-left:4px; background:rgba(99,102,241,0.2); border:1px solid rgba(99,102,241,0.4); color:#a5b4fc; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:0.8rem;" onclick="event.stopPropagation(); abrirModalEditarSolicitud(${r.id})">✏️</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                }
+            });
+        } catch(e) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error al cargar datos.</td></tr>`;
+        }
+        
+        filtrarTabla(); // re-apply local filters after loading data
+    }
+
+    async function verEvidencia(id, folio, trElement, estatus = 'PENDIENTE') {
+        currentRowId = id;
+        
+        document.querySelectorAll('.admin-table tr').forEach(tr => tr.classList.remove('selected'));
+        if(trElement) trElement.classList.add('selected');
+        
+        document.getElementById('visor-folio').textContent = folio;
+        
+        const visor = document.getElementById('visor-evidencia');
+        visor.innerHTML = '<div class="visor-empty">Cargando evidencia...</div>';
+        
+        if (currentTab === 'consumos' || currentTab === 'facturas') {
+            try {
+                let urlList = `/api/evidencia/diesel/${currentTab}/${id}?action=list&t=${Date.now()}`;
+                let res = await fetch(urlList);
+                if (!res.ok) throw new Error('Not found');
+                
+                let data = await res.json();
+                if (data.type === 'zip' && data.files.length > 0) {
+                    let html = '<div style="display:flex; flex-direction:column; gap:15px; overflow-y:auto; max-height:100%; padding-right:10px;">';
+                    data.files.forEach(f => {
+                        let fUrl = `/api/evidencia/diesel/${currentTab}/${id}?action=view&file=${encodeURIComponent(f)}&t=${Date.now()}`;
+                        if (f.toLowerCase().endsWith('.pdf') || currentTab === 'facturas') {
+                            html += `<iframe src="${fUrl}" width="100%" height="400px" style="border:1px solid rgba(255,255,255,0.1); border-radius:8px;"></iframe>`;
+                        } else {
+                            html += `<img src="${fUrl}" style="width:100%; border-radius:8px;" />`;
+                        }
+                    });
+                    html += '</div>';
+                    visor.innerHTML = html;
+                } else {
+                    // Single file fallback
+                    let sUrl = `/api/evidencia/diesel/${currentTab}/${id}?t=${Date.now()}`;
+                    if (currentTab === 'facturas') {
+                        visor.innerHTML = `<iframe src="${sUrl}" width="100%" height="500px" style="border:none;"></iframe>`;
+                    } else {
+                        visor.innerHTML = `<img src="${sUrl}" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'visor-empty\\'>⚠️ Foto no disponible o archivo corrupto.</div>'" />`;
+                    }
+                }
+            } catch(e) {
+                visor.innerHTML = '<div class="visor-empty">⚠️ Evidencia no encontrada.</div>';
+            }
+        } else if (currentTab === 'solicitudes') {
+            visor.innerHTML = `<div class="visor-empty">📝 Solicitud ${folio}<br><br>Evidencia de solicitud adjunta o notas adicionales irían aquí.</div>`;
+        }
+        
+        document.getElementById('visor-acciones').style.display = 'flex';
+    }
+    
+    async function aprobarFila(id) {
+        if (isProcessing) return;
+        isProcessing = true;
+        let tablaDB = 'diesel.consumos';
+        if (currentTab === 'facturas') tablaDB = 'diesel.facturas';
+        if (currentTab === 'solicitudes') tablaDB = 'diesel.solicitudes';
+        await cambiarEstatus(tablaDB, id, 'APROBADO');
+        if(currentRowId === id) {
+            document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">Registro aprobado. Selecciona otro.</div>';
+            document.getElementById('visor-acciones').style.display = 'none';
+        }
+        await checkSelection();
+        cargarDatos();
+        isProcessing = false;
+    }
+    
+    async function accionAprobar() {
+        if(!currentRowId || isProcessing) return;
+        await aprobarFila(currentRowId);
+    }
+    
+    async function accionRechazar() {
+        if(!currentRowId || isProcessing) return;
+        if(confirm("\u00bfEst\u00e1s seguro de rechazar este registro?")) {
+            isProcessing = true;
+            let tablaDB = 'diesel.consumos';
+            if (currentTab === 'facturas') tablaDB = 'diesel.facturas';
+            if (currentTab === 'solicitudes') tablaDB = 'diesel.solicitudes';
+            await cambiarEstatus(tablaDB, currentRowId, 'RECHAZADO');
+            document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">Registro rechazado. Selecciona otro.</div>';
+            document.getElementById('visor-acciones').style.display = 'none';
+            await checkSelection();
+            cargarDatos();
+            isProcessing = false;
+        }
+    }
+    
+    async function accionObservacion() {
+        if(!currentRowId || isProcessing) return;
+        isProcessing = true;
+        let tablaDB = 'diesel.consumos';
+        if (currentTab === 'facturas') tablaDB = 'diesel.facturas';
+        if (currentTab === 'solicitudes') tablaDB = 'diesel.solicitudes';
+        await cambiarEstatus(tablaDB, currentRowId, 'OBSERVACION');
+        document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">Registro puesto en observación. Selecciona otro.</div>';
+        document.getElementById('visor-acciones').style.display = 'none';
+        await checkSelection();
+        cargarDatos();
+        isProcessing = false;
+    }
+
+    // Editar Lógica
+    let tomSelectObra = null;
+    let tomSelectEquipo = null;
+    
+    function calcImporteSol() {
+        const lts = parseFloat(document.getElementById('edit-sol-litros').value) || 0;
+        const prc = parseFloat(document.getElementById('edit-sol-precio').value) || 0;
+        document.getElementById('edit-sol-importe').value = (lts * prc).toFixed(2);
+    }
+
+    function abrirModalEditarSolicitud(id) {
+        const rowId = id || currentRowId;
+        if(!rowId || !datosTabla[rowId]) return;
+        currentRowId = rowId;
+        const data = datosTabla[rowId];
+        
+        document.getElementById('edit-sol-litros').value = data.litros || '';
+        document.getElementById('edit-sol-precio').value = data.costo_por_litro || '';
+        document.getElementById('edit-sol-importe').value = data.importe_total || '';
+        document.getElementById('edit-sol-obra').value = data.obra_destino || '';
+        document.getElementById('edit-sol-semana').value = (data.semana||'').toString().replace('Semana','').trim();
+        
+        document.getElementById('modalEditarSolicitud').style.display = 'flex';
+    }
+
+    async function guardarEdicionSolicitud(forcedEstatus) {
+        const payload = {
+            tabla: 'diesel.solicitudes',
+            id: currentRowId,
+            campos: {
+                litros: parseFloat(document.getElementById('edit-sol-litros').value) || 0,
+                costo_por_litro: parseFloat(document.getElementById('edit-sol-precio').value) || 0,
+                importe_total: parseFloat(document.getElementById('edit-sol-importe').value) || 0,
+                obra_destino: document.getElementById('edit-sol-obra').value.trim(),
+                semana: document.getElementById('edit-sol-semana').value.trim()
+            }
+        };
+        if (forcedEstatus) {
+            payload.campos.estatus_conciliacion = forcedEstatus;
+        }
+        
+        try {
+            const res = await fetch('/api/admin/editar_registro', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('modalEditarSolicitud').style.display = 'none';
+                checkSelection();
+                cargarDatos();
+            } else {
+                alert('Error al guardar: ' + data.error);
+            }
+        } catch(e) {
+            alert('Error de conexión');
+        }
+    }
+
+    function abrirModalEditar(id) {
+        const rowId = id || currentRowId;
+        if(!rowId || !datosTabla[rowId]) return;
+        currentRowId = rowId;
+        const data = datosTabla[rowId];
+        
+        archivosConsumoAccum = [];
+        actualizarLabelUI('lbl-editEvidencia', archivosConsumoAccum);
+
+        document.getElementById('editFecha').value = data.fecha || '';
+        document.getElementById('editSemana').value = (data.semana || '').toString().replace('Semana','').trim();
+        document.getElementById('editLitros').value = data.litros !== undefined && data.litros !== null ? data.litros : '';
+        document.getElementById('editImporte').value = data.importe_total !== undefined && data.importe_total !== null ? data.importe_total : '';
+        
+        if(!tomSelectObra) {
+            tomSelectObra = new TomSelect("#editObra", { create: true, selectOnTab: true });
+        }
+        if(!tomSelectEquipo) {
+            tomSelectEquipo = new TomSelect("#editEquipo", { create: true, selectOnTab: true });
+        }
+        
+        if (data.obra_destino) {
+            tomSelectObra.addOption({value: data.obra_destino, text: data.obra_destino});
+            tomSelectObra.setValue(data.obra_destino);
+        } else {
+            tomSelectObra.clear();
+        }
+
+        if (data.equipo) {
+            tomSelectEquipo.addOption({value: data.equipo, text: data.equipo});
+            tomSelectEquipo.setValue(data.equipo);
+        } else {
+            tomSelectEquipo.clear();
+        }
+
+        const selResp = document.getElementById('editResponsable');
+        if (selResp) {
+            if (data.responsable) {
+                let match = Array.from(selResp.options).find(o => o.value.toLowerCase() === data.responsable.toLowerCase());
+                if (match) {
+                    selResp.value = match.value;
+                } else {
+                    let newOpt = document.createElement('option');
+                    newOpt.value = data.responsable;
+                    newOpt.textContent = data.responsable;
+                    selResp.appendChild(newOpt);
+                    selResp.value = data.responsable;
+                }
+            } else {
+                selResp.value = '';
+            }
+        }
+        
+        document.getElementById('modalEditar').style.display = 'flex';
+    }
+
+    let tomSelectFacObra = null;
+
+    function abrirModalEditarFactura(id) {
+        if(!datosTabla[id]) return;
+        currentRowId = id;
+        const data = datosTabla[id];
+        
+        archivosFacturaAccum = [];
+        actualizarLabelUI('lbl-editFacEvidencia', archivosFacturaAccum);
+
+        document.getElementById('editFacFolio').value    = data.folio_factura    || '';
+        document.getElementById('editFacFecha').value    = data.fecha_factura    || '';
+        document.getElementById('editFacProveedor').value= data.proveedor        || '';
+        document.getElementById('editFacLitros').value   = data.litros_facturados !== undefined && data.litros_facturados !== null ? data.litros_facturados : '';
+        document.getElementById('editFacImporte').value  = data.importe_total !== undefined && data.importe_total !== null ? data.importe_total : '';
+        document.getElementById('editFacSemana').value   = (data.semana||'').toString().replace('Semana','').trim();
+        
+        if(!tomSelectFacObra) {
+            tomSelectFacObra = new TomSelect("#editFacObra", { create: true, selectOnTab: true });
+        }
+
+        if (data.obra_destino) {
+            tomSelectFacObra.addOption({value: data.obra_destino, text: data.obra_destino});
+            tomSelectFacObra.setValue(data.obra_destino);
+        } else {
+            tomSelectFacObra.clear();
+        }
+        
+        document.getElementById('modalEditarFactura').style.display = 'flex';
+    }
+
+    async function guardarEdicionFactura(forcedEstatus) {
+        const formData = new FormData();
+        formData.append('tabla', 'diesel.facturas');
+        formData.append('id', currentRowId);
+        
+        const campos = {
+            folio_factura:     document.getElementById('editFacFolio').value,
+            fecha_factura:     document.getElementById('editFacFecha').value,
+            semana:            document.getElementById('editFacSemana').value,
+            proveedor:         document.getElementById('editFacProveedor').value,
+            obra_destino:      tomSelectFacObra.getValue(),
+            litros_facturados: document.getElementById('editFacLitros').value,
+            importe_total:     document.getElementById('editFacImporte').value
+        };
+        if (forcedEstatus) {
+            campos.estatus_revision = forcedEstatus;
+        }
+        formData.append('campos', JSON.stringify(campos));
+        
+        if (archivosFacturaAccum.length > 0) {
+            for(let i=0; i<archivosFacturaAccum.length; i++) {
+                formData.append('foto_evidencia', archivosFacturaAccum[i]);
+            }
+        }
+
+        const res  = await fetch('/api/admin/editar_registro', { method:'POST', body:formData });
+        const resp = await res.json();
+        if(resp.success) {
+            document.getElementById('modalEditarFactura').style.display = 'none';
+            checkSelection();
+            cargarDatos();
+        } else {
+            alert('Error al actualizar: ' + resp.error);
+        }
+    }
+
+    async function guardarEdicion(forcedEstatus) {
+        const formData = new FormData();
+        formData.append('tabla', 'diesel.consumos');
+        formData.append('id', currentRowId);
+        
+        const campos = {
+            fecha: document.getElementById('editFecha').value,
+            semana: document.getElementById('editSemana').value,
+            obra_destino: tomSelectObra.getValue(),
+            equipo: tomSelectEquipo.getValue(),
+            litros: document.getElementById('editLitros').value,
+            importe_total: document.getElementById('editImporte').value,
+            responsable: document.getElementById('editResponsable').value
+        };
+        if (forcedEstatus) {
+            campos.estatus_revision = forcedEstatus;
+        }
+        formData.append('campos', JSON.stringify(campos));
+        
+        if (archivosConsumoAccum.length > 0) {
+            for(let i=0; i<archivosConsumoAccum.length; i++) {
+                formData.append('foto_evidencia', archivosConsumoAccum[i]);
+            }
+        }
+
+        const res = await fetch('/api/admin/editar_registro', {
+            method: 'POST',
+            body: formData
+        });
+        const respData = await res.json();
+        
+        if(respData.success) {
+            document.getElementById('modalEditar').style.display = 'none';
+            checkSelection();
+            cargarDatos(); // Refrescar la tabla
+        } else {
+            alert('Error al actualizar: ' + respData.error);
+        }
+    }
+
+    // Calculate Week logic for admin editing
+    document.getElementById("editFecha").addEventListener("change", function(e) {
+        if(!this.value) return;
+        const parts = this.value.split('-');
+        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        const dayNum = d.getDay() || 7;
+        d.setDate(d.getDate() + 4 - dayNum);
+        const yearStart = new Date(d.getFullYear(),0,1);
+        const week = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        document.getElementById("editSemana").value = week;
+    });
+
+    async function init() {
+        // Cargar semanas disponibles
+        const semRes = await fetch('/api/admin/semanas');
+        const semanas = await semRes.json();
+        const selSem = document.getElementById('filtro-semana');
+        semanas.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = s;
+            selSem.appendChild(opt);
+        });
+        // Seleccionar semana más reciente por defecto
+        if (semanas.length > 0) selSem.value = semanas[0];
+        checkSelection();
+        cargarDatos();
+    }
+
+    function actualizarLabelUI(lblId, accumArray) {
+        const lbl = document.getElementById(lblId);
+        if(accumArray.length > 0) {
+            lbl.innerHTML = `<span style="font-size: 1.5rem; display:block; margin-bottom:5px;">✅</span><strong style="color:white">${accumArray.length} archivo(s) listos</strong><br><small style="color:var(--text-muted);">(Clic, arrastra o pega para añadir más)</small>`;
+        } else {
+            lbl.innerHTML = '<span style="font-size: 1.5rem; display:block; margin-bottom:5px;">📁</span>Arrastra aquí tus archivos, haz clic, o pega (Ctrl+V)';
+        }
+    }
+
+    function pushFiles(files, type) {
+        if(!files || files.length === 0) return;
+        if(type === 'consumo') {
+            for(let i=0; i<files.length; i++) archivosConsumoAccum.push(files[i]);
+            actualizarLabelUI('lbl-editEvidencia', archivosConsumoAccum);
+        } else {
+            for(let i=0; i<files.length; i++) archivosFacturaAccum.push(files[i]);
+            actualizarLabelUI('lbl-editFacEvidencia', archivosFacturaAccum);
+        }
+    }
+
+    function setupDragAndDrop(zoneId, inputId, type) {
+        const zone = document.getElementById(zoneId);
+        const input = document.getElementById(inputId);
+        if(!zone || !input) return;
+        
+        // Handle input native change (when clicked)
+        input.addEventListener('change', e => {
+            pushFiles(e.target.files, type);
+            e.target.value = ''; // reset
+        });
+
+        zone.addEventListener('dragover', e => {
+            e.preventDefault();
+            zone.style.background = 'rgba(139,92,246,0.3)';
+        });
+        zone.addEventListener('dragleave', e => {
+            e.preventDefault();
+            zone.style.background = 'rgba(139,92,246,0.1)';
+        });
+        zone.addEventListener('drop', e => {
+            e.preventDefault();
+            zone.style.background = 'rgba(139,92,246,0.1)';
+            if(e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                pushFiles(e.dataTransfer.files, type);
+            } else {
+                alert('No se detectó un archivo local válido. Si arrastraste una imagen desde WhatsApp Web, por favor usa CLIC DERECHO -> Copiar imagen, y luego presiona "Ctrl+V" (Pegar) aquí.');
+            }
+        });
+    }
+
+    // Prevenir drop global para que no navegue
+    window.addEventListener('dragover', e => e.preventDefault());
+    window.addEventListener('drop', e => e.preventDefault());
+
+    // Soporte para pegar (Ctrl+V)
+    window.addEventListener('paste', e => {
+        if(e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+            if (document.getElementById('modalEditar').style.display === 'flex') {
+                pushFiles(e.clipboardData.files, 'consumo');
+            } else if (document.getElementById('modalEditarFactura').style.display === 'flex') {
+                pushFiles(e.clipboardData.files, 'factura');
+            }
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        init();
+        setupDragAndDrop('dz-consumo', 'editEvidencia', 'consumo');
+        setupDragAndDrop('dz-factura', 'editFacEvidencia', 'factura');
+    });
+
+    function abrirModalAuth(id, ref, litros) {
+        document.getElementById('editAuthId').value = id;
+        document.getElementById('editAuthRef').textContent = ref;
+        document.getElementById('editAuthLitros').value = litros;
+        document.getElementById('modalAuth').style.display = 'flex';
+    }
+
+    async function guardarAuth() {
+        const id = document.getElementById('editAuthId').value;
+        const litros = document.getElementById('editAuthLitros').value;
+        try {
+            const res = await fetch('/api/admin/autorizaciones/guardar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id: id, litros: litros })
+            });
+            const data = await res.json();
+            if(res.ok) {
+                document.getElementById('modalAuth').style.display = 'none';
+                checkSelection();
+        cargarDatos();
+            } else {
+                alert('Error al guardar: ' + data.error);
+            }
+        } catch (error) {
+            alert('Error de conexión');
+        }
+    }
+
+    async function borrarRegistroActual() {
+        if (!currentRowId) return;
+        if (!confirm('¿Estás seguro de que deseas borrar este registro de forma permanente? Esta acción no se puede deshacer.')) return;
+        
+        let tabla = 'diesel.consumos';
+        if (currentTab === 'facturas') tabla = 'diesel.facturas';
+        if (currentTab === 'solicitudes') tabla = 'diesel.solicitudes';
+        
+        try {
+            const res = await fetch('/api/admin/borrar_registro', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({tabla: tabla, id: currentRowId})
+            });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('modalEditar').style.display = 'none';
+                document.getElementById('modalEditarFactura').style.display = 'none';
+                document.getElementById('modalEditarSolicitud').style.display = 'none';
+                document.getElementById('visor-evidencia').innerHTML = '<div class="visor-empty">Registro borrado.</div>';
+                document.getElementById('visor-acciones').style.display = 'none';
+                currentRowId = null;
+                checkSelection();
+        cargarDatos();
+            } else {
+                alert('Error al borrar: ' + data.error);
+            }
+        } catch(e) {
+            alert('Error de conexión al borrar');
+        }
+    }
+
+    function abrirModalAjusteJalisco(semana, ajusteActual) {
+        document.getElementById('editJaliscoSemana').value = semana;
+        document.getElementById('editJaliscoRef').textContent = 'Semana ' + semana;
+        document.getElementById('editJaliscoAjuste').value = ajusteActual;
+        document.getElementById('modalAjusteJalisco').style.display = 'flex';
+    }
+
+    async function guardarAjusteJalisco() {
+        const semana = document.getElementById('editJaliscoSemana').value;
+        const ajuste = document.getElementById('editJaliscoAjuste').value;
+        
+        try {
+            const res = await fetch('/api/admin/jalisco/ajuste', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ semana: semana, ajuste: parseFloat(ajuste) })
+            });
+            const data = await res.json();
+            
+            if(res.ok && data.success) {
+                document.getElementById('modalAjusteJalisco').style.display = 'none';
+                checkSelection();
+        cargarDatos();
+            } else {
+                alert('Error al guardar: ' + (data.error || 'Desconocido'));
+            }
+        } catch (error) {
+            alert('Error de conexión');
+        }
+    }
+
+    // --- BATCH APPROVAL LOGIC ---
+    function toggleAll(source) {
+        const checkboxes = document.querySelectorAll('.chk-row');
+        for(let i=0; i<checkboxes.length; i++) {
+            checkboxes[i].checked = source.checked;
+        }
+        checkSelection();
+    }
+
+    function checkSelection() {
+        const checkboxes = document.querySelectorAll('.chk-row:checked');
+        const btn = document.getElementById('btn-aprobar-batch');
+        if(btn) {
+            btn.style.display = checkboxes.length > 0 ? 'inline-block' : 'none';
+            btn.textContent = `✅ Aprobar Seleccionados (${checkboxes.length})`;
+        }
+    }
+
+    // ── Modal de Duplicados ──────────────────────────────────────────────────
+    function mostrarModalDuplicados(duplicados, ids, tabla) {
+        // Crear o reusar el modal
+        let modal = document.getElementById('modalDuplicados');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'modalDuplicados';
+            modal.style.cssText = 'display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; padding:20px;';
+            document.body.appendChild(modal);
+        }
+
+        let rowsHtml = '';
+        duplicados.forEach((d, i) => {
+            const p = d.pendiente;
+            const a = d.aprobado;
+            const folioPend = p.folio || `ID ${p.id}`;
+            const folioApro = a.folio_solicitud || a.folio_conciliacion || `ID ${a.id}`;
+            rowsHtml += `
+            <div style="margin-bottom:18px; border:1px solid rgba(239,68,68,0.4); border-radius:10px; overflow:hidden;">
+                <div style="background:rgba(239,68,68,0.15); padding:10px 16px; font-weight:700; color:#f87171;">
+                    ⚠️ Duplicado ${i+1} de ${duplicados.length}
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0;">
+                    <div style="padding:14px 16px; border-right:1px solid rgba(255,255,255,0.1);">
+                        <div style="color:#f59e0b; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">🕐 Pendiente (el que intentas aprobar)</div>
+                        <div style="font-family:monospace; color:#60a5fa; margin-bottom:6px;">${folioPend}</div>
+                        <div>📅 Fecha: <strong>${p.fecha || '—'}</strong></div>
+                        <div>💧 Litros: <strong>${(p.litros||0).toFixed(2)} L</strong></div>
+                        <div>💵 Importe: <strong>$${(p.importe||0).toLocaleString('es-MX', {minimumFractionDigits:2})}</strong></div>
+                        ${p.obra ? `<div>🏗️ Obra: <strong>${p.obra}</strong></div>` : ''}
+                        ${p.equipo ? `<div>🚛 Equipo: <strong>${p.equipo}</strong></div>` : ''}
+                        ${p.solicitante ? `<div>👤 Solicitante: <strong>${p.solicitante}</strong></div>` : ''}
+                        ${p.proveedor ? `<div>🏪 Proveedor: <strong>${p.proveedor}</strong></div>` : ''}
+                    </div>
+                    <div style="padding:14px 16px; background:rgba(16,185,129,0.05);">
+                        <div style="color:#10b981; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">✅ Ya Aprobado (el posible duplicado)</div>
+                        <div style="font-family:monospace; color:#60a5fa; margin-bottom:6px;">${folioApro}</div>
+                        <div>📅 Fecha: <strong>${a.fecha || a.fecha_factura || '—'}</strong></div>
+                        <div>💧 Litros: <strong>${parseFloat(a.litros || a.litros_facturados || 0).toFixed(2)} L</strong></div>
+                        <div>💵 Importe: <strong>$${parseFloat(a.importe_total||0).toLocaleString('es-MX', {minimumFractionDigits:2})}</strong></div>
+                        ${a.obra_destino ? `<div>🏗️ Obra: <strong>${a.obra_destino}</strong></div>` : ''}
+                        ${a.equipo ? `<div>🚛 Equipo: <strong>${a.equipo}</strong></div>` : ''}
+                        ${a.solicitante ? `<div>👤 Solicitante: <strong>${a.solicitante}</strong></div>` : ''}
+                        ${a.proveedor ? `<div>🏪 Proveedor: <strong>${a.proveedor}</strong></div>` : ''}
+                    </div>
+                </div>
+            </div>`;
+        });
+
+        modal.innerHTML = `
+        <div style="background:#1e1b4b; border:1px solid rgba(239,68,68,0.5); border-radius:16px; max-width:800px; width:100%; max-height:90vh; overflow-y:auto; padding:28px; box-shadow: 0 25px 60px rgba(0,0,0,0.6);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="color:#f87171; margin:0;">🚨 Posibles Duplicados Detectados</h2>
+                <button onclick="document.getElementById('modalDuplicados').style.display='none'" style="background:transparent; border:none; color:#94a3b8; cursor:pointer; font-size:1.5rem;">✕</button>
+            </div>
+            <p style="color:#94a3b8; margin-bottom:20px;">El sistema encontró registros <strong style="color:white;">ya aprobados</strong> con datos muy similares. Revisa cada caso y decide cómo proceder:</p>
+            ${rowsHtml}
+            <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:20px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1);">
+                <button onclick="document.getElementById('modalDuplicados').style.display='none'" 
+                    style="padding:10px 20px; border-radius:8px; border:1px solid rgba(255,255,255,0.2); background:transparent; color:white; cursor:pointer; font-weight:600;">
+                    Cancelar — Revisar primero
+                </button>
+                <button onclick="document.getElementById('modalDuplicados').style.display='none'; aprobarBatch(true)" 
+                    style="padding:10px 20px; border-radius:8px; border:1px solid rgba(239,68,68,0.5); background:rgba(239,68,68,0.2); color:#f87171; cursor:pointer; font-weight:600;">
+                    ⚠️ Aprobar de todos modos (no recomendado)
+                </button>
+            </div>
+        </div>`;
+        modal.style.display = 'flex';
+    }
+
+    async function aprobarBatch(forzar = false) {
+        const checkboxes = document.querySelectorAll('.chk-row:checked');
+        if(checkboxes.length === 0) return;
+        
+        let ids = [];
+        checkboxes.forEach(cb => ids.push(parseInt(cb.value)));
+        
+        let prefix = window.location.pathname.includes('gasolina') ? 'gasolina' : 'diesel';
+        let tabla = prefix + '.' + currentTab;
+        
+        try {
+            const res = await fetch('/api/admin/aprobar_batch', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ tabla: tabla, ids: ids, estatus: 'APROBADO', forzar: forzar })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                const chkAll = document.querySelector('thead input[type="checkbox"]');
+                if(chkAll) chkAll.checked = false;
+                checkSelection();
+                cargarDatos();
+                // Pequeño toast de éxito
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:rgba(16,185,129,0.9); color:white; padding:14px 22px; border-radius:10px; font-weight:600; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+                toast.textContent = `✅ ${data.aprobados || ids.length} registro(s) aprobado(s)`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            } else if(data.duplicateWarning) {
+                mostrarModalDuplicados(data.duplicados || [], ids, tabla);
+            } else {
+                alert('Error al aprobar: ' + data.error);
+            }
+        } catch(e) {
+            alert('Error de conexión al aprobar masivamente');
+        } finally {
+            isProcessing = false;
+        }
+    }
+
+    function abrirModalCancelarFactura(id, modulo = 'diesel') {
+        document.getElementById('cancFacturaId').value = id;
+        document.getElementById('cancFacturaModulo').value = modulo;
+        document.getElementById('cancFacturaMotivo').value = '';
+        document.getElementById('cancFacturaArchivo').value = '';
+        document.getElementById('modalCancelarFactura').style.display = 'flex';
+    }
+
+    function cerrarModalCancelarFactura() {
+        document.getElementById('modalCancelarFactura').style.display = 'none';
+    }
+
+    async function submitCancelarFactura(event) {
+        event.preventDefault();
+        const id = document.getElementById('cancFacturaId').value;
+        const modulo = document.getElementById('cancFacturaModulo').value;
+        const motivo = document.getElementById('cancFacturaMotivo').value.trim();
+        const archivo = document.getElementById('cancFacturaArchivo').files[0];
+
+        if (!motivo) {
+            alert('El motivo de cancelación es obligatorio.');
+            return;
+        }
+        if (!archivo) {
+            alert('Es obligatorio adjuntar el comprobante o acuse SAT de cancelación (PDF/Imagen).');
+            return;
+        }
+
+        const btn = document.getElementById('btnSubmitCancFactura');
+        btn.disabled = true;
+        btn.textContent = 'Procesando...';
+
+        const fd = new FormData();
+        fd.append('id', id);
+        fd.append('modulo', modulo);
+        fd.append('motivo_cancelacion', motivo);
+        fd.append('archivo_cancelacion', archivo);
+
+        try {
+            const res = await fetch('/api/admin/cancelar_factura', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (data.success) {
+                alert('Factura cancelada con éxito y respaldada.');
+                cerrarModalCancelarFactura();
+                cargarDatos();
+            } else {
+                alert('Error: ' + (data.error || 'No se pudo cancelar la factura.'));
+            }
+        } catch(e) {
+            alert('Error de conexión al cancelar factura.');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🚫 Confirmar Cancelación';
+        }
+    }
+</script>
+
+<!-- MODAL CANCELAR FACTURA CON RESPALDO Y EVIDENCIA OBLIGATORIA -->
+<div id="modalCancelarFactura" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.8); align-items:center; justify-content:center;">
+    <div style="background: #1e293b; border: 1px solid #ef4444; border-radius: 12px; width: 90%; max-width: 500px; padding: 20px; color: white; box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:10px; margin-bottom:15px;">
+            <h3 style="margin:0; color:#f87171;">🚫 Cancelar Factura y Generar Respaldo</h3>
+            <button onclick="cerrarModalCancelarFactura()" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;">&times;</button>
+        </div>
+        <form id="formCancelarFactura" onsubmit="submitCancelarFactura(event)">
+            <input type="hidden" id="cancFacturaId">
+            <input type="hidden" id="cancFacturaModulo">
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display:block; margin-bottom:5px; font-size:0.85rem; color:#94a3b8;">Motivo de Cancelación <span style="color:#ef4444">*</span></label>
+                <textarea id="cancFacturaMotivo" required placeholder="Escribe el motivo detallado de cancelación de la factura..." style="width:100%; height:80px; padding:8px; border-radius:6px; background:rgba(0,0,0,0.3); color:white; border:1px solid rgba(255,255,255,0.2); box-sizing:border-box;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display:block; margin-bottom:5px; font-size:0.85rem; color:#94a3b8;">Comprobante / Acuse SAT de Cancelación (PDF o Imagen) <span style="color:#ef4444">*</span></label>
+                <input type="file" id="cancFacturaArchivo" accept=".pdf,image/*" required style="width:100%; padding:6px; background:rgba(0,0,0,0.3); color:white; border:1px solid rgba(255,255,255,0.2); border-radius:6px; box-sizing:border-box;">
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="cerrarModalCancelarFactura()" style="padding:8px 16px; border-radius:6px; background:rgba(255,255,255,0.1); border:none; color:white; cursor:pointer;">Cancelar</button>
+                <button type="submit" id="btnSubmitCancFactura" style="padding:8px 16px; border-radius:6px; background:#ef4444; border:none; color:white; font-weight:bold; cursor:pointer;">🚫 Confirmar Cancelación</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Fénix — Dashboard Ejecutivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-base:    #080f1e;
+    --bg-card:    rgba(15,25,50,0.75);
+    --bg-card2:   rgba(20,35,70,0.6);
+    --border:     rgba(99,160,255,0.15);
+    --accent:     #3b82f6;
+    --accent2:    #6366f1;
+    --green:      #10b981;
+    --amber:      #f59e0b;
+    --red:        #ef4444;
+    --text:       #e2e8f0;
+    --text-muted: #64748b;
+    --glow:       rgba(59,130,246,0.15);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Inter',sans-serif; background:var(--bg-base);
+    background-image: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(59,130,246,0.08) 0%, transparent 60%),
+                      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99,102,241,0.07) 0%, transparent 50%);
+    color:var(--text); min-height:100vh; padding:0 0 60px; }
+  header { display:flex; align-items:center; justify-content:space-between;
+    padding:20px 36px; background:rgba(8,15,30,0.9); border-bottom:1px solid var(--border);
+    backdrop-filter:blur(12px); position:sticky; top:0; z-index:100; }
+  .logo { display:flex; align-items:center; gap:14px; }
+  .logo-icon { width:40px; height:40px; border-radius:10px;
+    background:linear-gradient(135deg,#3b82f6,#6366f1); display:flex; align-items:center;
+    justify-content:center; font-size:20px; box-shadow:0 0 20px rgba(99,102,241,0.4); }
+  .logo h1 { font-size:1.3rem; font-weight:700; letter-spacing:-0.3px; }
+  .logo span { font-size:0.75rem; color:var(--text-muted); font-weight:400; }
+  .header-right { display:flex; align-items:center; gap:16px; }
+  #last-update { font-size:0.72rem; color:var(--text-muted); }
+  .btn-refresh { padding:8px 16px; border-radius:8px; border:1px solid var(--border);
+    background:var(--bg-card2); color:var(--text); font-size:0.8rem; cursor:pointer;
+    font-family:inherit; transition:all .2s; }
+  .btn-refresh:hover { background:var(--accent); border-color:var(--accent); }
+  .tabs { display:flex; gap:4px; padding:16px 36px 0; flex-wrap:wrap; }
+  .tab { padding:10px 18px; border-radius:8px 8px 0 0; border:1px solid var(--border);
+    border-bottom:none; background:var(--bg-card2); color:var(--text-muted);
+    font-size:0.8rem; font-weight:500; cursor:pointer; transition:all .2s; font-family:inherit; }
+  .tab.active { background:var(--bg-card); color:var(--text); border-color:var(--border); }
+  .tab:hover { color:var(--text); }
+  .content { padding:0 36px; }
+  .panel { display:none; padding-top:24px; }
+  .panel.active { display:block; }
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:16px; margin-bottom:24px; }
+  .kpi-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    padding:20px 22px; backdrop-filter:blur(12px); position:relative; overflow:hidden;
+    transition:transform .2s, box-shadow .2s; }
+  .kpi-card:hover { transform:translateY(-2px); box-shadow:0 8px 30px var(--glow); }
+  .kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+  .kpi-card.green::before { background:linear-gradient(90deg,#10b981,#059669); }
+  .kpi-card.amber::before { background:linear-gradient(90deg,#f59e0b,#d97706); }
+  .kpi-card.red::before   { background:linear-gradient(90deg,#ef4444,#dc2626); }
+  .kpi-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:8px; }
+  .kpi-value { font-size:1.8rem; font-weight:700; letter-spacing:-1px; line-height:1; }
+  .kpi-sub   { font-size:0.72rem; color:var(--text-muted); margin-top:6px; }
+  .kpi-icon  { position:absolute; right:18px; top:18px; font-size:1.4rem; opacity:0.25; }
+  .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:16px; }
+  @media(max-width:900px){ .grid-2,.grid-3 { grid-template-columns:1fr; } }
+  .chart-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    padding:22px 24px; backdrop-filter:blur(12px); margin-bottom:16px; }
+  .chart-card h3 { font-size:0.78rem; font-weight:600; text-transform:uppercase;
+    letter-spacing:.8px; margin-bottom:16px; color:var(--text-muted); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%;
+    background:var(--accent); margin-right:6px; vertical-align:middle; }
+  .section-title { font-size:0.72rem; font-weight:600; text-transform:uppercase;
+    letter-spacing:1px; color:var(--text-muted); margin:20px 0 10px; padding-bottom:6px;
+    border-bottom:1px solid var(--border); }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+  th { background:rgba(59,130,246,0.1); color:var(--text-muted); font-weight:600;
+    text-transform:uppercase; font-size:0.68rem; letter-spacing:.6px; padding:10px 12px;
+    text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+  td { padding:8px 12px; border-bottom:1px solid rgba(99,160,255,0.05); vertical-align:middle; }
+  tr:hover td { background:rgba(59,130,246,0.04); }
+  .mono { font-family:'Courier New',monospace; }
+  .text-green { color:#10b981; } .text-red { color:#ef4444; }
+  .text-amber { color:#f59e0b; } .text-blue  { color:#60a5fa; }
+  .text-purple{ color:#a78bfa; }
+  .badge { padding:2px 8px; border-radius:20px; font-size:0.68rem; font-weight:600; }
+  .badge-green { background:rgba(16,185,129,0.15); color:#10b981; }
+  .badge-red   { background:rgba(239,68,68,0.15);  color:#ef4444; }
+  .badge-amber { background:rgba(245,158,11,0.15); color:#f59e0b; }
+  .badge-blue  { background:rgba(59,130,246,0.15); color:#60a5fa; }
+  .alert-box { display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
+    background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2);
+    border-radius:10px; margin-bottom:10px; }
+  .alert-box .icon { font-size:1.2rem; flex-shrink:0; }
+  .alert-box h4 { font-size:0.82rem; margin-bottom:4px; }
+  .alert-box p  { font-size:0.77rem; color:var(--text-muted); line-height:1.5; }
+  .progress-bar-wrap { background:rgba(255,255,255,0.06); border-radius:4px; height:6px; min-width:80px; }
+  .progress-bar { height:100%; border-radius:4px; }
+  .loading { display:flex; align-items:center; gap:10px; color:var(--text-muted); padding:40px; justify-content:center; }
+  .spinner { width:18px; height:18px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🔥</div>
+    <div>
+      <h1>Sistema Fénix</h1>
+      <span>Dashboard Ejecutivo — Control de Combustibles y Acarreos</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <select id="week-selector" class="btn-refresh" style="background:#080f1e" onchange="loadAll()">
+      <option value="todas">Todas las Semanas</option>
+    </select>
+    <span id="last-update">Cargando...</span>
+    <a href="/captura" style="text-decoration:none;">
+      <button class="btn-refresh" style="background:linear-gradient(135deg,#10b981,#059669);color:white;font-weight:600;">✏️ Captura de Datos</button>
+    </a>
+    <button class="btn-refresh" onclick="loadAll()">↻ Actualizar</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('resumen',this)">📊 Resumen</button>
+  <button class="tab"        onclick="showTab('diesel',this)">🛢️ Diésel</button>
+  <button class="tab"        onclick="showTab('gasolina',this)">⛽ Gasolina</button>
+  <button class="tab"        onclick="showTab('acarreos',this)">🚛 Acarreos</button>
+  <button class="tab"        onclick="showTab('rendimiento',this)">⚡ Rendimiento</button>
+  <button class="tab"        onclick="showTab('facturas-doc',this)">📄 Facturas CFDI</button>
+  <button class="tab"        onclick="showTab('totales',this)">📈 Totales</button>
+</div>
+
+<div class="content">
+
+<!-- ══════════════════ RESUMEN ══════════════════ -->
+<div id="panel-resumen" class="panel active">
+  <div id="kpi-grid" class="kpi-grid"><div class="loading"><div class="spinner"></div> Cargando KPIs...</div></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot"></span> Tendencia — Diésel</h3><canvas id="chart-td" height="180"></canvas></div>
+    <div class="chart-card"><h3><span class="dot"></span> Tendencia — Gasolina</h3><canvas id="chart-tg" height="180"></canvas></div>
+  </div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot"></span> Diésel por Obra</h3><canvas id="chart-od" height="180"></canvas></div>
+    <div class="chart-card"><h3><span class="dot"></span> Acarreos por Sindicato</h3><canvas id="chart-as" height="180"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════ DIESEL ══════════════════ -->
+<div id="panel-diesel" class="panel">
+  <div id="diesel-kpi" class="kpi-grid"></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot"></span> Consumo por Obra</h3><canvas id="chart-do" height="220"></canvas></div>
+    <div class="chart-card" style="height:400px;overflow-y:auto;padding:14px">
+      <div id="diesel-facturas-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+  <div class="section-title">Consumo Detallado por Obra</div>
+  <div class="chart-card">
+    <div class="table-wrap">
+      <table><thead><tr><th>Obra</th><th>Litros</th><th>Registros</th><th>%</th><th>Barra</th></tr></thead>
+      <tbody id="tbody-diesel"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ GASOLINA ══════════════════ -->
+<div id="panel-gasolina" class="panel">
+  <div id="gasolina-kpi" class="kpi-grid"></div>
+
+  <div class="section-title">⚖️ Conciliación por Unidad — Autorizado vs Gasolinera</div>
+  <div class="chart-card" style="overflow-x:auto;margin-bottom:20px;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Placa</th><th>Responsable</th><th>Unidad</th><th>Obra</th><th>Sem</th>
+            <th>Lts Autorizados</th><th>Lts Reales</th>
+            <th>$ Autorizado</th><th>$ Real</th><th>Diferencia</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-conciliacion-placa"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">🚨 Alertas de Desviación (por Fecha y Proveedor)</div>
+  <div id="gasolina-alertas" style="margin-bottom:20px;"></div>
+
+  <div class="section-title">❓ Tickets sin Identificar (Placa NO REPORTADA)</div>
+  <div class="chart-card" style="overflow-x:auto;margin-bottom:20px;">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ticket</th><th>Gasolinera</th><th>Fecha</th><th>Litros</th><th>$/L</th><th>Importe</th><th>Nota</th></tr></thead>
+        <tbody id="tbody-tickets-desconocidos"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section-title">📋 Matriz de Control Operativo (Deducciones Diarias por Proveedor)</div>
+  <div class="chart-card" style="overflow-x:auto;">
+    <div class="table-wrap">
+      <table id="table-matriz-gasolina" style="min-width:1500px;">
+        <thead id="thead-matriz-gasolina"></thead>
+        <tbody id="tbody-matriz-gasolina"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ ACARREOS ══════════════════ -->
+<div id="panel-acarreos" class="panel">
+  <div id="acarreos-kpi" class="kpi-grid"></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot"></span> Pago por Sindicato</h3><canvas id="chart-as2" height="220"></canvas></div>
+    <div class="chart-card"><h3><span class="dot"></span> Anomalías Detectadas</h3><div id="anomalias-content"><div class="loading"><div class="spinner"></div></div></div></div>
+  </div>
+  <div class="section-title">Estimación de Pagos por Sindicato / Obra</div>
+  <div class="chart-card">
+    <div class="table-wrap">
+      <table><thead><tr><th>Sindicato</th><th>Obra</th><th>Semana</th><th>Categoría</th><th>Viajes</th><th>Total a Pagar</th></tr></thead>
+      <tbody id="tbody-acarreos"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ RENDIMIENTO ══════════════════ -->
+<div id="panel-rendimiento" class="panel">
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot"></span> Horas por Equipo (Top 15)</h3><canvas id="chart-h" height="220"></canvas></div>
+    <div class="chart-card" style="display:flex;flex-direction:column;justify-content:center">
+      <div class="kpi-label" style="margin-bottom:14px">Semáforo de Rendimiento</div>
+      <div id="semaforo-counts" style="display:flex;gap:12px"></div>
+    </div>
+  </div>
+  <div class="section-title">Rendimiento por Equipo</div>
+  <div class="chart-card">
+    <div class="table-wrap">
+      <table><thead><tr><th>Económico</th><th>Equipo</th><th>Obra</th><th>Sem</th><th>Horas</th><th>Litros</th><th>Real L/h</th><th>Base L/h</th><th>Desv.%</th><th>Estado</th></tr></thead>
+      <tbody id="tbody-rendimiento"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ FACTURAS CFDI ══════════════════ -->
+<div id="panel-facturas-doc" class="panel">
+  <div class="section-title">Validación de Facturas CFDI — Diésel</div>
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px">
+    <div class="chart-card" style="height:600px;overflow-y:auto;padding:14px">
+      <div id="doc-list"><div class="loading"><div class="spinner"></div> Cargando facturas...</div></div>
+    </div>
+    <div class="chart-card" style="height:600px;padding:0;overflow:hidden">
+      <iframe id="pdf-viewer" style="width:100%;height:100%;border:none;background:#fff"></iframe>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ TOTALES ══════════════════ -->
+<div id="panel-totales" class="panel">
+  <div id="totales-kpi" class="kpi-grid"></div>
+  <div class="grid-2">
+    <div class="chart-card"><h3><span class="dot"></span> Diésel vs Gasolina por Semana</h3><canvas id="chart-tc" height="220"></canvas></div>
+    <div class="chart-card"><h3><span class="dot"></span> Acarreos por Semana</h3><canvas id="chart-ta" height="220"></canvas></div>
+  </div>
+  <div class="section-title">Resumen de Facturas Validadas</div>
+  <div class="chart-card">
+    <div class="table-wrap">
+      <table><thead><tr><th>Tipo Combustible</th><th>Facturas Validadas</th><th>Litros Amparados</th><th>Monto Total</th></tr></thead>
+      <tbody id="tbody-totales-fac"></tbody></table>
+    </div>
+  </div>
+  <div class="section-title">Consolidado Semanal</div>
+  <div class="chart-card">
+    <div class="table-wrap">
+      <table><thead><tr><th>Semana</th><th>Diésel (L)</th><th>Gasolina (L)</th><th>Total Comb. (L)</th><th>Acarreos ($)</th><th>Viajes</th></tr></thead>
+      <tbody id="tbody-totales-sem"></tbody></table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+// ─── HELPERS ──────────────────────────────────────────────────────────────
+const fmt  = v => (v!=null&&!isNaN(v)) ? Number(v).toLocaleString('es-MX',{minimumFractionDigits:1,maximumFractionDigits:1}) : '—';
+const fmtP = v => (v!=null&&!isNaN(v)) ? Number(v).toLocaleString('es-MX',{style:'currency',currency:'MXN'}) : '—';
+const fmtI = v => (v!=null&&!isNaN(v)) ? Number(v).toLocaleString('es-MX',{minimumFractionDigits:0,maximumFractionDigits:0}) : '—';
+const COLORS=['#3b82f6','#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16','#ec4899'];
+const charts={};
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; }}
+const axisOpts = { grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#64748b'} };
+const xOpts    = { grid:{display:false}, ticks:{color:'#64748b',maxRotation:30} };
+
+function showTab(name, btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+function q(){
+  const s = document.getElementById('week-selector').value;
+  return (s&&s!=='todas') ? '?semana='+s : '';
+}
+
+// ─── SEMANAS ─────────────────────────────────────────────────────────────
+let weeksLoaded=false;
+async function loadWeeks(){
+  if(weeksLoaded) return;
+  const sems = await fetch('/api/semanas_disponibles').then(r=>r.json());
+  const sel = document.getElementById('week-selector');
+  sems.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent='Semana '+s; sel.appendChild(o); });
+  weeksLoaded=true;
+}
+
+// ─── MAIN LOAD ───────────────────────────────────────────────────────────
+async function loadAll(){
+  try {
+    await loadWeeks();
+    await Promise.all([ loadKPIs(), loadDiesel(), loadGasolina(), loadAcarreos(), loadRendimiento(), loadFacturasDoc(), loadTotales() ]);
+  } catch(e) {
+    console.error('Error cargando dashboard:', e);
+    document.getElementById('last-update').textContent = 'Error al cargar — revisa consola (F12)';
+  }
+}
+
+// ─── KPIs RESUMEN ────────────────────────────────────────────────────────
+async function loadKPIs(){
+  const d = await fetch('/api/kpis'+q()).then(r=>r.json());
+  document.getElementById('last-update').textContent = 'Actualizado: '+d.generado;
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card"><span class="kpi-icon">🛢️</span><div class="kpi-label">Litros Diésel</div><div class="kpi-value mono">${fmt(d.litros_diesel)}</div><div class="kpi-sub">Consumidos</div></div>
+    <div class="kpi-card green"><span class="kpi-icon">⛽</span><div class="kpi-label">Litros Gasolina</div><div class="kpi-value mono text-green">${fmt(d.litros_gasolina)}</div><div class="kpi-sub">Consumidos</div></div>
+    <div class="kpi-card amber"><span class="kpi-icon">🚛</span><div class="kpi-label">Acarreos</div><div class="kpi-value mono text-amber">${fmtP(d.total_acarreos)}</div><div class="kpi-sub">${fmtI(d.total_viajes)} viajes</div></div>
+    <div class="kpi-card"><span class="kpi-icon">⚙️</span><div class="kpi-label">Equipos Activos</div><div class="kpi-value mono">${d.total_equipos}</div></div>
+    ${d.alertas_rojas>0?`<div class="kpi-card red"><span class="kpi-icon">🚨</span><div class="kpi-label">Alertas Críticas</div><div class="kpi-value mono text-red">${d.alertas_rojas}</div><div class="kpi-sub">${d.alertas_amarillas} amarillas</div></div>`:`<div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Estado</div><div class="kpi-value mono text-green">OK</div></div>`}
+    ${d.facturas_pendientes>0?`<div class="kpi-card amber"><span class="kpi-icon">📄</span><div class="kpi-label">Facturas Pendientes</div><div class="kpi-value mono text-amber">${d.facturas_pendientes}</div></div>`:''}
+  `;
+
+  const [tD,tG,oD,aS] = await Promise.all([
+    fetch('/api/diesel/tendencia').then(r=>r.json()),
+    fetch('/api/gasolina/tendencia').then(r=>r.json()),
+    fetch('/api/diesel/consumo_por_obra'+q()).then(r=>r.json()),
+    fetch('/api/acarreos/resumen_sindicatos'+q()).then(r=>r.json())
+  ]);
+  destroyChart('td'); charts['td']=new Chart(document.getElementById('chart-td').getContext('2d'),{type:'line',data:{labels:tD.map(r=>'Sem '+r.semana),datasets:[{label:'Litros',data:tD.map(r=>r.litros),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',tension:.4,fill:true,pointRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:axisOpts,x:xOpts}}});
+  destroyChart('tg'); charts['tg']=new Chart(document.getElementById('chart-tg').getContext('2d'),{type:'line',data:{labels:tG.map(r=>'Sem '+r.semana),datasets:[{label:'Litros',data:tG.map(r=>r.litros),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.1)',tension:.4,fill:true,pointRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:axisOpts,x:xOpts}}});
+  destroyChart('od'); charts['od']=new Chart(document.getElementById('chart-od').getContext('2d'),{type:'doughnut',data:{labels:oD.map(r=>r.obra),datasets:[{data:oD.map(r=>r.litros),backgroundColor:COLORS,borderWidth:0}]},options:{plugins:{legend:{position:'right',labels:{color:'#e2e8f0',font:{size:11}}}}}});
+  destroyChart('as'); charts['as']=new Chart(document.getElementById('chart-as').getContext('2d'),{type:'bar',data:{labels:aS.map(r=>r.nombre),datasets:[{label:'Total $',data:aS.map(r=>r.total),backgroundColor:COLORS,borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:axisOpts,x:xOpts}}});
+}
+
+// ─── DIESEL ──────────────────────────────────────────────────────────────
+async function loadDiesel(){
+  const [obras, facData] = await Promise.all([
+    fetch('/api/diesel/consumo_por_obra'+q()).then(r=>r.json()),
+    fetch('/api/diesel/facturas').then(r=>r.json())
+  ]);
+  const total = obras.reduce((s,r)=>s+r.litros,0)||1;
+
+  document.getElementById('diesel-kpi').innerHTML = `
+    <div class="kpi-card"><span class="kpi-icon">🛢️</span><div class="kpi-label">Total Litros Diésel</div><div class="kpi-value mono">${fmt(total)}</div></div>
+    <div class="kpi-card green"><span class="kpi-icon">✅</span><div class="kpi-label">Facturas Validadas</div><div class="kpi-value mono text-green">${facData.kpi.validadas}</div><div class="kpi-sub">${fmt(facData.kpi.litros_validados)} L — ${fmtP(facData.kpi.monto_validado)}</div></div>
+    <div class="kpi-card amber"><span class="kpi-icon">⏳</span><div class="kpi-label">Pendientes</div><div class="kpi-value mono text-amber">${facData.kpi.pendientes}</div></div>
+    <div class="kpi-card red"><span class="kpi-icon">❌</span><div class="kpi-label">Rechazadas</div><div class="kpi-value mono text-red">${facData.kpi.rechazadas}</div></div>
+  `;
+
+  destroyChart('do'); charts['do']=new Chart(document.getElementById('chart-do').getContext('2d'),{type:'bar',data:{labels:obras.map(r=>r.obra),datasets:[{label:'Litros',data:obras.map(r=>r.litros),backgroundColor:COLORS,borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{grid:{display:false},ticks:{color:'#64748b'}},x:axisOpts}}});
+
+  document.getElementById('tbody-diesel').innerHTML = obras.map(r=>`
+    <tr><td>${r.obra}</td><td class="mono text-green">${fmt(r.litros)} L</td><td class="mono">${fmtI(r.registros)}</td>
+    <td class="mono">${((r.litros/total)*100).toFixed(1)}%</td>
+    <td><div class="progress-bar-wrap"><div class="progress-bar" style="width:${(r.litros/total)*100}%;background:linear-gradient(90deg,#3b82f6,#6366f1)"></div></div></td></tr>`).join('');
+
+  document.getElementById('diesel-facturas-list').innerHTML = facData.facturas.map(r=>{
+    const bc = r.estatus_validacion==='VALIDADA'?'badge-green':r.estatus_validacion==='RECHAZADA'?'badge-red':'badge-amber';
+    const cIcon = r.confianza_clasif==='ALTA'?'🎯':r.confianza_clasif==='MEDIA'?'🔶':'❓';
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:rgba(0,0,0,0.2)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <strong style="font-size:0.78rem">${r.emisor_nombre||'Sin nombre'}</strong><span class="badge ${bc}">${r.estatus_validacion}</span>
+      </div>
+      <div style="font-size:0.73rem;color:#60a5fa;margin-bottom:6px">${cIcon} ${r.destino_suministro||'—'}</div>
+      ${r.nota_leyenda&&r.nota_leyenda!=='—'?`<div style="font-size:0.68rem;color:var(--text-muted);font-style:italic;border-left:2px solid rgba(99,160,255,0.3);padding-left:6px;margin-bottom:6px">${r.nota_leyenda}</div>`:''}
+      <div style="display:flex;justify-content:space-between;font-size:0.73rem;color:var(--text-muted);margin-bottom:8px">
+        <span class="mono">F-${r.folio}</span><span class="mono">${r.fecha_emision?r.fecha_emision.substring(0,10):''}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span class="mono text-green" style="font-weight:700">${fmt(r.litros)} L</span><br><span class="mono" style="font-size:0.73rem">${fmtP(r.total)}</span></div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+          ${r.tiene_pdf?`<button onclick="viewPDF(${r.id})" style="padding:4px 8px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem">👁 PDF</button>`:''}
+          ${r.estatus_validacion!=='VALIDADA'?`<button onclick="updateDocStatus(${r.id},'VALIDADA')" style="padding:4px 8px;background:#10b981;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem">✅ Validar</button>`:''}
+          ${r.estatus_validacion!=='RECHAZADA'?`<button onclick="updateDocStatus(${r.id},'RECHAZADA')" style="padding:4px 8px;background:#ef4444;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem">❌ Rechazar</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── GASOLINA ────────────────────────────────────────────────────────────
+async function loadGasolina(){
+  const [kpis, matrizData, alertas, concilPlaca, ticketsSinId] = await Promise.all([
+    fetch('/api/gasolina/kpis'+q()).then(r=>r.json()),
+    fetch('/api/gasolina/matriz'+q()).then(r=>r.json()),
+    fetch('/api/gasolina/conciliacion'+q()).then(r=>r.json()),
+    fetch('/api/gasolina/conciliacion_por_placa'+q()).then(r=>r.json()),
+    fetch('/api/gasolina/tickets_desconocidos'+q()).then(r=>r.json())
+  ]);
+
+  // 1. KPIs
+  const difTotal = (kpis.importe_real||0) - (kpis.importe_autorizado||0);
+  const sinIdTotal = ticketsSinId.reduce((s,t)=>s+(t.importe||0), 0);
+  document.getElementById('gasolina-kpi').innerHTML = `
+    <div class="kpi-card"><span class="kpi-icon">📋</span><div class="kpi-label">Litros Autorizados</div><div class="kpi-value mono">${fmt(kpis.litros_autorizados)} L</div><div class="kpi-sub">${fmtP(kpis.importe_autorizado)} MXN</div></div>
+    <div class="kpi-card green"><span class="kpi-icon">⛽</span><div class="kpi-label">Litros Reales (Gasolinera)</div><div class="kpi-value mono text-green">${fmt(kpis.litros_real)} L</div><div class="kpi-sub">${fmtP(kpis.importe_real)} MXN</div></div>
+    <div class="kpi-card ${difTotal>0?'red':'green'}"><span class="kpi-icon">${difTotal>0?'⚠️':'✅'}</span><div class="kpi-label">Diferencia Real − Aut.</div><div class="kpi-value mono ${difTotal>0?'text-red':'text-green'}">${fmtP(difTotal)}</div><div class="kpi-sub">${difTotal>0?'Exceso de gasto':'Dentro del presupuesto'}</div></div>
+    ${sinIdTotal>0?`<div class="kpi-card amber"><span class="kpi-icon">❓</span><div class="kpi-label">Sin Identificar</div><div class="kpi-value mono text-amber">${ticketsSinId.length} tickets</div><div class="kpi-sub">${fmtP(sinIdTotal)} MXN</div></div>`:''}
+  `;
+
+  // 2. Conciliación por Placa
+  const tbConcil = document.getElementById('tbody-conciliacion-placa');
+  if (!concilPlaca.length) {
+    tbConcil.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted)">Sin datos para la semana seleccionada</td></tr>';
+  } else {
+    tbConcil.innerHTML = concilPlaca.map(r => {
+      const dif = r.diferencia || 0;
+      const difClass = dif > 50 ? 'text-red' : dif < -50 ? 'text-amber' : 'text-green';
+      const ltsDiv = (r.litros_consumidos||0) - (r.litros_autorizados||0);
+      const ltsDivClass = ltsDiv > 5 ? 'text-red' : ltsDiv < -5 ? 'text-amber' : 'text-green';
+      return `<tr>
+        <td class="mono" style="font-weight:600">${r.placa||'—'}</td>
+        <td>${r.responsable||'—'}</td><td>${r.unidad||'—'}</td><td>${r.obra||'—'}</td>
+        <td class="mono">Sem ${r.semana}</td>
+        <td class="mono">${fmt(r.litros_autorizados)} L</td>
+        <td class="mono ${ltsDivClass}">${fmt(r.litros_consumidos)} L</td>
+        <td class="mono">${fmtP(r.importe_autorizado)}</td>
+        <td class="mono text-green">${fmtP(r.importe_consumido)}</td>
+        <td class="mono ${difClass}" style="font-weight:700">${fmtP(dif)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // 3. Alertas Fecha/Proveedor
+  const alertasDiv = document.getElementById('gasolina-alertas');
+  if (!alertas.length) {
+    alertasDiv.innerHTML = '<div class="alert-box"><div class="icon">✅</div><div><h4>Conciliación Cuadrada</h4><p>No hay diferencias &gt; $10 entre la matriz y los reportes de gasolineras.</p></div></div>';
+  } else {
+    alertasDiv.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px">' +
+      alertas.map(a => `
+        <div class="alert-box" style="border-left:4px solid #ef4444;margin:0">
+          <div class="icon">🚨</div>
+          <div><h4 style="font-size:0.85rem">${a.placa} — ${a.fecha}</h4>
+          <p style="font-size:0.78rem">Excel: <b>${fmtP(a.monto_excel)}</b> | Gasolinera: <b>${fmtP(a.monto_ticket)}</b><br>
+          Proveedor: ${a.proveedor} | Diff: <b style="color:#ef4444">${fmtP(a.diferencia)}</b></p></div>
+        </div>`).join('') + '</div>';
+  }
+
+  // 4. Tickets sin Identificar
+  const tbDesc = document.getElementById('tbody-tickets-desconocidos');
+  if (!ticketsSinId.length) {
+    tbDesc.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">✅ Sin tickets sin identificar</td></tr>';
+  } else {
+    tbDesc.innerHTML = ticketsSinId.map(t => `<tr>
+      <td class="mono" style="color:#f59e0b;font-weight:600">${t.ticket||'—'}</td>
+      <td>${t.gasolinera||'—'}</td><td class="mono">${t.fecha||'—'}</td>
+      <td class="mono">${fmt(t.litros)} L</td><td class="mono">${fmtP(t.precio_litro)}</td>
+      <td class="mono text-red" style="font-weight:700">${fmtP(t.importe)}</td>
+      <td style="font-size:0.75rem;color:#f59e0b">⚠️ PENDIENTE</td>
+    </tr>`).join('');
+  }
+
+  // 5. Matriz Compleja
+  const thead = document.getElementById('thead-matriz-gasolina');
+  const tbody = document.getElementById('tbody-matriz-gasolina');
+  let hR1 = `<tr><th rowspan="2" style="background:#0ea5e9;color:white">Responsable</th><th rowspan="2" style="background:#0ea5e9;color:white">Obra</th><th rowspan="2" style="background:#0ea5e9;color:white">Unidad</th><th rowspan="2" style="background:#0ea5e9;color:white">Placas</th><th rowspan="2" style="background:#0ea5e9;color:white">$ Autorizado</th>`;
+  let hR2 = `<tr>`;
+  matrizData.fechas.forEach(f => {
+    hR1 += `<th colspan="3" style="text-align:center;background:#bbf7d0;color:#166534">${f}</th>`;
+    hR2 += `<th>LEVET</th><th>MOBILE</th><th>SIVALE</th>`;
+  });
+  hR1 += `<th rowspan="2" style="background:#0ea5e9;color:white">Total Usado</th><th rowspan="2" style="background:#0ea5e9;color:white">Saldo</th></tr>`;
+  hR2 += `</tr>`;
+  thead.innerHTML = hR1 + hR2;
+  let trs = ''; let lastR = '';
+  matrizData.filas.forEach(r => {
+    let respText = r.responsable !== lastR ? (r.responsable||'') : '';
+    lastR = r.responsable;
+    let tot = 0;
+    r.dias.forEach(d => { tot += (d.levet||0)+(d.mobile||0)+(d.sivale||0); });
+    let saldo = (r.autorizado||0) - tot;
+    let sc = saldo < -10 ? 'text-red' : saldo > 10 ? 'text-green' : '';
+    trs += `<tr><td style="font-weight:bold">${respText}</td><td>${r.obra||''}</td><td>${r.unidad||''}</td><td class="mono">${r.placa||''}</td><td class="mono text-green" style="font-weight:bold">${fmtP(r.autorizado)}</td>`;
+    r.dias.forEach(d => {
+      trs += `<td class="mono ${(d.levet||0)>0?'text-amber':''}">${(d.levet||0)>0?fmtP(d.levet):''}</td><td class="mono">${(d.mobile||0)>0?fmtP(d.mobile):''}</td><td class="mono ${(d.sivale||0)>0?'text-purple':''}">${(d.sivale||0)>0?fmtP(d.sivale):''}</td>`;
+    });
+    trs += `<td class="mono" style="font-weight:600">${fmtP(tot)}</td><td class="mono ${sc}" style="font-weight:700">${fmtP(saldo)}</td></tr>`;
+  });
+  tbody.innerHTML = trs;
+}
+
+// ─── ACARREOS ────────────────────────────────────────────────────────────
+async function loadAcarreos(){
+  const [sind,det,anom] = await Promise.all([
+    fetch('/api/acarreos/resumen_sindicatos'+q()).then(r=>r.json()),
+    fetch('/api/acarreos/detalle'+q()).then(r=>r.json()),
+    fetch('/api/acarreos/anomalias'+q()).then(r=>r.json())
+  ]);
+  const totalAc = sind.reduce((s,r)=>s+r.total,0);
+  document.getElementById('acarreos-kpi').innerHTML = `
+    <div class="kpi-card amber"><span class="kpi-icon">💰</span><div class="kpi-label">Total Acarreos</div><div class="kpi-value mono text-amber">${fmtP(totalAc)}</div></div>
+    <div class="kpi-card"><span class="kpi-icon">🤝</span><div class="kpi-label">Sindicatos</div><div class="kpi-value mono">${sind.length}</div></div>
+    ${anom.length>0?`<div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Anomalías</div><div class="kpi-value mono text-red">${anom.length}</div><div class="kpi-sub">Placas con 8+ viajes/día</div></div>`:''}
+  `;
+  destroyChart('as2'); charts['as2']=new Chart(document.getElementById('chart-as2').getContext('2d'),{type:'bar',data:{labels:sind.map(r=>r.nombre),datasets:[{label:'Total $',data:sind.map(r=>r.total),backgroundColor:COLORS,borderRadius:6}]},options:{plugins:{legend:{display:false}},scales:{y:axisOpts,x:xOpts}}});
+  const anomDiv=document.getElementById('anomalias-content');
+  anomDiv.innerHTML=anom.length?anom.map(r=>`<div class="alert-box"><div class="icon">⚠️</div><div><h4>Placa ${r.placa} — ${r.fecha}</h4><p>${fmtI(r.viajes_dia)} viajes — ${fmtP(r.monto_dia)}</p></div></div>`).join(''):'<div style="padding:30px;text-align:center;color:var(--text-muted)">✅ Sin anomalías detectadas</div>';
+  document.getElementById('tbody-acarreos').innerHTML = det.map(r=>`<tr><td>${r.sindicato||'—'}</td><td>${r.obra||'—'}</td><td class="mono">Sem ${r.semana}</td><td>${r.categoria||'—'}</td><td class="mono">${fmtI(r.total_viajes)}</td><td class="mono text-amber">${fmtP(r.total_a_pagar)}</td></tr>`).join('');
+}
+
+// ─── RENDIMIENTO ─────────────────────────────────────────────────────────
+async function loadRendimiento(){
+  const [ren,horas] = await Promise.all([
+    fetch('/api/rendimiento'+q()).then(r=>r.json()),
+    fetch('/api/horas_maquinaria'+q()).then(r=>r.json())
+  ]);
+  const rojos=ren.filter(r=>r.semaforo&&r.semaforo.startsWith('ROJO')).length;
+  const amarillos=ren.filter(r=>r.semaforo&&r.semaforo.startsWith('AMARILLO')).length;
+  const verdes=ren.filter(r=>r.semaforo&&r.semaforo.startsWith('VERDE')).length;
+  document.getElementById('semaforo-counts').innerHTML=`
+    <div style="flex:1;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.8rem;font-weight:700;color:#ef4444">${rojos}</div><div style="font-size:0.7rem;color:#ef4444">CRÍTICO</div></div>
+    <div style="flex:1;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.8rem;font-weight:700;color:#f59e0b">${amarillos}</div><div style="font-size:0.7rem;color:#f59e0b">REVISAR</div></div>
+    <div style="flex:1;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.8rem;font-weight:700;color:#10b981">${verdes}</div><div style="font-size:0.7rem;color:#10b981">NORMAL</div></div>`;
+  destroyChart('h'); const top15=horas.slice(0,15);
+  charts['h']=new Chart(document.getElementById('chart-h').getContext('2d'),{type:'bar',data:{labels:top15.map(r=>r.numero_economico),datasets:[{label:'Horas',data:top15.map(r=>r.total_horas),backgroundColor:'rgba(99,102,241,0.7)',borderRadius:6}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{y:{grid:{display:false},ticks:{color:'#64748b',font:{size:10}}},x:axisOpts}}});
+  const semMap={'ROJO - Anomalia':['badge-red','🔴'],'AMARILLO - Revisar':['badge-amber','🟡'],'VERDE - Normal':['badge-green','🟢']};
+  document.getElementById('tbody-rendimiento').innerHTML=ren.map(r=>{
+    const[bc,emoji]=semMap[r.semaforo]||['badge-blue','⚪'];
+    const dev=r.desviacion!=null?(r.desviacion>0?'text-red':r.desviacion<-15?'text-amber':'text-green'):'';
+    return `<tr><td class="mono">${r.numero_economico||'—'}</td><td>${r.descripcion||'—'}</td><td>${r.obra||'—'}</td><td class="mono">Sem ${r.semana_num}</td><td class="mono">${fmt(r.horas)}</td><td class="mono">${fmt(r.litros)}</td><td class="mono">${r.real_lh!=null?r.real_lh:'—'}</td><td class="mono">${r.base_lh!=null?r.base_lh:'—'}</td><td class="mono ${dev}">${r.desviacion!=null?(r.desviacion>0?'+':'')+r.desviacion+'%':'—'}</td><td><span class="badge ${bc}">${emoji} ${r.semaforo||'SIN DATOS'}</span></td></tr>`;
+  }).join('');
+}
+
+// ─── FACTURAS DOCUMENTALES ────────────────────────────────────────────────
+async function loadFacturasDoc(){
+  const d = await fetch('/api/facturas_doc').then(r=>r.json());
+  const div = document.getElementById('doc-list');
+  if(!d.length){ div.innerHTML='<div style="padding:20px;text-align:center;color:var(--text-muted)">No hay facturas cargadas.</div>'; return; }
+  div.innerHTML=d.map(r=>{
+    const bc=r.estatus_validacion==='VALIDADA'?'badge-green':r.estatus_validacion==='RECHAZADA'?'badge-red':'badge-amber';
+    const cIcon=r.confianza_clasif==='ALTA'?'🎯':r.confianza_clasif==='MEDIA'?'🔶':'❓';
+    const tipoBadge=r.tipo_combustible==='Diesel'?'<span style="font-size:0.68rem;background:rgba(59,130,246,0.2);color:#60a5fa;border-radius:4px;padding:2px 6px">🛢️ Diésel</span>':r.tipo_combustible==='Gasolina'?'<span style="font-size:0.68rem;background:rgba(16,185,129,0.2);color:#10b981;border-radius:4px;padding:2px 6px">⛽ Gasolina</span>':'<span style="font-size:0.68rem;background:rgba(239,68,68,0.2);color:#ef4444;border-radius:4px;padding:2px 6px">⚠️ Sin tipo</span>';
+    return `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:10px;background:rgba(0,0,0,0.2)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px"><strong style="font-size:0.78rem">${r.emisor_nombre||'—'}</strong><span class="badge ${bc}">${r.estatus_validacion}</span></div>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:3px">${tipoBadge} ${cIcon} <span style="font-size:0.73rem;color:#60a5fa">${r.destino_suministro||'—'}</span></div>
+      ${r.nota_leyenda&&r.nota_leyenda!=='—'?`<div style="font-size:0.68rem;color:var(--text-muted);font-style:italic;border-left:2px solid rgba(99,160,255,0.3);padding-left:6px;margin-bottom:6px">${r.nota_leyenda}</div>`:''}
+      <div style="display:flex;justify-content:space-between;font-size:0.73rem;color:var(--text-muted);margin-bottom:8px"><span class="mono">F-${r.folio}</span><span class="mono">${r.fecha_emision?r.fecha_emision.substring(0,10):''}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><span class="mono text-green" style="font-weight:700">${fmt(r.litros_totales)} L</span><br><span class="mono" style="font-size:0.73rem">${fmtP(r.total)}</span></div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">
+          ${r.tiene_pdf?`<button onclick="viewPDF(${r.id})" style="padding:4px 8px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem">👁 PDF</button>`:''}
+          ${r.estatus_validacion!=='VALIDADA'?`<button onclick="updateDocStatus(${r.id},'VALIDADA')" style="padding:4px 8px;background:#10b981;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem">✅ Validar</button>`:''}
+          ${r.estatus_validacion!=='RECHAZADA'?`<button onclick="updateDocStatus(${r.id},'RECHAZADA')" style="padding:4px 8px;background:#ef4444;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:0.7rem">❌ Rechazar</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function viewPDF(id){ document.getElementById('pdf-viewer').src='/api/facturas_doc/pdf/'+id; }
+async function updateDocStatus(id,estatus){
+  if(!confirm('¿Marcar factura como '+estatus+'?')) return;
+  await fetch('/api/facturas_doc/status/'+id,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({estatus})});
+  loadFacturasDoc(); loadDiesel();
+}
+
+// ─── TOTALES ─────────────────────────────────────────────────────────────
+async function loadTotales(){
+  const data = await fetch('/api/totales').then(r=>r.json());
+  let cs=data.consumos_por_semana, as=data.acarreos_por_semana, fr=data.facturas_resumen;
+  const s = document.getElementById('week-selector').value;
+  if(s !== 'todas') {
+    const wInt = parseInt(s);
+    cs = cs.filter(r => r.semana === wInt);
+    as = as.filter(r => r.semana === wInt);
+  }
+  const totalD=cs.reduce((s,r)=>s+r.diesel,0);
+  const totalG=cs.reduce((s,r)=>s+r.gasolina,0);
+  const totalGastoGas=cs.reduce((s,r)=>s+r.gasto_gasolina,0);
+  const totalAc=as.reduce((s,r)=>s+r.acarreos,0);
+  const totalV=as.reduce((s,r)=>s+r.viajes,0);
+  document.getElementById('totales-kpi').innerHTML=`
+    <div class="kpi-card"><span class="kpi-icon">🛢️</span><div class="kpi-label">Total Diésel</div><div class="kpi-value mono">${fmt(totalD)} L</div></div>
+    <div class="kpi-card green"><span class="kpi-icon">⛽</span><div class="kpi-label">Total Gasolina</div><div class="kpi-value mono text-green">${fmt(totalG)} L</div><div class="kpi-sub text-green">${fmtP(totalGastoGas)} MXN</div></div>
+    <div class="kpi-card"><span class="kpi-icon">📊</span><div class="kpi-label">Total Combustible</div><div class="kpi-value mono">${fmt(totalD+totalG)} L</div></div>
+    <div class="kpi-card amber"><span class="kpi-icon">🚛</span><div class="kpi-label">Total Acarreos</div><div class="kpi-value mono text-amber">${fmtP(totalAc)}</div><div class="kpi-sub">${fmtI(totalV)} viajes</div></div>
+  `;
+  destroyChart('tc'); charts['tc']=new Chart(document.getElementById('chart-tc').getContext('2d'),{type:'bar',data:{labels:cs.map(r=>'Sem '+r.semana),datasets:[{label:'Diésel (L)',data:cs.map(r=>r.diesel),backgroundColor:'rgba(59,130,246,0.7)',borderRadius:4},{label:'Gasolina (L)',data:cs.map(r=>r.gasolina),backgroundColor:'rgba(16,185,129,0.7)',borderRadius:4}]},options:{plugins:{legend:{labels:{color:'#e2e8f0'}}},scales:{y:axisOpts,x:xOpts}}});
+  destroyChart('ta'); charts['ta']=new Chart(document.getElementById('chart-ta').getContext('2d'),{type:'bar',data:{labels:as.map(r=>'Sem '+r.semana),datasets:[{label:'Acarreos $',data:as.map(r=>r.acarreos),backgroundColor:'rgba(245,158,11,0.7)',borderRadius:4}]},options:{plugins:{legend:{display:false}},scales:{y:axisOpts,x:xOpts}}});
+  document.getElementById('tbody-totales-fac').innerHTML=(fr.length?fr:[]).map(r=>`<tr><td>${r.tipo_combustible}</td><td class="mono">${fmtI(r.facturas)}</td><td class="mono text-green">${fmt(r.litros)} L</td><td class="mono text-amber">${fmtP(r.monto)}</td></tr>`).join('');
+  const semanas=[...new Set([...cs.map(r=>r.semana),...as.map(r=>r.semana)])].sort();
+  const csMap=Object.fromEntries(cs.map(r=>[r.semana,r]));
+  const asMap=Object.fromEntries(as.map(r=>[r.semana,r]));
+  document.getElementById('tbody-totales-sem').innerHTML=semanas.map(s=>{
+    const c=csMap[s]||{diesel:0,gasolina:0}; const a=asMap[s]||{acarreos:0,viajes:0};
+    return `<tr><td class="mono">Sem ${s}</td><td class="mono">${fmt(c.diesel)} L</td><td class="mono text-green">${fmt(c.gasolina)} L</td><td class="mono" style="font-weight:600">${fmt(c.diesel+c.gasolina)} L</td><td class="mono text-amber">${fmtP(a.acarreos)}</td><td class="mono">${fmtI(a.viajes)}</td></tr>`;
+  }).join('');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>

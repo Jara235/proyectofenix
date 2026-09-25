@@ -1,0 +1,2103 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Datalists de Catálogos para Autocompletado en Filas -->
+<datalist id="listaEquiposCatalogos">
+    {% for eq in equipos %}
+        <option value="{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}"></option>
+        <option value="{{ eq['numero_economico'] }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="listaObrasCatalogos">
+    {% for ob in obras %}
+        <option value="{{ ob['nombre'] }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="listaEquiposTransporte">
+    {% for eq in transportes_equipos %}
+        <option value="{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}"></option>
+        <option value="{{ eq['numero_economico'] }}"></option>
+    {% endfor %}
+</datalist>
+
+<!-- ==================== SWITCH DE ÁREA (OBRA VS TRANSPORTES) ==================== -->
+<div style="display: flex; justify-content: center; align-items: center; margin-bottom: 1.5rem;">
+    <div style="background: rgba(15, 23, 42, 0.9); padding: 6px; border-radius: 16px; border: 2px solid rgba(255, 255, 255, 0.12); display: inline-flex; gap: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.45);">
+        <button type="button" id="btnAreaObra" class="area-switch-btn" onclick="setAreaMode('obra')"
+            style="padding: 0.75rem 1.6rem; border-radius: 12px; border: none; background: #2563eb; color: #ffffff; cursor: pointer; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(37,99,235,0.4);">
+            <span style="font-size: 1.25rem;">🏗️</span> 
+            <div style="text-align: left;">
+                <div style="line-height: 1.1;">ÁREA: OBRA</div>
+                <div style="font-size: 0.75rem; font-weight: 400; opacity: 0.85;">Maquinaria en Sitio</div>
+            </div>
+        </button>
+        <button type="button" id="btnAreaTransportes" class="area-switch-btn" onclick="setAreaMode('transportes')"
+            style="padding: 0.75rem 1.6rem; border-radius: 12px; border: none; background: transparent; color: #94a3b8; cursor: pointer; font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
+            <span style="font-size: 1.25rem;">🚛</span> 
+            <div style="text-align: left;">
+                <div style="line-height: 1.1;">ÁREA: TRANSPORTES</div>
+                <div style="font-size: 0.75rem; font-weight: 400; opacity: 0.85;">Tanque Pegaso / Traslados</div>
+            </div>
+        </button>
+    </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.25rem;">
+    <div>
+        <h1 class="header-title" id="pageHeaderTitle" style="text-align: left; margin-bottom: 0.2rem;">Diésel <span style="font-size: 1.1rem; color: #3b82f6; font-weight: normal; margin-left: 8px;">🏗️ Maquinaria en Obra</span></h1>
+        <p class="header-subtitle" id="pageHeaderSubtitle" style="text-align: left; margin-bottom: 0;">Ingreso de bitácoras y captura masiva de reportes en PDF al sistema.</p>
+    </div>
+    
+    <!-- Tab Toggle -->
+    <div id="tabButtonsContainer" style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 4px; display: flex; gap: 6px; flex-wrap: wrap;">
+        <button id="btnTabConsumo" class="tab-btn active" onclick="switchTab('consumo')" style="padding: 0.6rem 1.15rem; border-radius: 8px; border: none; background: var(--primary); color: white; cursor: pointer; font-weight: 600; font-size: 0.92rem;">🚛 Consumos Marimba / Suministro</button>
+        <button id="btnTabOperador" class="tab-btn" onclick="switchTab('operador')" style="padding: 0.6rem 1.15rem; border-radius: 8px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-size: 0.92rem;">📱 Cargas de Operador (Campo)</button>
+        <button id="btnTabMasiva" class="tab-btn" onclick="switchTab('masiva')" style="padding: 0.6rem 1.15rem; border-radius: 8px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-size: 0.92rem;">📄 Bitácora PDF (Obra)</button>
+        <button id="btnTabBitacoraTransportes" class="tab-btn" onclick="switchTab('bitacora_transportes')" style="display:none; padding: 0.6rem 1.15rem; border-radius: 8px; border: none; background: transparent; color: #34d399; cursor: pointer; font-weight: 600; font-size: 0.92rem;">📊 Bitácora Excel (Tanque Pegaso)</button>
+    </div>
+</div>
+
+<!-- ==================== FORMULARIO DE CONSUMOS INDIVIDUALES (MARIMBA / TRANSPORTES) ==================== -->
+<div class="glass-card" id="formConsumoContainer" style="max-width: 1000px; margin: 0 auto;">
+    <form id="dieselForm">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" name="fecha" id="fechaInputDiesel" value="{{ current_date }}" required>
+            </div>
+            <div class="form-group">
+                <label>Semana</label>
+                <input type="number" name="semana" id="semanaInputDiesel" value="{{ current_week }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Origen de Carga</label>
+                <select name="origen" id="origenSelect" required>
+                    {% for ori in origenes %}
+                        <option value="{{ ori }}">{{ ori }}</option>
+                    {% endfor %}
+                    <option value="Tanque Pegaso">Tanque Pegaso</option>
+                </select>
+            </div>
+            <div class="form-group" id="grpTipoOperacion">
+                <label>Tipo de Operación</label>
+                <select id="opSelect" onchange="updateOperacion(this)" required>
+                    {% for op in operaciones %}
+                        <option value="{{ op['codigo_operacion'] }}|{{ op['tipo_operacion'] }}" 
+                        {% if op['codigo_operacion'] == 'CMQ' %}selected{% endif %}>
+                            {{ op['tipo_operacion'] }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="tipo_movimiento_codigo" id="opCodigo" value="CMQ">
+                <input type="hidden" name="tipo_movimiento_nombre" id="opNombre" value="CARGA MAQUINARIA">
+            </div>
+            
+            <div class="form-group">
+                <label>Obra Destino</label>
+                <select name="obra_destino" id="obraSelect" required placeholder="Escribe para buscar...">
+                    <option value="">Selecciona la obra...</option>
+                    {% for o in obras %}
+                        <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="lblResponsable">Ing. Responsable de Obra</label>
+                <select name="responsable" id="responsableSelect" required placeholder="Selecciona el responsable...">
+                    <option value="">Selecciona el responsable...</option>
+                    {% for r in responsables %}
+                        <option value="{{ r['nombre'] }}">{{ r['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 2rem 0;">
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label id="lblEquipo">Equipo Económico / Maquinaria</label>
+                <select name="equipo_economico" id="equipoSelect" required placeholder="Escribe para buscar...">
+                    <option value="">Selecciona unidad...</option>
+                    {% for eq in equipos %}
+                        <option value="{{ eq['numero_economico'] }}">{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--primary);">Litros Cargados</label>
+                <input type="number" step="0.01" name="litros" id="litrosInput" placeholder="Ej. 250.00" required>
+            </div>
+            <div class="form-group">
+                <label>Costo por Litro (Autocálculo)</label>
+                <input type="number" step="0.01" name="costo_por_litro" id="costoInput" value="27.00">
+            </div>
+            <div class="form-group" id="grpOdometroTransportes" style="display: none;">
+                <label style="color: #38bdf8;">Odómetro (Km)</label>
+                <input type="number" step="0.1" name="odometro_km" placeholder="Ej. 125430">
+            </div>
+            <div class="form-group" id="grpHorometroTransportes" style="display: none;">
+                <label style="color: #f59e0b;">Horómetro (Hrs)</label>
+                <input type="number" step="0.1" name="horometro" placeholder="Ej. 3450.5">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 0.6rem; font-size: 0.85rem; color: #93c5fd; display: flex; gap: 8px; align-items: center;">
+                <span>📸</span>
+                <span><strong>Evidencias Obligatorias Marimba:</strong> 1️⃣ Foto del cuenta litros del medidor | 2️⃣ Foto de la manguera conectada a la máquina receptora.</span>
+            </div>
+            <label>Fotografías de Evidencia (Puedes seleccionar varias, arrastrar o pegar con Ctrl+V / Portapapeles)</label>
+            <div class="file-upload-wrapper" id="dropAreaConsumo" style="height: auto; min-height: 120px; padding: 1.25rem; position: relative;">
+                <input type="file" name="foto_evidencia" accept="image/*" id="fileInputConsumo" multiple style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 2;">
+                <div class="file-upload-text" id="uploadTextConsumo" style="pointer-events: none; z-index: 1;">📸 Toca para abrir la cámara, selecciona fotos, arrastra o pega desde el portapapeles (Ctrl + V)</div>
+                <div id="previewConsumo" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; position: relative; z-index: 3;"></div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtnConsumo">Guardar Consumo Marimba</button>
+    </form>
+</div>
+
+<!-- ==================== FORMULARIO DE CARGAS DE OPERADOR (CAMPO / HORÓMETRO) ==================== -->
+<div class="glass-card" id="formOperadorContainer" style="max-width: 1000px; margin: 0 auto; display: none;">
+    <div style="margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">
+        <h3 style="margin: 0; color: #38bdf8; font-size: 1.25rem; display: flex; align-items: center; gap: 8px;">
+            📱 Carga de Diésel Reportada por Operador (Campo)
+        </h3>
+        <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.88rem;">
+            Captura individual de suministros recibidos por maquinaria con horómetro inicial, operador responsable y evidencias fotográficas.
+        </p>
+    </div>
+
+    <form id="dieselOperadorForm">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Fecha de Carga</label>
+                <input type="date" name="fecha" id="fechaInputOperador" value="{{ current_date }}" required>
+            </div>
+            <div class="form-group">
+                <label>Semana No.</label>
+                <input type="number" name="semana" id="semanaInputOperador" value="{{ current_week }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Origen de Suministro</label>
+                <select name="origen" id="origenOperadorSelect" required>
+                    {% for ori in origenes %}
+                        <option value="{{ ori }}">{{ ori }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Obra Destino</label>
+                <select name="obra_destino" id="obraOperadorSelect" required placeholder="Escribe para buscar obra...">
+                    <option value="">Selecciona la obra...</option>
+                    {% for o in obras %}
+                        <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Ing. Responsable de Obra</label>
+                <select name="responsable" id="responsableOperadorSelect" required placeholder="Selecciona el ingeniero...">
+                    <option value="">Selecciona el responsable...</option>
+                    {% for r in responsables %}
+                        <option value="{{ r['nombre'] }}">{{ r['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color: #38bdf8; font-weight: 600;">👷 Responsable de Maquinaria / Operador</label>
+                <select name="responsable_maquinaria" id="respMaquinariaSelect" required placeholder="Escribe o selecciona operador...">
+                    <option value="">Selecciona o escribe operador...</option>
+                    {% for op in operadores %}
+                        <option value="{{ op['nombre'] }}">{{ op['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 1.75rem 0;">
+
+        <div class="form-grid" style="grid-template-columns: 2fr 1fr 1fr;">
+            <div class="form-group">
+                <label>Equipo Económico / Maquinaria</label>
+                <select name="equipo_economico" id="equipoOperadorSelect" required placeholder="Escribe para buscar maquinaria...">
+                    <option value="">Selecciona unidad...</option>
+                    {% for eq in equipos %}
+                        <option value="{{ eq['numero_economico'] }}">{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color: #f59e0b; font-weight: 600;">⏱️ Horómetro Inicial <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">(Opcional)</span></label>
+                <input type="number" step="0.01" name="horometro_inicial" id="horometroInicialInput" placeholder="Ej. 1250.5 (si aplica)">
+            </div>
+
+            <div class="form-group">
+                <label style="color: #34d399; font-weight: 600;">Litros Cargados</label>
+                <input type="number" step="0.01" name="litros" placeholder="Ej. 250.00" required>
+            </div>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1rem;">
+            <div class="form-group">
+                <label>Costo por Litro</label>
+                <input type="number" step="0.01" name="costo_por_litro" value="27.00">
+            </div>
+            <div class="form-group">
+                <label>Observaciones / Notas de WhatsApp</label>
+                <input type="text" name="observaciones" placeholder="Ej. Carga reportada por Alan - Fotos contador y horómetro">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <div style="background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 0.6rem; font-size: 0.85rem; color: #7dd3fc; display: flex; gap: 8px; align-items: center;">
+                <span>📸</span>
+                <span><strong>Evidencias Obligatorias Operador:</strong> 1️⃣ Foto del horómetro en tablero | 2️⃣ Foto del cuenta litros / medidor (si la máquina lo tiene) | 3️⃣ Litros exactos ingresados.</span>
+            </div>
+            <label>Fotografías de Evidencia (Contador inicial, contador final y horómetro de cabina)</label>
+            <div class="file-upload-wrapper" id="dropAreaOperador" style="height: auto; min-height: 120px; padding: 1.25rem; position: relative;">
+                <input type="file" name="foto_evidencia" accept="image/*" id="fileInputOperador" multiple style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 2;">
+                <div class="file-upload-text" id="uploadTextOperador" style="pointer-events: none; z-index: 1;">📸 Toca para abrir la cámara, arrastra fotos o pega desde el portapapeles (Ctrl + V)</div>
+                <div id="previewOperador" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; position: relative; z-index: 3;"></div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtnOperador" style="background: linear-gradient(135deg, #0284c7, #2563eb);">💾 Guardar Carga de Operador</button>
+    </form>
+</div>
+
+<!-- ==================== CAPTURA MASIVA DE BITÁCORAS PDF (GRID ESPACIOSO 63% / 35%) ==================== -->
+<div class="glass-card" id="formMasivaContainer" style="display: none; padding: 1.5rem; width: 100%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div>
+            <h3 style="margin: 0; color: var(--accent); font-size: 1.35rem;">📄 Lectura y Captura Masiva de Bitácoras PDF</h3>
+            <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.92rem;">Sube o arrastra el reporte semanal en PDF para extracción automática, detección de duplicados y edición fluida.</p>
+        </div>
+    </div>
+    
+    <!-- Grid Optimizado (63% Tabla Espaciosa / 35% PDF Compacto) -->
+    <div style="display: grid; grid-template-columns: 63% 35%; gap: 2%; width: 100%;">
+        
+        <!-- Lado Izquierdo: Tabla Espaciosa y Controles -->
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            
+            <!-- Zona Drag and Drop -->
+            <div id="dropZoneMasiva" style="border: 2px dashed rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 1.25rem; text-align: center; background: rgba(15, 23, 42, 0.4); cursor: pointer; transition: all 0.3s ease;">
+                <input type="file" id="archivoPdfMasiva" accept=".pdf" style="display: none;">
+                <div style="font-size: 2rem; margin-bottom: 0.25rem;">📂</div>
+                <div style="font-weight: 600; color: var(--text-main); font-size: 1.05rem;">Arrastra aquí el reporte PDF o haz clic para seleccionar</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Soporta formatos GC-COMB-006 (Marimba M-01, Pegaso, Plantas, Obra)</div>
+            </div>
+
+            <div id="loaderMasiva" style="display: none; text-align: center; padding: 1.25rem; color: var(--accent); font-weight: 600; font-size: 1.05rem;">
+                ⏳ Extrayendo información, leyendo PDF a fondo y verificando duplicados...
+            </div>
+
+            <!-- Banner Alerta de Duplicados -->
+            <div id="alertDuplicadosMasiva" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #f87171; color: #fca5a5; padding: 0.85rem 1.25rem; border-radius: 10px; font-size: 0.9rem; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>⚠️ Atención:</strong> Se detectaron <strong id="lblCantDuplicados">0</strong> registros que coinciden con cargas ya existentes en la base de datos.
+                </div>
+                <button type="button" onclick="desmarcarTodosDuplicados()" style="background: #ef4444; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">Excluir Duplicados</button>
+            </div>
+
+            <!-- Panel de Controles Generales Horizontal -->
+            <div id="controlesGeneralesMasiva" style="display: none; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.25rem; border-radius: 12px;">
+                <h4 style="margin: 0 0 0.75rem 0; color: var(--primary); font-size: 0.95rem;">⚙️ Configuración General de la Bitácora</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Obra Destino General</label>
+                        <select id="obraMasivaSelect" style="width: 100%; padding: 0.55rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;" onchange="actualizarObraTodasFilas(this.value)">
+                            <option value="">Seleccionar Obra...</option>
+                            {% for ob in obras %}
+                                <option value="{{ ob['nombre'] }}">{{ ob['nombre'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Ing. Responsable General</label>
+                        <select id="responsableMasivaSelect" style="width: 100%; padding: 0.55rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;" onchange="actualizarResponsableTodasFilas(this.value)">
+                            <option value="">Seleccionar Responsable...</option>
+                            {% for r in responsables %}
+                                <option value="{{ r['nombre'] }}">{{ r['nombre'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Semana No.</label>
+                        <input type="number" id="semanaMasivaInput" value="{{ current_week }}" style="width: 100%; padding: 0.5rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Origen de Carga</label>
+                        <input type="text" id="origenMasivaInput" value="Marimba M-01" style="width: 100%; padding: 0.5rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla Espaciosa con Día Compacto y Litros / Obra / Responsable Visibles -->
+            <div id="contenedorTablaMasiva" style="display: none; flex-direction: column; gap: 0.85rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 0.25rem;">
+                    <h4 style="margin: 0; color: var(--text-main); font-size: 1.05rem;">📋 Partidas Detectadas (<span id="countPartidas">0</span>)</h4>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #34d399;">Total a Guardar: <span id="totalLitrosMasiva">0.00</span> Lts</div>
+                </div>
+
+                <div style="max-height: 540px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; background: rgba(0,0,0,0.3);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+                        <thead>
+                            <tr style="background: rgba(30, 41, 59, 0.95); position: sticky; top: 0; z-index: 10; color: var(--text-muted); font-size: 0.82rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th style="padding: 0.65rem 0.4rem; width: 35px; text-align: center;">Inc.</th>
+                                <th style="padding: 0.65rem 0.4rem; width: 55px; text-align: center;">Día</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 32%;">Equipo / Maquinaria</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 90px; text-align: center;">Litros</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 170px;">Obra</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 170px;">Ing. Responsable</th>
+                                <th style="padding: 0.65rem 0.4rem; width: 35px; text-align: center;">✕</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyFilasMasiva">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn-primary" id="btnGuardarMasiva" style="margin-top: 0.5rem; padding: 0.85rem; font-size: 1.05rem; font-weight: bold; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);" onclick="guardarBitacoraMasiva()">
+                    💾 Guardar Bitácora Completa (<span id="btnCountPartidas">0</span> Registros)
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Lado Derecho: Visualizador Interactivo PDF (35% de Ancho) -->
+        <div style="background: rgba(15, 23, 42, 0.85); border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; height: calc(100vh - 200px); min-height: 780px; display: flex; flex-direction: column;">
+            <div style="background: rgba(30, 41, 59, 0.95); padding: 0.65rem 1rem; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: var(--text-main);">👁️ Vista Previa PDF</span>
+                <span id="pdfStatusLabel" style="color: var(--accent); font-weight: 500; font-size: 0.8rem;">Sin archivo</span>
+            </div>
+            <iframe id="pdfViewerMasiva" style="width: 100%; height: 100%; border: none; background: #0f172a;" src=""></iframe>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== BITÁCORA EXCEL DIESEL TRANSPORTES (TANQUE PEGASO) ==================== -->
+<div class="glass-card" id="formBitacoraTransportesContainer" style="display: none; padding: 1.5rem; width: 100%; max-width: 1400px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <h2 style="margin: 0; color: #34d399; font-size: 1.35rem; display: flex; align-items: center; gap: 8px;">
+                <span>📊</span> Bitácora Diésel Transportes - Tanque Pegaso
+            </h2>
+            <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.88rem;">
+                Extracción masiva de archivos semanales Excel, balance y cuadratura de tanque vs bomba, y propuesta automática de autorizaciones por vehículo.
+            </p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button type="button" class="btn-secondary" onclick="limpiarBitacoraTransportes()" style="padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 8px;">
+                🔄 Limpiar
+            </button>
+        </div>
+    </div>
+
+    <!-- Dropzone de Excel -->
+    <div id="dropzoneTransportesExcel" style="border: 2px dashed rgba(52, 211, 153, 0.4); border-radius: 12px; padding: 2.2rem 1.5rem; text-align: center; background: rgba(5, 150, 105, 0.05); cursor: pointer; transition: all 0.25s ease;"
+         onclick="document.getElementById('fileInputTransportesExcel').click()"
+         ondragover="event.preventDefault(); this.style.borderColor='#10b981'; this.style.background='rgba(5, 150, 105, 0.12)';"
+         ondragleave="this.style.borderColor='rgba(52, 211, 153, 0.4)'; this.style.background='rgba(5, 150, 105, 0.05)';"
+         ondrop="event.preventDefault(); this.style.borderColor='rgba(52, 211, 153, 0.4)'; this.style.background='rgba(5, 150, 105, 0.05)'; manejarDropExcelTransportes(event);">
+        
+        <input type="file" id="fileInputTransportesExcel" accept=".xlsx, .xls" style="display: none;" onchange="manejarArchivoExcelTransportes(this.files[0])">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📗</div>
+        <h4 style="margin: 0 0 0.35rem 0; color: #34d399; font-size: 1.1rem;">Haz clic o arrastra aquí la Bitácora Diésel de Transportes (.xlsx)</h4>
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem;">
+            Compatible con formatos tipo <code>BITACORA DIESEL TANQUE PEGASO semana XX.xlsx</code>
+        </p>
+        <div id="transportesFileInfo" style="display: none; margin-top: 1rem; background: rgba(0,0,0,0.4); border: 1px solid rgba(52, 211, 153, 0.3); border-radius: 8px; padding: 0.6rem 1rem; display: inline-flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.2rem;">📄</span>
+            <span id="transportesFileName" style="font-weight: 600; color: #fff;">archivo.xlsx</span>
+            <span id="transportesFileSize" style="color: var(--text-muted); font-size: 0.8rem;">(0 KB)</span>
+        </div>
+    </div>
+
+    <!-- Indicador de Carga / Spinner -->
+    <div id="spinnerTransportesExcel" style="display: none; text-align: center; padding: 2.5rem 1rem;">
+        <div style="display: inline-block; width: 42px; height: 42px; border: 4px solid rgba(52, 211, 153, 0.2); border-top-color: #34d399; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <p style="margin-top: 1rem; color: #34d399; font-weight: 600; font-size: 1rem;">Analizando bitácora y calculando balances de tanque...</p>
+    </div>
+
+    <!-- Contenedor Principal de Resultados (Oculto hasta que se procese el Excel) -->
+    <div id="resultadoBitacoraTransportes" style="display: none; margin-top: 1.5rem;">
+        
+        <!-- Selector de Hoja si hay múltiples semanas -->
+        <div id="selectorHojasTransportes" style="display: none; margin-bottom: 1.25rem; background: rgba(15, 23, 42, 0.6); padding: 0.6rem 1rem; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-weight: 600; font-size: 0.88rem; color: #94a3b8;">📅 Semanas Detectadas:</span>
+            <div id="pillsHojasTransportes" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+        </div>
+
+        <!-- 4 TARJETAS KPI EJECUTIVAS: BALANCE DE TANQUE PEGASO -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 1.5rem;">
+            
+            <!-- TARJETA 1: INVENTARIO FÍSICO TANQUE PEGASO -->
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 1rem 1.2rem; position: relative; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #60a5fa; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">🛢️ Tanque Pegaso (Inventario)</span>
+                    <span id="kpi-empresa-tag" style="background: rgba(59,130,246,0.2); color: #93c5fd; padding: 2px 7px; border-radius: 6px; font-size: 0.72rem; font-weight: 600;">JDJ</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Diésel Inicial:</span>
+                    <span id="kpi-tanque-ini" style="font-weight: bold; font-size: 1.05rem; color: #fff;">0.00 L</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Diésel Final:</span>
+                    <span id="kpi-tanque-fin" style="font-weight: bold; font-size: 1.05rem; color: #93c5fd;">0.00 L</span>
+                </div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0;">Consumo Neto Tanque:</span>
+                    <span id="kpi-tanque-consumo" style="font-weight: 800; font-size: 1.15rem; color: #38bdf8;">0.00 L</span>
+                </div>
+            </div>
+
+            <!-- TARJETA 2: CUENTALITROS / BOMBA -->
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1rem 1.2rem; position: relative; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #34d399; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">📟 Cuentalitros Bomba</span>
+                    <span id="kpi-cuadratura-status" style="background: rgba(16,185,129,0.2); color: #34d399; padding: 2px 7px; border-radius: 6px; font-size: 0.72rem; font-weight: 700;">🟢 Cuadra 100%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Lectura Inicial:</span>
+                    <span id="kpi-cuenta-ini" style="font-weight: bold; font-size: 1.05rem; color: #fff; font-family: monospace;">0</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Lectura Final:</span>
+                    <span id="kpi-cuenta-fin" style="font-weight: bold; font-size: 1.05rem; color: #a7f3d0; font-family: monospace;">0</span>
+                </div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0;">Salida Registrada Bomba:</span>
+                    <span id="kpi-cuenta-delta" style="font-weight: 800; font-size: 1.15rem; color: #10b981;">0.00 L</span>
+                </div>
+            </div>
+
+            <!-- TARJETA 3: DESPACHO DIRECTO (GASOLINERA) -->
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 1rem 1.2rem; position: relative; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #fbbf24; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">⛽ Cargas Gasolinera Externa</span>
+                    <span id="kpi-factura-ref" style="background: rgba(245,158,11,0.2); color: #fde68a; padding: 2px 7px; border-radius: 6px; font-size: 0.72rem; font-weight: 600;">Directo</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Litros Despacho Directo:</span>
+                    <span id="kpi-lts-directo" style="font-weight: bold; font-size: 1.05rem; color: #fef08a;">0.00 L</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Cargas Externas:</span>
+                    <span id="kpi-count-directo" style="font-weight: bold; font-size: 1.05rem; color: #fff;">0</span>
+                </div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0;">Impacto en Tanque:</span>
+                    <span style="font-weight: 700; font-size: 0.92rem; color: #94a3b8;">0 L (No toca bomba)</span>
+                </div>
+            </div>
+
+            <!-- TARJETA 4: BALANCE CONSOLIDADO Y COSTO -->
+            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(168, 85, 247, 0.3); border-radius: 12px; padding: 1rem 1.2rem; position: relative; overflow: hidden;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="color: #c084fc; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">💰 Costo Total Flotilla</span>
+                    <span id="kpi-semana-badge" style="background: rgba(168,85,247,0.2); color: #e9d5ff; padding: 2px 7px; border-radius: 6px; font-size: 0.72rem; font-weight: 700;">SEM --</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Litros Totales (Tanque + Ext):</span>
+                    <span id="kpi-lts-totales" style="font-weight: 800; font-size: 1.15rem; color: #fff;">0.00 L</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px;">
+                    <span style="font-size: 0.82rem; color: var(--text-muted);">Precio Unitario:</span>
+                    <span style="font-weight: bold; font-size: 0.95rem; color: #cbd5e1;">$27.00 / L</span>
+                </div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin-top: 8px; padding-top: 6px; display: flex; justify-content: space-between; align-items: baseline;">
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #e2e8f0;">Importe Total Semanal:</span>
+                    <span id="kpi-importe-total" style="font-weight: 800; font-size: 1.2rem; color: #a855f7;">$0.00 MXN</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Subtabs de Visualización: PROPUESTAS VS PARTIDAS -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 1rem; padding-bottom: 6px;">
+            <button type="button" id="btnSubTabPropuestas" onclick="switchSubTabTransportes('propuestas')"
+                    style="background: #059669; color: white; border: none; padding: 7px 16px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer;">
+                🎯 Propuesta de Autorizaciones Semanales (<span id="countVehiculosPropuesta">0</span> Unidades)
+            </button>
+            <button type="button" id="btnSubTabPartidas" onclick="switchSubTabTransportes('partidas')"
+                    style="background: transparent; color: #94a3b8; border: none; padding: 7px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer;">
+                📋 Partidas Extraídas de la Bitácora (<span id="countPartidasTransportes">0</span>)
+            </button>
+        </div>
+
+        <!-- VISTA A: TABLA DE PROPUESTAS DE AUTORIZACIÓN POR VEHÍCULO -->
+        <div id="vistaPropuestasTransportes" style="display: block;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 8px;">
+                <p style="margin: 0; color: #94a3b8; font-size: 0.85rem;">
+                    💡 La propuesta calcula el consumo histórico de cada unidad y proyecta el tope semanal recomendado con holgura operativa (+10% redondeado a 50 L).
+                </p>
+                <div style="display: flex; gap: 12px; font-size: 0.78rem; font-weight: 600;">
+                    <span style="color: #34d399;">🟢 Normal (&le; 10%)</span>
+                    <span style="color: #fbbf24;">🟡 Alerta (10% - 25%)</span>
+                    <span style="color: #f87171;">🔴 Excedido (&gt; 25%)</span>
+                </div>
+            </div>
+
+            <div style="max-height: 520px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(0,0,0,0.3);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.86rem; text-align: left;">
+                    <thead>
+                        <tr style="background: rgba(30, 41, 59, 0.95); position: sticky; top: 0; z-index: 10; color: #94a3b8; font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th style="padding: 0.65rem 0.6rem; text-align: center; width: 45px;">Sem.</th>
+                            <th style="padding: 0.65rem 0.6rem;">Unidad / Tracto</th>
+                            <th style="padding: 0.65rem 0.6rem;">Operador(es) Habitual(es)</th>
+                            <th style="padding: 0.65rem 0.6rem; text-align: right;">Consumo Semana (L)</th>
+                            <th style="padding: 0.65rem 0.6rem; text-align: right;">Prom. Histórico (L)</th>
+                            <th style="padding: 0.65rem 0.6rem; text-align: center;">Var. (%)</th>
+                            <th style="padding: 0.65rem 0.6rem; text-align: right; color: #34d399; font-weight: bold;">Tope Propuesto (L)</th>
+                            <th style="padding: 0.65rem 0.6rem; text-align: right; color: #c084fc;">Costo Propuesto ($)</th>
+                            <th style="padding: 0.65rem 0.6rem;">Recomendación Operativa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyPropuestasTransportes">
+                        <!-- Filas de propuesta generadas dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- VISTA B: TABLA DE PARTIDAS EXTRAÍDAS DE LA BITÁCORA -->
+        <div id="vistaPartidasTransportes" style="display: none;">
+            <div style="max-height: 520px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; background: rgba(0,0,0,0.3);">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; text-align: left;">
+                    <thead>
+                        <tr style="background: rgba(30, 41, 59, 0.95); position: sticky; top: 0; z-index: 10; color: #94a3b8; font-size: 0.78rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                            <th style="padding: 0.6rem 0.5rem; text-align: center; width: 35px;">#</th>
+                            <th style="padding: 0.6rem 0.5rem; width: 85px;">Fecha</th>
+                            <th style="padding: 0.6rem 0.5rem; width: 110px;">Unidad</th>
+                            <th style="padding: 0.6rem 0.5rem;">Operador</th>
+                            <th style="padding: 0.6rem 0.5rem;">Centro Trabajo / Obra</th>
+                            <th style="padding: 0.6rem 0.5rem; text-align: right; font-weight: bold; color: #34d399;">Litros</th>
+                            <th style="padding: 0.6rem 0.5rem; text-align: center;">Cuenta-litros (Ini &rarr; Fin)</th>
+                            <th style="padding: 0.6rem 0.5rem; text-align: right;">Odómetro (Km)</th>
+                            <th style="padding: 0.6rem 0.5rem; text-align: center;">Flejes (Viejo &rarr; Nuevo)</th>
+                            <th style="padding: 0.6rem 0.5rem; text-align: center;">Tipo Despacho</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyPartidasTransportes">
+                        <!-- Filas de partidas generadas dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- BOTÓN DE INYECCIÓN DEFINITIVA A BASE DE DATOS -->
+        <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+            <div id="statusInyeccionTransportes" style="color: #94a3b8; font-size: 0.88rem;"></div>
+            <button type="button" class="btn-primary" id="btnInyectarTransportes"
+                    onclick="guardarBitacoraTransportesExcel()"
+                    style="background: linear-gradient(135deg, #059669, #047857); padding: 0.9rem 2rem; font-size: 1.05rem; font-weight: 800; border-radius: 10px; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4); display: flex; align-items: center; gap: 8px;">
+                <span>💾</span> Confirmar e Inyectar Bitácora al Sistema (<span id="labelSemanaInyectar">--</span>)
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== HISTORIAL DE CAPTURAS ==================== -->
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 3rem; margin-bottom: 1rem;">
+    <div>
+        <h3 id="historicoTitle" style="margin: 0; color: var(--text-main); font-size: 1.25rem;">Últimos Registros Capturados</h3>
+        <p style="margin: 0.2rem 0 0 0; color: var(--text-muted); font-size: 0.85rem;">Historial consolidado de suministros de Marimba y reportes individuales de Operadores en campo.</p>
+    </div>
+</div>
+
+<div class="glass-card" style="padding: 1rem; overflow-x: auto;" id="historyConsumo">
+    <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.82rem;">
+                <th style="padding: 0.6rem 0.5rem;">Origen / Tipo</th>
+                <th style="padding: 0.6rem 0.5rem;">Folio</th>
+                <th style="padding: 0.6rem 0.5rem;">Fecha (Sem)</th>
+                <th style="padding: 0.6rem 0.5rem;">Obra</th>
+                <th style="padding: 0.6rem 0.5rem;">Equipo</th>
+                <th style="padding: 0.6rem 0.5rem;">Litros</th>
+                <th style="padding: 0.6rem 0.5rem;">Responsable / Operador</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: center;">Horómetro</th>
+            </tr>
+        </thead>
+        <tbody id="tbodyHistorialObra">
+        {% for h in historial_consumos %}
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 0.6rem 0.5rem;">
+                {% if h['tipo_captura'] == 'OPERADOR' or (h['folio_conciliacion'] and 'OPR-' in h['folio_conciliacion']) %}
+                    <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">📱 OPERADOR</span>
+                {% else %}
+                    <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">🏗️ MARIMBA</span>
+                {% endif %}
+            </td>
+            <td style="padding: 0.6rem 0.5rem; font-family: monospace; font-weight: bold; color: {% if h['tipo_captura'] == 'OPERADOR' or (h['folio_conciliacion'] and 'OPR-' in h['folio_conciliacion']) %}#38bdf8{% else %}var(--primary){% endif %};">
+                {{ h['folio_conciliacion'] }}
+            </td>
+            <td style="padding: 0.6rem 0.5rem;">{{ h['fecha'] }} <span style="color: var(--text-muted); font-size: 0.8rem;">(S{{ h['semana'] or '?' }})</span></td>
+            <td style="padding: 0.6rem 0.5rem;">{{ h['obra_destino'] }}</td>
+            <td style="padding: 0.6rem 0.5rem; font-weight: 500;">{{ h['equipo_economico'] or h['equipo'] or 'N/A' }}</td>
+            <td style="padding: 0.6rem 0.5rem; font-weight: bold; color: #34d399;">{{ h['litros'] }} L</td>
+            <td style="padding: 0.6rem 0.5rem; font-size: 0.85rem;">
+                {% if h['responsable_maquinaria'] %}
+                    <strong style="color: #38bdf8;">👷 {{ h['responsable_maquinaria'] }}</strong><br>
+                {% elif h['operador'] and h['operador'] != 'Sin Registro' %}
+                    <strong style="color: #38bdf8;">👷 {{ h['operador'] }}</strong><br>
+                {% endif %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">{{ h['responsable'] or '' }}</span>
+            </td>
+            <td style="padding: 0.6rem 0.5rem; text-align: center;">
+                {% if h['horometro_inicial'] %}
+                    <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 6px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                        ⏱️ {{ h['horometro_inicial'] }} hrs
+                    </span>
+                {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No hay consumos de obra recientes.</td></tr>
+        {% endfor %}
+        </tbody>
+
+        <tbody id="tbodyHistorialTransportes" style="display: none;">
+        {% for h in historial_transportes %}
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 0.6rem 0.5rem;">
+                <span style="background: rgba(5, 150, 105, 0.2); color: #34d399; border: 1px solid rgba(5, 150, 105, 0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">🚛 TRANSPORTES</span>
+            </td>
+            <td style="padding: 0.6rem 0.5rem; font-family: monospace; font-weight: bold; color: #10b981;">
+                {{ h['folio_conciliacion'] }}
+            </td>
+            <td style="padding: 0.6rem 0.5rem;">{{ h['fecha'] }} <span style="color: var(--text-muted); font-size: 0.8rem;">(S{{ h['semana'] or '?' }})</span></td>
+            <td style="padding: 0.6rem 0.5rem;">{{ h['obra_destino'] }}</td>
+            <td style="padding: 0.6rem 0.5rem; font-weight: 500;">{{ h['equipo_economico'] or h['equipo'] or 'N/A' }}</td>
+            <td style="padding: 0.6rem 0.5rem; font-weight: bold; color: #34d399;">{{ h['litros'] }} L</td>
+            <td style="padding: 0.6rem 0.5rem; font-size: 0.85rem;">
+                <strong style="color: #38bdf8;">👤 {{ h['responsable'] or h['operador'] }}</strong>
+            </td>
+            <td style="padding: 0.6rem 0.5rem; text-align: center;">
+                {% if h['horometro_inicial'] %}
+                    <span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); padding: 2px 6px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;">
+                        ⏱️ {{ h['horometro_inicial'] }} hrs
+                    </span>
+                {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">—</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">No hay consumos de transportes registrados aún.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables y Selects Consumos Marimba / Transportes
+    let tomSelectObra = initTomSelect("#obraSelect");
+    let tomSelectEquipo = initTomSelect("#equipoSelect");
+    let tomSelectResponsable = initTomSelect("#responsableSelect", { create: true });
+
+    // Catálogos Obra y Transportes
+    const obraEquipos = [
+        {% for eq in equipos %}
+            { value: "{{ eq['numero_economico'] }}", text: "{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}" },
+        {% endfor %}
+    ];
+    const obraResponsables = [
+        {% for r in responsables %}
+            { value: "{{ r['nombre'] }}", text: "{{ r['nombre'] }}" },
+        {% endfor %}
+    ];
+
+    const transportesEquipos = [
+        {% for eq in transportes_equipos %}
+            { value: "{{ eq['numero_economico'] }}", text: "{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}", resp_default: "{{ eq['responsable_default'] or '' }}" },
+        {% endfor %}
+    ];
+    const transportesOperadores = [
+        {% for op in transportes_operadores %}
+            { value: "{{ op['nombre'] }}", text: "{{ op['nombre'] }} ({{ op['puesto'] or 'Operador' }})" },
+        {% endfor %}
+    ];
+
+    const transportesRespMap = {{ transportes_resp_to_equipo | tojson | safe }};
+    let currentAreaMode = 'obra';
+
+    function setAreaMode(mode) {
+        currentAreaMode = mode;
+        const btnObra = document.getElementById('btnAreaObra');
+        const btnTransportes = document.getElementById('btnAreaTransportes');
+        const lblResp = document.getElementById('lblResponsable');
+        const lblEq = document.getElementById('lblEquipo');
+        const grpOdometro = document.getElementById('grpOdometroTransportes');
+        const grpHorometro = document.getElementById('grpHorometroTransportes');
+        const grpTipoOp = document.getElementById('grpTipoOperacion');
+        const submitBtn = document.getElementById('submitBtnConsumo');
+        const origenSel = document.getElementById('origenSelect');
+        const tabContainer = document.getElementById('tabButtonsContainer');
+        const headerTitle = document.getElementById('pageHeaderTitle');
+        const headerSubtitle = document.getElementById('pageHeaderSubtitle');
+        const tbodyObra = document.getElementById('tbodyHistorialObra');
+        const tbodyTrp = document.getElementById('tbodyHistorialTransportes');
+
+        if (mode === 'transportes') {
+            btnTransportes.style.background = '#059669';
+            btnTransportes.style.color = '#ffffff';
+            btnTransportes.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.4)';
+            btnObra.style.background = 'transparent';
+            btnObra.style.color = '#94a3b8';
+            btnObra.style.boxShadow = 'none';
+
+            headerTitle.innerHTML = 'Diésel <span style="font-size: 1.1rem; color: #34d399; font-weight: normal; margin-left: 8px;">🚛 Transportes (Tanque Pegaso)</span>';
+            headerSubtitle.innerText = 'Control y despacho de combustible para la flota de transporte, tractocamiones y traslados de maquinaria.';
+
+            lblResp.innerHTML = '👤 Responsable de Unidad / Operador <span style="color:#ef4444">*</span>';
+            lblEq.innerHTML = '🚛 Unidad de Transporte / Tracto <span style="color:#ef4444">*</span>';
+            if (grpOdometro) grpOdometro.style.display = 'block';
+            if (grpHorometro) grpHorometro.style.display = 'block';
+            if (grpTipoOp) grpTipoOp.style.display = 'none';
+            if (tabContainer) tabContainer.style.display = 'flex';
+            
+            const btnTabConsumo = document.getElementById('btnTabConsumo');
+            const btnTabOperador = document.getElementById('btnTabOperador');
+            const btnTabMasiva = document.getElementById('btnTabMasiva');
+            const btnTabBitacoraTrp = document.getElementById('btnTabBitacoraTransportes');
+            
+            if (btnTabConsumo) {
+                btnTabConsumo.innerHTML = '🚛 Captura Individual (Tanque Pegaso)';
+                btnTabConsumo.style.background = '#059669';
+                btnTabConsumo.style.color = '#ffffff';
+            }
+            if (btnTabOperador) btnTabOperador.style.display = 'none';
+            if (btnTabMasiva) btnTabMasiva.style.display = 'none';
+            if (btnTabBitacoraTrp) {
+                btnTabBitacoraTrp.style.display = 'inline-block';
+                btnTabBitacoraTrp.style.background = 'transparent';
+                btnTabBitacoraTrp.style.color = 'var(--text-muted)';
+            }
+
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Guardar Consumo Transporte (Tanque Pegaso)';
+                submitBtn.style.background = '#059669';
+            }
+
+            if (origenSel) {
+                let found = false;
+                for (let i = 0; i < origenSel.options.length; i++) {
+                    if (origenSel.options[i].value.toLowerCase().includes('pegaso')) {
+                        origenSel.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    const opt = new Option('Tanque Pegaso', 'Tanque Pegaso', true, true);
+                    origenSel.add(opt, 0);
+                    origenSel.selectedIndex = 0;
+                }
+            }
+
+            if (tomSelectResponsable) {
+                tomSelectResponsable.clear();
+                tomSelectResponsable.clearOptions();
+                transportesOperadores.forEach(op => tomSelectResponsable.addOption(op));
+                tomSelectResponsable.refreshOptions(false);
+            }
+
+            if (tomSelectEquipo) {
+                tomSelectEquipo.clear();
+                tomSelectEquipo.clearOptions();
+                transportesEquipos.forEach(eq => tomSelectEquipo.addOption(eq));
+                tomSelectEquipo.refreshOptions(false);
+            }
+
+            if (tbodyObra) tbodyObra.style.display = 'none';
+            if (tbodyTrp) tbodyTrp.style.display = '';
+
+        } else {
+            // Obra mode
+            btnObra.style.background = '#2563eb';
+            btnObra.style.color = '#ffffff';
+            btnObra.style.boxShadow = '0 4px 12px rgba(37,99,235,0.4)';
+            btnTransportes.style.background = 'transparent';
+            btnTransportes.style.color = '#94a3b8';
+            btnTransportes.style.boxShadow = 'none';
+
+            headerTitle.innerHTML = 'Diésel <span style="font-size: 1.1rem; color: #3b82f6; font-weight: normal; margin-left: 8px;">🏗️ Maquinaria en Obra</span>';
+            headerSubtitle.innerText = 'Ingreso de bitácoras y captura masiva de reportes en PDF al sistema.';
+
+            lblResp.innerHTML = 'Ing. Responsable de Obra <span style="color:#ef4444">*</span>';
+            lblEq.innerHTML = 'Equipo Económico / Maquinaria <span style="color:#ef4444">*</span>';
+            if (grpOdometro) grpOdometro.style.display = 'none';
+            if (grpHorometro) grpHorometro.style.display = 'none';
+            if (grpTipoOp) grpTipoOp.style.display = 'block';
+            if (tabContainer) tabContainer.style.display = 'flex';
+            
+            const btnTabConsumo = document.getElementById('btnTabConsumo');
+            const btnTabOperador = document.getElementById('btnTabOperador');
+            const btnTabMasiva = document.getElementById('btnTabMasiva');
+            const btnTabBitacoraTrp = document.getElementById('btnTabBitacoraTransportes');
+            
+            if (btnTabConsumo) {
+                btnTabConsumo.innerHTML = '🚛 Consumos Marimba / Suministro';
+                btnTabConsumo.style.background = 'var(--primary)';
+                btnTabConsumo.style.color = '#ffffff';
+            }
+            if (btnTabOperador) btnTabOperador.style.display = 'inline-block';
+            if (btnTabMasiva) btnTabMasiva.style.display = 'inline-block';
+            if (btnTabBitacoraTrp) btnTabBitacoraTrp.style.display = 'none';
+
+            if (typeof currentActiveTab !== 'undefined' && currentActiveTab === 'bitacora_transportes') {
+                switchTab('consumo');
+            }
+
+            if (submitBtn) {
+                submitBtn.innerHTML = 'Guardar Consumo Marimba';
+                submitBtn.style.background = 'var(--primary)';
+            }
+
+            if (tomSelectResponsable) {
+                tomSelectResponsable.clear();
+                tomSelectResponsable.clearOptions();
+                obraResponsables.forEach(r => tomSelectResponsable.addOption(r));
+                tomSelectResponsable.refreshOptions(false);
+            }
+
+            if (tomSelectEquipo) {
+                tomSelectEquipo.clear();
+                tomSelectEquipo.clearOptions();
+                obraEquipos.forEach(eq => tomSelectEquipo.addOption(eq));
+                tomSelectEquipo.refreshOptions(false);
+            }
+
+            if (tbodyObra) tbodyObra.style.display = '';
+            if (tbodyTrp) tbodyTrp.style.display = 'none';
+        }
+    }
+
+    // Auto-asignación de maquinaria por default al seleccionar responsable en Transportes
+    if (tomSelectResponsable) {
+        tomSelectResponsable.on('change', function(val) {
+            if (currentAreaMode === 'transportes' && val) {
+                const valClean = val.trim().toUpperCase();
+                const defaultEco = transportesRespMap[valClean];
+                if (defaultEco && tomSelectEquipo) {
+                    tomSelectEquipo.setValue(defaultEco);
+                    if (typeof showToast === 'function') {
+                        showToast(`Unidad ${defaultEco} auto-asignada por defecto a ${val}`, 'info');
+                    }
+                }
+            }
+        });
+    }
+
+    // Variables y Selects Cargas Operador
+    let tomSelectObraOperador = initTomSelect("#obraOperadorSelect");
+    let tomSelectEquipoOperador = initTomSelect("#equipoOperadorSelect");
+    let tomSelectResponsableOperador = initTomSelect("#responsableOperadorSelect", { create: true });
+    let tomSelectRespMaquinaria = initTomSelect("#respMaquinariaSelect", { create: true });
+
+    let filasExtraidas = [];
+
+    // Auxiliares para manejo de días
+    function extraerDia(fechaStr) {
+        if(!fechaStr) return '';
+        if(fechaStr.includes('-')) {
+            const parts = fechaStr.split('-');
+            if(parts.length === 3) return parts[2];
+        }
+        if(fechaStr.includes('/')) {
+            const parts = fechaStr.split('/');
+            if(parts.length === 3) return parts[0];
+        }
+        return fechaStr;
+    }
+
+    function actualizarDiaEnFecha(idx, nuevoDia) {
+        let f = filasExtraidas[idx];
+        if(!f || !f.fecha) return;
+        let diaPadded = String(nuevoDia).padStart(2, '0');
+        if(f.fecha.includes('-')) {
+            let parts = f.fecha.split('-');
+            if(parts.length === 3) parts[2] = diaPadded;
+            f.fecha = parts.join('-');
+        } else if(f.fecha.includes('/')) {
+            let parts = f.fecha.split('/');
+            if(parts.length === 3) parts[0] = diaPadded;
+            f.fecha = parts.join('/');
+        }
+    }
+
+    function updateOperacion(selectElement) {
+        let val = selectElement.value;
+        let parts = val.split("|");
+        if(parts.length === 2) {
+            document.getElementById('opCodigo').value = parts[0];
+            document.getElementById('opNombre').value = parts[1];
+        }
+    }
+
+    // Tab Switcher
+    let currentActiveTab = 'consumo';
+    function switchTab(tab) {
+        currentActiveTab = tab;
+        document.getElementById('formConsumoContainer').style.display = 'none';
+        document.getElementById('formOperadorContainer').style.display = 'none';
+        document.getElementById('formMasivaContainer').style.display = 'none';
+        const formTrp = document.getElementById('formBitacoraTransportesContainer');
+        if (formTrp) formTrp.style.display = 'none';
+        
+        const bCons = document.getElementById('btnTabConsumo');
+        const bOper = document.getElementById('btnTabOperador');
+        const bMasi = document.getElementById('btnTabMasiva');
+        const bTrp = document.getElementById('btnTabBitacoraTransportes');
+
+        if (bCons) { bCons.style.background = 'transparent'; bCons.style.color = 'var(--text-muted)'; }
+        if (bOper) { bOper.style.background = 'transparent'; bOper.style.color = 'var(--text-muted)'; }
+        if (bMasi) { bMasi.style.background = 'transparent'; bMasi.style.color = 'var(--text-muted)'; }
+        if (bTrp) { bTrp.style.background = 'transparent'; bTrp.style.color = 'var(--text-muted)'; }
+
+        if (tab === 'consumo') {
+            document.getElementById('formConsumoContainer').style.display = 'block';
+            if (bCons) {
+                bCons.style.background = currentAreaMode === 'transportes' ? '#059669' : 'var(--primary)';
+                bCons.style.color = 'white';
+            }
+        } else if (tab === 'operador') {
+            document.getElementById('formOperadorContainer').style.display = 'block';
+            if (bOper) {
+                bOper.style.background = '#0284c7';
+                bOper.style.color = 'white';
+            }
+        } else if (tab === 'masiva') {
+            document.getElementById('formMasivaContainer').style.display = 'block';
+            if (bMasi) {
+                bMasi.style.background = 'var(--primary)';
+                bMasi.style.color = 'white';
+            }
+        } else if (tab === 'bitacora_transportes') {
+            if (formTrp) formTrp.style.display = 'block';
+            if (bTrp) {
+                bTrp.style.background = '#059669';
+                bTrp.style.color = 'white';
+            }
+        }
+    }
+
+    // =========================================================================
+    // LÓGICA DE EXTRACCIÓN Y BALANCE DE BITÁCORA TRANSPORTES (TANQUE PEGASO)
+    // =========================================================================
+    let transportesBitacoraResult = null;
+    let transportesActiveSheetIdx = 0;
+
+    function manejarDropExcelTransportes(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            manejarArchivoExcelTransportes(files[0]);
+        }
+    }
+
+    function manejarArchivoExcelTransportes(file) {
+        if (!file) return;
+        if (!file.name.match(/\.(xlsx|xls)$/i)) {
+            alert('Por favor selecciona un archivo Excel válido (.xlsx o .xls).');
+            return;
+        }
+
+        const infoBox = document.getElementById('transportesFileInfo');
+        const nameEl = document.getElementById('transportesFileName');
+        const sizeEl = document.getElementById('transportesFileSize');
+        if (infoBox && nameEl && sizeEl) {
+            nameEl.textContent = file.name;
+            sizeEl.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+            infoBox.style.display = 'inline-flex';
+        }
+
+        analizarBitacoraTransportesExcel(file);
+    }
+
+    async function analizarBitacoraTransportesExcel(file) {
+        const spinner = document.getElementById('spinnerTransportesExcel');
+        const resCont = document.getElementById('resultadoBitacoraTransportes');
+        if (spinner) spinner.style.display = 'block';
+        if (resCont) resCont.style.display = 'none';
+
+        const formData = new FormData();
+        formData.append('archivo', file);
+
+        try {
+            const res = await fetch('/api/transportes/diesel/extraer_bitacora_excel', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (spinner) spinner.style.display = 'none';
+
+            if (!data.success) {
+                alert('Error al procesar la bitácora: ' + (data.error || 'Formato no reconocido.'));
+                return;
+            }
+
+            transportesBitacoraResult = data.data;
+            transportesActiveSheetIdx = 0;
+            renderizarSelectorHojasTransportes();
+            renderizarBalanceTransportes(0);
+
+            if (resCont) resCont.style.display = 'block';
+
+        } catch (err) {
+            if (spinner) spinner.style.display = 'none';
+            alert('Error de conexión con el servidor: ' + err.message);
+        }
+    }
+
+    function renderizarSelectorHojasTransportes() {
+        if (!transportesBitacoraResult || !transportesBitacoraResult.hojas) return;
+        const hojas = transportesBitacoraResult.hojas;
+        const selector = document.getElementById('selectorHojasTransportes');
+        const pills = document.getElementById('pillsHojasTransportes');
+        if (!selector || !pills) return;
+
+        if (hojas.length <= 1) {
+            selector.style.display = 'none';
+            return;
+        }
+
+        selector.style.display = 'flex';
+        pills.innerHTML = '';
+        hojas.forEach((h, idx) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tab-btn';
+            btn.style.padding = '5px 12px';
+            btn.style.borderRadius = '6px';
+            btn.style.fontSize = '0.82rem';
+            btn.style.fontWeight = 'bold';
+            btn.style.border = idx === transportesActiveSheetIdx ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.15)';
+            btn.style.background = idx === transportesActiveSheetIdx ? 'rgba(16, 185, 129, 0.25)' : 'rgba(0,0,0,0.3)';
+            btn.style.color = idx === transportesActiveSheetIdx ? '#34d399' : '#cbd5e1';
+            btn.innerHTML = `📅 Semana ${h.balance.semana} (${h.nombre_hoja})`;
+            btn.onclick = () => {
+                transportesActiveSheetIdx = idx;
+                renderizarSelectorHojasTransportes();
+                renderizarBalanceTransportes(idx);
+            };
+            pills.appendChild(btn);
+        });
+    }
+
+    function renderizarBalanceTransportes(idx) {
+        if (!transportesBitacoraResult || !transportesBitacoraResult.hojas || !transportesBitacoraResult.hojas[idx]) return;
+        const hoja = transportesBitacoraResult.hojas[idx];
+        const b = hoja.balance;
+        const vehiculos = hoja.resumen_vehiculos;
+        const partidas = hoja.partidas;
+        const propuestas = hoja.propuesta_autorizaciones || [];
+
+        // KPI 1: Tanque Pegaso
+        document.getElementById('kpi-empresa-tag').textContent = b.empresa || 'JDJ';
+        document.getElementById('kpi-tanque-ini').textContent = Number(b.diesel_inicial_tanque).toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' L';
+        document.getElementById('kpi-tanque-fin').textContent = Number(b.diesel_final_tanque).toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' L';
+        document.getElementById('kpi-tanque-consumo').textContent = Number(b.litros_salida_tanque).toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' L';
+
+        // KPI 2: Bomba / Cuenta-litros
+        document.getElementById('kpi-cuenta-ini').textContent = Number(b.cuentalitros_inicial).toLocaleString('es-MX', {minimumFractionDigits: 1});
+        document.getElementById('kpi-cuenta-fin').textContent = Number(b.cuentalitros_final).toLocaleString('es-MX', {minimumFractionDigits: 1});
+        document.getElementById('kpi-cuenta-delta').textContent = Number(b.litros_bomba_cuentalitros).toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' L';
+        
+        const statusEl = document.getElementById('kpi-cuadratura-status');
+        if (Math.abs(b.diferencia_tanque_vs_bomba) < 0.1) {
+            statusEl.textContent = '🟢 Cuadra 100%';
+            statusEl.style.background = 'rgba(16,185,129,0.2)';
+            statusEl.style.color = '#34d399';
+        } else {
+            statusEl.textContent = `⚠️ Dif: ${Number(b.diferencia_tanque_vs_bomba).toFixed(2)} L`;
+            statusEl.style.background = 'rgba(239,68,68,0.2)';
+            statusEl.style.color = '#f87171';
+        }
+
+        // KPI 3: Despacho Directo Gasolinera
+        document.getElementById('kpi-lts-directo').textContent = Number(b.litros_despacho_directo).toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' L';
+        document.getElementById('kpi-count-directo').textContent = b.total_cargas_directas;
+        document.getElementById('kpi-factura-ref').textContent = b.factura_despacho_directo ? `Fac: ${b.factura_despacho_directo}` : 'Directo';
+
+        // KPI 4: Total Flotilla
+        document.getElementById('kpi-semana-badge').textContent = `SEM ${b.semana}`;
+        document.getElementById('kpi-lts-totales').textContent = Number(b.litros_totales_cargados).toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' L';
+        document.getElementById('kpi-importe-total').textContent = `$${Number(b.costo_total).toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN`;
+
+        // Botón Inyectar Label
+        document.getElementById('labelSemanaInyectar').textContent = `Semana ${b.semana}`;
+        document.getElementById('countVehiculosPropuesta').textContent = propuestas.length;
+        document.getElementById('countPartidasTransportes').textContent = partidas.length;
+
+        // Render Propuestas Table
+        const tbProp = document.getElementById('tbodyPropuestasTransportes');
+        tbProp.innerHTML = '';
+        if (propuestas.length === 0) {
+            tbProp.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No se generaron propuestas de autorizaciones.</td></tr>';
+        } else {
+            propuestas.forEach(p => {
+                let badgeDot = '🟢';
+                let rowBg = '';
+                if (p.semaforo === 'ROJO') {
+                    badgeDot = '🔴';
+                    rowBg = 'background: rgba(239, 68, 68, 0.08);';
+                } else if (p.semaforo === 'AMARILLO') {
+                    badgeDot = '🟡';
+                    rowBg = 'background: rgba(245, 158, 11, 0.08);';
+                }
+
+                const varPctStr = p.variacion_pct > 0 ? `+${p.variacion_pct.toFixed(1)}%` : `${p.variacion_pct.toFixed(1)}%`;
+                const varColor = p.variacion_pct > 25 ? '#f87171' : (p.variacion_pct > 10 ? '#fbbf24' : '#34d399');
+
+                tbProp.innerHTML += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.06); ${rowBg}">
+                        <td style="padding: 0.6rem 0.5rem; text-align:center; font-size: 1.1rem;">${badgeDot}</td>
+                        <td style="padding: 0.6rem 0.5rem; font-weight: bold; color: #fff;">🚛 ${p.equipo}</td>
+                        <td style="padding: 0.6rem 0.5rem; color: #94a3b8; font-size: 0.82rem;">${(p.operadores || []).join(', ') || '—'}</td>
+                        <td style="padding: 0.6rem 0.5rem; text-align: right; font-weight: bold; color: #38bdf8;">${Number(p.litros_semana_actual).toLocaleString('es-MX', {minimumFractionDigits: 2})} L</td>
+                        <td style="padding: 0.6rem 0.5rem; text-align: right; color: #94a3b8;">${Number(p.promedio_historico_semanal).toLocaleString('es-MX', {minimumFractionDigits: 2})} L</td>
+                        <td style="padding: 0.6rem 0.5rem; text-align: center; font-weight: 700; color: ${varColor};">${varPctStr}</td>
+                        <td style="padding: 0.6rem 0.5rem; text-align: right; font-weight: 800; font-size: 0.95rem; color: #34d399;">${Number(p.tope_propuesto_litros).toLocaleString('es-MX')} L</td>
+                        <td style="padding: 0.6rem 0.5rem; text-align: right; font-weight: 700; color: #c084fc;">$${Number(p.costo_propuesto_mxn).toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                        <td style="padding: 0.6rem 0.5rem; font-size: 0.8rem; color: #cbd5e1;">${p.observacion_propuesta}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Render Partidas Table
+        const tbPart = document.getElementById('tbodyPartidasTransportes');
+        tbPart.innerHTML = '';
+        if (partidas.length === 0) {
+            tbPart.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No hay partidas extraídas.</td></tr>';
+        } else {
+            partidas.forEach((pt, i) => {
+                const tipoBadge = pt.tipo_despacho === 'TANQUE_PEGASO'
+                    ? '<span style="background: rgba(16,185,129,0.15); color: #34d399; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold;">TANQUE</span>'
+                    : `<span style="background: rgba(245,158,11,0.15); color: #fbbf24; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: bold;">DIRECTA (${pt.factura_referencia || 'FAC'})</span>`;
+
+                const cuentaStr = pt.cuentalitros_inicial ? `${Number(pt.cuentalitros_inicial).toLocaleString()} &rarr; ${Number(pt.cuentalitros_final).toLocaleString()}` : '<span style="color:#64748b;">—</span>';
+                const flejesStr = (pt.flejes_viejos || pt.flejes_nuevos) ? `${pt.flejes_viejos || '—'} &rarr; ${pt.flejes_nuevos || '—'}` : '<span style="color:#64748b;">—</span>';
+                const odoStr = pt.odometro_km ? Number(pt.odometro_km).toLocaleString() : '<span style="color:#64748b;">—</span>';
+
+                tbPart.innerHTML += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.82rem;">
+                        <td style="padding: 0.5rem 0.4rem; text-align: center; color: #64748b;">${i + 1}</td>
+                        <td style="padding: 0.5rem 0.4rem; font-family: monospace;">${pt.fecha || '—'}</td>
+                        <td style="padding: 0.5rem 0.4rem; font-weight: 600; color: #fff;">${pt.equipo_economico}</td>
+                        <td style="padding: 0.5rem 0.4rem; color: #cbd5e1;">👤 ${pt.operador || '—'}</td>
+                        <td style="padding: 0.5rem 0.4rem; color: #94a3b8;">${pt.centro_trabajo || '—'}</td>
+                        <td style="padding: 0.5rem 0.4rem; text-align: right; font-weight: bold; color: #34d399;">${Number(pt.litros).toLocaleString('es-MX', {minimumFractionDigits: 2})} L</td>
+                        <td style="padding: 0.5rem 0.4rem; text-align: center; font-family: monospace;">${cuentaStr}</td>
+                        <td style="padding: 0.5rem 0.4rem; text-align: right; font-family: monospace;">${odoStr}</td>
+                        <td style="padding: 0.5rem 0.4rem; text-align: center; font-size: 0.75rem; color: #94a3b8;">${flejesStr}</td>
+                        <td style="padding: 0.5rem 0.4rem; text-align: center;">${tipoBadge}</td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    function switchSubTabTransportes(subtab) {
+        const vProp = document.getElementById('vistaPropuestasTransportes');
+        const vPart = document.getElementById('vistaPartidasTransportes');
+        const bProp = document.getElementById('btnSubTabPropuestas');
+        const bPart = document.getElementById('btnSubTabPartidas');
+
+        if (subtab === 'propuestas') {
+            vProp.style.display = 'block';
+            vPart.style.display = 'none';
+            bProp.style.background = '#059669';
+            bProp.style.color = '#ffffff';
+            bPart.style.background = 'transparent';
+            bPart.style.color = '#94a3b8';
+        } else {
+            vProp.style.display = 'none';
+            vPart.style.display = 'block';
+            bProp.style.background = 'transparent';
+            bProp.style.color = '#94a3b8';
+            bPart.style.background = '#059669';
+            bPart.style.color = '#ffffff';
+        }
+    }
+
+    async function guardarBitacoraTransportesExcel() {
+        if (!transportesBitacoraResult || !transportesBitacoraResult.hojas) return;
+        const hoja = transportesBitacoraResult.hojas[transportesActiveSheetIdx];
+        if (!hoja) return;
+
+        const btn = document.getElementById('btnInyectarTransportes');
+        const statusEl = document.getElementById('statusInyeccionTransportes');
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        statusEl.innerHTML = '<span style="color:#38bdf8;">⏳ Inyectando partidas y guardando balance en base de datos...</span>';
+
+        try {
+            const res = await fetch('/api/transportes/diesel/guardar_bitacora_excel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hoja_data: hoja })
+            });
+            const data = await res.json();
+
+            btn.disabled = false;
+            btn.style.opacity = '1';
+
+            if (!data.success) {
+                statusEl.innerHTML = `<span style="color:#ef4444;">❌ Error: ${data.error || 'No se pudo guardar la bitácora.'}</span>`;
+                alert('Error al guardar: ' + data.error);
+                return;
+            }
+
+            const r = data.resultado;
+            statusEl.innerHTML = `<span style="color:#10b981; font-weight:bold;">✅ ¡Guardado con éxito! ${r.partidas_insertadas} partidas nuevas, ${r.partidas_actualizadas} actualizadas.</span>`;
+            alert(`¡Bitácora de la Semana ${r.semana} guardada exitosamente!\n\n• Partidas insertadas: ${r.partidas_insertadas}\n• Partidas actualizadas: ${r.partidas_actualizadas}\n• Litros tanque: ${r.litros_tanque} L\n• Litros directos: ${r.litros_despacho_directo} L\n• Costo total: $${Number(r.costo_total).toLocaleString('es-MX')} MXN`);
+
+        } catch (err) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            statusEl.innerHTML = `<span style="color:#ef4444;">❌ Error de conexión: ${err.message}</span>`;
+        }
+    }
+
+    function limpiarBitacoraTransportes() {
+        transportesBitacoraResult = null;
+        transportesActiveSheetIdx = 0;
+        document.getElementById('fileInputTransportesExcel').value = '';
+        document.getElementById('transportesFileInfo').style.display = 'none';
+        document.getElementById('resultadoBitacoraTransportes').style.display = 'none';
+        document.getElementById('statusInyeccionTransportes').innerHTML = '';
+    }
+
+    // Auto-fill Responsable en formulario individual
+    document.getElementById('obraSelect').addEventListener('change', async function(e) {
+        const val = e.target.value;
+        if(val) {
+            const res = await fetch('/api/get_responsable/' + encodeURIComponent(val));
+            const data = await res.json();
+            if(data.responsable && tomSelectResponsable) {
+                tomSelectResponsable.addOption({value: data.responsable, text: data.responsable});
+                tomSelectResponsable.setValue(data.responsable);
+            }
+        }
+    });
+
+    // Auto-fill Responsable en formulario de Operador
+    document.getElementById('obraOperadorSelect').addEventListener('change', async function(e) {
+        const val = e.target.value;
+        if(val) {
+            const res = await fetch('/api/get_responsable/' + encodeURIComponent(val));
+            const data = await res.json();
+            if(data.responsable && tomSelectResponsableOperador) {
+                tomSelectResponsableOperador.addOption({value: data.responsable, text: data.responsable});
+                tomSelectResponsableOperador.setValue(data.responsable);
+            }
+        }
+    });
+
+    // Auto-fill Operador habitual al seleccionar Maquinaria en Formulario de Operador
+    document.getElementById('equipoOperadorSelect').addEventListener('change', async function(e) {
+        const val = e.target.value;
+        if(val) {
+            let eco = val.split(' - ')[0].trim();
+            const res = await fetch('/api/get_operador/' + encodeURIComponent(eco));
+            const data = await res.json();
+            if(data.operador && tomSelectRespMaquinaria) {
+                tomSelectRespMaquinaria.addOption({value: data.operador, text: data.operador});
+                tomSelectRespMaquinaria.setValue(data.operador);
+            }
+        }
+    });
+
+    // Auto-fill Responsable en Captura Masiva al cambiar Obra General y revalidar duplicados
+    document.getElementById('obraMasivaSelect').addEventListener('change', async function(e) {
+        const val = e.target.value;
+        if(val) {
+            actualizarObraTodasFilas(val);
+            const res = await fetch('/api/get_responsable/' + encodeURIComponent(val));
+            const data = await res.json();
+            if(data.responsable) {
+                document.getElementById('responsableMasivaSelect').value = data.responsable;
+                actualizarResponsableTodasFilas(data.responsable);
+            }
+        }
+        if(filasExtraidas && filasExtraidas.length > 0) {
+            revalidarDuplicadosLive();
+        }
+    });
+
+    document.getElementById('semanaMasivaInput').addEventListener('change', function() {
+        if(filasExtraidas && filasExtraidas.length > 0) {
+            revalidarDuplicadosLive();
+        }
+    });
+
+    async function revalidarDuplicadosLive() {
+        const sem = document.getElementById('semanaMasivaInput').value;
+        const ob = document.getElementById('obraMasivaSelect').value;
+        try {
+            const res = await fetch('/api/diesel/validar_duplicados', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ semana: sem, filas: filasExtraidas, obra_general: ob })
+            });
+            const data = await res.json();
+            if (data.success) {
+                filasExtraidas = data.filas || [];
+                filasExtraidas.forEach(f => {
+                    if (f.es_duplicado) f.incluir = false;
+                });
+                if (data.duplicados_count > 0) {
+                    document.getElementById('lblCantDuplicados').innerText = data.duplicados_count;
+                    document.getElementById('alertDuplicadosMasiva').style.display = 'flex';
+                } else {
+                    document.getElementById('alertDuplicadosMasiva').style.display = 'none';
+                }
+                renderizarTablaFilasMasiva();
+            }
+        } catch(e) { console.error('Error revalidando duplicados:', e); }
+    }
+
+    // Drag and Drop para PDF Masiva
+    const dropZone = document.getElementById('dropZoneMasiva');
+    const inputPdf = document.getElementById('archivoPdfMasiva');
+
+    dropZone.addEventListener('click', () => inputPdf.click());
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.background = 'rgba(59, 130, 246, 0.15)';
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+            dropZone.style.background = 'rgba(15, 23, 42, 0.4)';
+        }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if(files.length > 0 && files[0].type === 'application/pdf') {
+            inputPdf.files = files;
+            procesarBitacoraPdf(files[0]);
+        }
+    });
+
+    inputPdf.addEventListener('change', function() {
+        if(this.files.length > 0) {
+            procesarBitacoraPdf(this.files[0]);
+        }
+    });
+
+    // Procesar PDF subido con la API de extracción profunda
+    async function procesarBitacoraPdf(pdfFile) {
+        document.getElementById('loaderMasiva').style.display = 'block';
+        document.getElementById('controlesGeneralesMasiva').style.display = 'none';
+        document.getElementById('contenedorTablaMasiva').style.display = 'none';
+        document.getElementById('alertDuplicadosMasiva').style.display = 'none';
+        document.getElementById('pdfStatusLabel').innerText = 'Cargando ' + pdfFile.name + '...';
+
+        const fd = new FormData();
+        fd.append('archivo_pdf', pdfFile);
+
+        try {
+            const res = await fetch('/api/diesel/extraer_bitacora_pdf', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            document.getElementById('loaderMasiva').style.display = 'none';
+
+            if(data.success) {
+                // Mostrar PDF en iframe
+                document.getElementById('pdfViewerMasiva').src = data.pdf_url;
+                document.getElementById('pdfStatusLabel').innerText = '📄 ' + pdfFile.name;
+
+                // Cargar Metadatos
+                if(data.semana) document.getElementById('semanaMasivaInput').value = data.semana;
+                if(data.marimba) document.getElementById('origenMasivaInput').value = data.marimba;
+
+                if(data.obra_detectada) {
+                    const selObra = document.getElementById('obraMasivaSelect');
+                    for(let i=0; i<selObra.options.length; i++) {
+                        if(selObra.options[i].value.toLowerCase().includes(data.obra_detectada.toLowerCase())) {
+                            selObra.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    selObra.dispatchEvent(new Event('change'));
+                }
+
+                filasExtraidas = data.filas || [];
+
+                // Asignar estado de inclusión e ingeniero por defecto
+                const respGen = document.getElementById('responsableMasivaSelect').value;
+                filasExtraidas.forEach(f => {
+                    f.incluir = !f.es_duplicado;
+                    if(!f.responsable) f.responsable = respGen;
+                });
+
+                if(data.duplicados_count > 0) {
+                    document.getElementById('lblCantDuplicados').innerText = data.duplicados_count;
+                    document.getElementById('alertDuplicadosMasiva').style.display = 'flex';
+                }
+
+                renderizarTablaFilasMasiva();
+
+                document.getElementById('controlesGeneralesMasiva').style.display = 'block';
+                document.getElementById('contenedorTablaMasiva').style.display = 'flex';
+                
+                if(data.duplicados_count > 0) {
+                    showToast('Bitácora leída. ¡Atención! Se detectaron ' + data.duplicados_count + ' posibles duplicados.', 'warning');
+                } else {
+                    showToast('Bitácora leída exitosamente. ' + filasExtraidas.length + ' partidas detectadas sin duplicados.', 'success');
+                }
+            } else {
+                showToast(data.error || 'Error leyendo la bitácora PDF', 'error');
+            }
+        } catch(e) {
+            console.error(e);
+            document.getElementById('loaderMasiva').style.display = 'none';
+            showToast('Error de conexión al procesar el PDF', 'error');
+        }
+    }
+
+    // Renderizar filas editables de la tabla con Día Compacto y espacio amplio para Litros, Obra y Responsable
+    function renderizarTablaFilasMasiva() {
+        const tbody = document.getElementById('tbodyFilasMasiva');
+        tbody.innerHTML = '';
+
+        let totalLts = 0;
+        let countIncluidos = 0;
+
+        if(filasExtraidas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="padding: 1rem; text-align: center; color: var(--danger);">No se detectaron partidas de combustible en este PDF.</td></tr>';
+        }
+
+        const obraGen = document.getElementById('obraMasivaSelect').value;
+        const respGen = document.getElementById('responsableMasivaSelect').value;
+
+        filasExtraidas.forEach((f, idx) => {
+            const lts = parseFloat(f.salida || f.litros || 0);
+            const isInc = f.incluir !== false;
+            
+            if(isInc) {
+                totalLts += lts;
+                countIncluidos++;
+            }
+
+            const obraFila = f.origen_obra || obraGen;
+            const respFila = f.responsable || respGen;
+            const diaSolo = extraerDia(f.fecha);
+
+            const rowStyle = f.es_duplicado ? 
+                'background: rgba(239, 68, 68, 0.12); border-left: 3px solid #ef4444;' : 
+                'border-bottom: 1px solid rgba(255,255,255,0.05);';
+
+            const msjDupText = f.msj_duplicado || 'Coincide con un registro existente en la semana';
+            const badgeDup = f.es_duplicado ? 
+                `<span style="background: #ef4444; color: white; border-radius: 4px; padding: 2px 5px; font-size: 0.68rem; font-weight: bold; margin-left: 4px; cursor: help;" title="${msjDupText}">⚠️ ${msjDupText}</span>` : '';
+
+            // Construir select de responsable para esta fila
+            let selectRespOptions = `<option value="">Seleccionar Responsable...</option>`;
+            {% for r in responsables %}
+                selectRespOptions += `<option value="{{ r['nombre'] }}" ${respFila === '{{ r["nombre"] }}' ? 'selected' : ''}>{{ r['nombre'] }}</option>`;
+            {% endfor %}
+
+            tbody.innerHTML += `
+                <tr style="${rowStyle}">
+                    <td style="padding: 0.4rem 0.3rem; text-align: center;">
+                        <input type="checkbox" ${isInc ? 'checked' : ''} onchange="filasExtraidas[${idx}].incluir=this.checked; recuentarTotalesMasiva();" style="accent-color: var(--primary); transform: scale(1.15); cursor: pointer;">
+                    </td>
+                    <td style="padding: 0.4rem 0.3rem; text-align: center;">
+                        <input type="text" value="${diaSolo}" title="Fecha completa: ${f.fecha}" onchange="actualizarDiaEnFecha(${idx}, this.value)" style="width: 48px; text-align: center; padding: 0.35rem 0.2rem; font-size: 0.88rem; font-weight: 600; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <div style="display: flex; align-items: center;">
+                            <input type="text" list="listaEquiposCatalogos" value="${f.equipo}" onchange="filasExtraidas[${idx}].equipo=this.value" placeholder="🔍 Buscar equipo..." style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                            ${badgeDup}
+                        </div>
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <input type="number" step="0.01" value="${lts}" onchange="filasExtraidas[${idx}].salida=parseFloat(this.value); recuentarTotalesMasiva();" style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.88rem; font-weight: bold; border-radius: 6px; background: rgba(15,23,42,0.85); color: #34d399; border: 1px solid rgba(255,255,255,0.12); text-align: right;">
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <input type="text" list="listaObrasCatalogos" value="${obraFila}" onchange="filasExtraidas[${idx}].origen_obra=this.value" placeholder="🔍 Buscar obra..." style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <select onchange="filasExtraidas[${idx}].responsable=this.value" style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                            ${selectRespOptions}
+                        </select>
+                    </td>
+                    <td style="padding: 0.4rem 0.3rem; text-align: center;">
+                        <button type="button" onclick="eliminarFilaMasiva(${idx})" style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); border-radius: 6px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.82rem;">✕</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('countPartidas').innerText = countIncluidos + ' / ' + filasExtraidas.length;
+        document.getElementById('btnCountPartidas').innerText = countIncluidos;
+        document.getElementById('totalLitrosMasiva').innerText = totalLts.toFixed(2);
+    }
+
+    function desmarcarTodosDuplicados() {
+        filasExtraidas.forEach(f => {
+            if(f.es_duplicado) f.incluir = false;
+        });
+        renderizarTablaFilasMasiva();
+        showToast('Registros duplicados excluidos de la lista a guardar.', 'info');
+    }
+
+    function recuentarTotalesMasiva() {
+        let totalLts = 0;
+        let countIncluidos = 0;
+        filasExtraidas.forEach(f => {
+            if(f.incluir !== false) {
+                totalLts += parseFloat(f.salida || f.litros || 0);
+                countIncluidos++;
+            }
+        });
+        document.getElementById('countPartidas').innerText = countIncluidos + ' / ' + filasExtraidas.length;
+        document.getElementById('btnCountPartidas').innerText = countIncluidos;
+        document.getElementById('totalLitrosMasiva').innerText = totalLts.toFixed(2);
+    }
+
+    function eliminarFilaMasiva(idx) {
+        filasExtraidas.splice(idx, 1);
+        renderizarTablaFilasMasiva();
+    }
+
+    function actualizarObraTodasFilas(nuevaObra) {
+        if(!nuevaObra) return;
+        filasExtraidas.forEach(f => f.origen_obra = nuevaObra);
+        renderizarTablaFilasMasiva();
+    }
+
+    function actualizarResponsableTodasFilas(nuevoResp) {
+        if(!nuevoResp) return;
+        filasExtraidas.forEach(f => f.responsable = nuevoResp);
+        renderizarTablaFilasMasiva();
+    }
+
+    // Guardar la bitácora completa
+    async function guardarBitacoraMasiva() {
+        const filasAEnviar = filasExtraidas.filter(f => f.incluir !== false);
+
+        if(filasAEnviar.length === 0) {
+            showToast('No hay filas seleccionadas para guardar', 'error');
+            return;
+        }
+
+        const obraGen = document.getElementById('obraMasivaSelect').value;
+        if(!obraGen) {
+            showToast('Por favor selecciona la Obra Destino General', 'error');
+            document.getElementById('obraMasivaSelect').focus();
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardarMasiva');
+        btn.disabled = true;
+        btn.innerText = '💾 Guardando Bitácora...';
+
+        const payload = {
+            semana: document.getElementById('semanaMasivaInput').value,
+            obra_general: obraGen,
+            responsable_general: document.getElementById('responsableMasivaSelect').value,
+            origen: document.getElementById('origenMasivaInput').value,
+            filas: filasAEnviar
+        };
+
+        try {
+            const res = await fetch('/api/diesel/guardar_bitacora_masiva', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if(data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(data.error || 'Error al guardar la bitácora', 'error');
+                btn.disabled = false;
+                btn.innerText = '💾 Guardar Bitácora Completa (' + filasAEnviar.length + ' Registros)';
+            }
+        } catch(e) {
+            console.error(e);
+            showToast('Error de conexión al guardar la bitácora', 'error');
+            btn.disabled = false;
+            btn.innerText = '💾 Guardar Bitácora Completa (' + filasAEnviar.length + ' Registros)';
+        }
+    }
+
+    // Submit Consumo Individual (Marimba / Transportes)
+    document.getElementById('dieselForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtnConsumo');
+        btn.innerHTML = 'Guardando...';
+        btn.disabled = true;
+
+        const targetUrl = currentAreaMode === 'transportes' ? '/api/transportes/diesel/consumo' : '/api/diesel/consumo';
+
+        try {
+            const res = await fetch(targetUrl, { method: 'POST', body: new FormData(this) });
+            const result = await res.json();
+            if(result.success) {
+                showToast(result.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(result.message || result.error || 'Error al guardar', 'error');
+            }
+        } catch(error) { showToast('Error de conexión.', 'error'); } 
+        finally { 
+            btn.innerHTML = currentAreaMode === 'transportes' ? 'Guardar Consumo Transporte (Tanque Pegaso)' : 'Guardar Consumo Marimba'; 
+            btn.disabled = false; 
+        }
+    });
+
+    // Submit Carga de Operador
+    const formOp = document.getElementById('dieselOperadorForm');
+    if (formOp) {
+        formOp.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtnOperador');
+            btn.innerHTML = '💾 Guardando Carga...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/diesel/operador_consumo', { method: 'POST', body: new FormData(this) });
+                const result = await res.json();
+                if(result.success) {
+                    showToast(result.message || '¡Carga de operador guardada exitosamente!', 'success');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showToast(result.message || 'Error al guardar carga de operador', 'error');
+                }
+            } catch(error) { 
+                console.error(error);
+                showToast('Error de conexión al guardar.', 'error'); 
+            } 
+            finally { 
+                btn.innerHTML = '💾 Guardar Carga de Operador'; 
+                btn.disabled = false; 
+            }
+        });
+    }
+
+    // ==================== GESTOR DE FOTOGRAFÍAS CONSUMO MARIMBA ====================
+    let selectedFilesConsumo = new DataTransfer();
+
+    function updateFileInputAndPreview() {
+        const fileInput = document.getElementById('fileInputConsumo');
+        const previewArea = document.getElementById('previewConsumo');
+        const uploadText = document.getElementById('uploadTextConsumo');
+        
+        if (fileInput) {
+            fileInput.files = selectedFilesConsumo.files;
+        }
+
+        if (uploadText) {
+            const cant = selectedFilesConsumo.files.length;
+            if (cant === 0) {
+                uploadText.innerHTML = '📸 Toca para abrir la cámara, selecciona fotos, arrastra o pega desde el portapapeles (Ctrl + V)';
+            } else {
+                uploadText.innerHTML = `✅ <strong>${cant} fotografía(s) adjuntada(s)</strong> — Toca para agregar más o pega desde el portapapeles (Ctrl + V)`;
+            }
+        }
+        
+        if (previewArea) {
+            previewArea.innerHTML = '';
+            Array.from(selectedFilesConsumo.files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = document.createElement('div');
+                    container.style.cssText = 'position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.4); background: #0f172a;';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '✕';
+                    removeBtn.title = 'Eliminar imagen';
+                    removeBtn.style.cssText = 'position: absolute; top: 3px; right: 3px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5);';
+                    removeBtn.onclick = function(ev) {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        removeFileConsumo(index);
+                    };
+                    
+                    container.appendChild(img);
+                    container.appendChild(removeBtn);
+                    previewArea.appendChild(container);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function addFilesConsumo(files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith('image/')) {
+                selectedFilesConsumo.items.add(file);
+            }
+        }
+        updateFileInputAndPreview();
+    }
+
+    function removeFileConsumo(index) {
+        const dt = new DataTransfer();
+        Array.from(selectedFilesConsumo.files).forEach((file, i) => {
+            if (i !== index) dt.items.add(file);
+        });
+        selectedFilesConsumo = dt;
+        updateFileInputAndPreview();
+    }
+
+    const fileInputConsumo = document.getElementById('fileInputConsumo');
+    if (fileInputConsumo) {
+        fileInputConsumo.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                addFilesConsumo(this.files);
+            }
+        });
+    }
+
+    const dropAreaConsumo = document.getElementById('dropAreaConsumo');
+    if (dropAreaConsumo) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropAreaConsumo.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropAreaConsumo.addEventListener(eventName, () => {
+                dropAreaConsumo.style.borderColor = 'var(--primary)';
+                dropAreaConsumo.style.background = 'rgba(59, 130, 246, 0.15)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropAreaConsumo.addEventListener(eventName, () => {
+                dropAreaConsumo.style.borderColor = '';
+                dropAreaConsumo.style.background = '';
+            }, false);
+        });
+
+        dropAreaConsumo.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                addFilesConsumo(dt.files);
+            }
+        });
+    }
+
+    // ==================== GESTOR DE FOTOGRAFÍAS CARGA OPERADOR ====================
+    let selectedFilesOperador = new DataTransfer();
+
+    function updateFileInputAndPreviewOperador() {
+        const fileInput = document.getElementById('fileInputOperador');
+        const previewArea = document.getElementById('previewOperador');
+        const uploadText = document.getElementById('uploadTextOperador');
+        
+        if (fileInput) {
+            fileInput.files = selectedFilesOperador.files;
+        }
+
+        if (uploadText) {
+            const cant = selectedFilesOperador.files.length;
+            if (cant === 0) {
+                uploadText.innerHTML = '📸 Toca para abrir la cámara, arrastra fotos o pega desde el portapapeles (Ctrl + V)';
+            } else {
+                uploadText.innerHTML = `✅ <strong>${cant} fotografía(s) adjuntada(s)</strong> — Toca para agregar más o pega desde el portapapeles (Ctrl + V)`;
+            }
+        }
+        
+        if (previewArea) {
+            previewArea.innerHTML = '';
+            Array.from(selectedFilesOperador.files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = document.createElement('div');
+                    container.style.cssText = 'position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; border: 2px solid #0284c7; box-shadow: 0 4px 12px rgba(0,0,0,0.4); background: #0f172a;';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '✕';
+                    removeBtn.title = 'Eliminar imagen';
+                    removeBtn.style.cssText = 'position: absolute; top: 3px; right: 3px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5);';
+                    removeBtn.onclick = function(ev) {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        removeFileOperador(index);
+                    };
+                    
+                    container.appendChild(img);
+                    container.appendChild(removeBtn);
+                    previewArea.appendChild(container);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function addFilesOperador(files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith('image/')) {
+                selectedFilesOperador.items.add(file);
+            }
+        }
+        updateFileInputAndPreviewOperador();
+    }
+
+    function removeFileOperador(index) {
+        const dt = new DataTransfer();
+        Array.from(selectedFilesOperador.files).forEach((file, i) => {
+            if (i !== index) dt.items.add(file);
+        });
+        selectedFilesOperador = dt;
+        updateFileInputAndPreviewOperador();
+    }
+
+    const fileInputOperador = document.getElementById('fileInputOperador');
+    if (fileInputOperador) {
+        fileInputOperador.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                addFilesOperador(this.files);
+            }
+        });
+    }
+
+    const dropAreaOperador = document.getElementById('dropAreaOperador');
+    if (dropAreaOperador) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropAreaOperador.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropAreaOperador.addEventListener(eventName, () => {
+                dropAreaOperador.style.borderColor = '#0284c7';
+                dropAreaOperador.style.background = 'rgba(2, 132, 199, 0.15)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropAreaOperador.addEventListener(eventName, () => {
+                dropAreaOperador.style.borderColor = '';
+                dropAreaOperador.style.background = '';
+            }, false);
+        });
+
+        dropAreaOperador.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                addFilesOperador(dt.files);
+            }
+        });
+    }
+
+    // 3. Pegado directo desde el Portapapeles (Ctrl+V / Win+V) detectando pestaña activa
+    document.addEventListener('paste', function(e) {
+        const activeEl = document.activeElement;
+        const targetTag = activeEl ? activeEl.tagName.toLowerCase() : '';
+        if (targetTag === 'textarea') return;
+        
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        if (!items) return;
+
+        let pastedFiles = [];
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    const ext = blob.type.split('/')[1] || 'png';
+                    const file = new File([blob], `evidencia_pegada_${Date.now()}_${i}.${ext}`, { type: blob.type });
+                    pastedFiles.push(file);
+                }
+            }
+        }
+
+        if (pastedFiles.length > 0) {
+            const opContainer = document.getElementById('formOperadorContainer');
+            const consContainer = document.getElementById('formConsumoContainer');
+            
+            if (opContainer && opContainer.style.display !== 'none') {
+                addFilesOperador(pastedFiles);
+                if (typeof showToast === 'function') {
+                    showToast(`📸 ${pastedFiles.length} imagen(es) agregada(s) a la Carga de Operador.`, 'success');
+                }
+            } else if (consContainer && consContainer.style.display !== 'none') {
+                addFilesConsumo(pastedFiles);
+                if (typeof showToast === 'function') {
+                    showToast(`📸 ${pastedFiles.length} imagen(es) agregada(s) al Consumo de Marimba.`, 'success');
+                }
+            }
+        }
+    });
+
+    // ==================== FILTRADO DINÁMICO DE MAQUINARIA SEGÚN OBRA SELECCIONADA ====================
+    const obraEquiposMap = {{ obra_equipos_map | tojson | safe }};
+    const obraSelectEl = document.getElementById('obraSelect');
+    const equipoSelectEl = document.getElementById('equipoSelect');
+    const obraOpSelectEl = document.getElementById('obraOperadorSelect');
+    const equipoOpSelectEl = document.getElementById('equipoOperadorSelect');
+
+    let allEquipoOptions = [];
+    if (equipoSelectEl) {
+        allEquipoOptions = Array.from(equipoSelectEl.options).map(opt => ({
+            value: opt.value,
+            text: opt.textContent
+        }));
+    }
+
+    function filterEquiposByObra() {
+        if (!obraSelectEl || !equipoSelectEl) return;
+        
+        const selectedObra = obraSelectEl.value ? obraSelectEl.value.trim() : '';
+        const assignedEquipos = obraEquiposMap[selectedObra] || [];
+        
+        equipoSelectEl.innerHTML = '';
+        
+        if (selectedObra && assignedEquipos.length > 0) {
+            let matchedOptions = [];
+            allEquipoOptions.forEach(opt => {
+                if (!opt.value) return;
+                const isAssigned = assignedEquipos.some(eq => {
+                    const eqUpper = String(eq).trim().toUpperCase();
+                    const optValUpper = String(opt.value).trim().toUpperCase();
+                    const optTextUpper = String(opt.text).trim().toUpperCase();
+                    
+                    if (/^\d+$/.test(eqUpper)) {
+                        return optValUpper === eqUpper;
+                    }
+                    
+                    return optValUpper === eqUpper || 
+                           optValUpper.includes(eqUpper) || 
+                           eqUpper.includes(optValUpper) || 
+                           optTextUpper.includes(eqUpper) || 
+                           eqUpper.includes(optTextUpper);
+                });
+                
+                if (isAssigned) {
+                    matchedOptions.push(opt);
+                }
+            });
+            
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = `Selecciona unidad (${matchedOptions.length} equipos para ${selectedObra})...`;
+            equipoSelectEl.appendChild(defaultOpt);
+
+            matchedOptions.forEach(opt => {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.text;
+                equipoSelectEl.appendChild(newOpt);
+            });
+            
+            const showAllOpt = document.createElement('option');
+            showAllOpt.value = '__SHOW_ALL__';
+            showAllOpt.textContent = '── VER LISTA COMPLETA DE EQUIPOS ──';
+            equipoSelectEl.appendChild(showAllOpt);
+
+        } else {
+            allEquipoOptions.forEach(opt => {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.value === '' ? 'Selecciona unidad...' : opt.text;
+                equipoSelectEl.appendChild(newOpt);
+            });
+        }
+    }
+
+    if (equipoSelectEl) {
+        equipoSelectEl.addEventListener('change', function() {
+            if (this.value === '__SHOW_ALL__') {
+                equipoSelectEl.innerHTML = '';
+                allEquipoOptions.forEach(opt => {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = opt.value;
+                    newOpt.textContent = opt.value === '' ? 'Selecciona unidad (Lista Completa)...' : opt.text;
+                    equipoSelectEl.appendChild(newOpt);
+                });
+            }
+        });
+    }
+
+    if (obraSelectEl) {
+        obraSelectEl.addEventListener('change', filterEquiposByObra);
+    }
+
+    // Auto calcular semana al cambiar fecha
+    document.getElementById("fechaInputDiesel").addEventListener("change", function(e) {
+        if(!this.value) return;
+        const parts = this.value.split('-');
+        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        const dayNum = d.getDay() || 7;
+        d.setDate(d.getDate() + 4 - dayNum);
+        const yearStart = new Date(d.getFullYear(),0,1);
+        const week = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        document.getElementById("semanaInputDiesel").value = week;
+    });
+
+    const fechaOp = document.getElementById("fechaInputOperador");
+    if (fechaOp) {
+        fechaOp.addEventListener("change", function(e) {
+            if(!this.value) return;
+            const parts = this.value.split('-');
+            const d = new Date(parts[0], parts[1]-1, parts[2]);
+            const dayNum = d.getDay() || 7;
+            d.setDate(d.getDate() + 4 - dayNum);
+            const yearStart = new Date(d.getFullYear(),0,1);
+            const week = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+            const semOp = document.getElementById("semanaInputOperador");
+            if (semOp) semOp.value = week;
+        });
+    }
+</script>
+{% endblock %}

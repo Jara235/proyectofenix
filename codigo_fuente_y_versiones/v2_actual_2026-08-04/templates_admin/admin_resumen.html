@@ -1,0 +1,2191 @@
+{% extends "layout_admin.html" %}
+
+{% block content %}
+<div class="admin-container" style="max-width: 1700px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.8rem;">📊</span> Resumen General de Operaciones
+        </h2>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="display: flex; gap: 10px; background: var(--admin-panel); padding: 8px 15px; border-radius: 12px; border: 1px solid var(--admin-border);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="color: var(--text-muted); font-size: 0.9rem;">Precio L:</label>
+                    <div style="position:relative;">
+                        <span style="position:absolute; left:8px; top:50%; transform:translateY(-50%); color:var(--text-muted);">$</span>
+                        <input type="number" id="precio-combustible" value="27.00" step="0.01" style="background: rgba(0,0,0,0.5); border: 1px solid var(--admin-border); color: white; padding: 6px 8px 6px 20px; border-radius: 6px; outline: none; width:75px;" oninput="renderTable()">
+                    </div>
+                </div>
+                <div style="border-left: 1px solid var(--admin-border); margin: 0 2px;"></div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <label style="color: var(--text-muted); font-size: 0.9rem;">Periodo:</label>
+                    <select id="filtro-semana" style="background: rgba(0,0,0,0.5); border: 1px solid var(--admin-border); color: white; padding: 6px 8px; border-radius: 6px; outline: none; width: 120px;" onchange="cargarResumen()">
+                        <option value="TODOS">Todas</option>
+                        <!-- Semanas cargadas dinamicamente -->
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <!-- Botón Generar Reporte PDF -->
+                <button id="btn-generar-pdf" onclick="generarReportePDF()"
+                    style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px;
+                           background: linear-gradient(135deg, rgba(79,70,229,0.3), rgba(99,102,241,0.2));
+                           border: 1px solid rgba(99,102,241,0.5); color: #a5b4fc; cursor: pointer;
+                           font-weight: 600; font-size: 0.9rem; transition: all 0.2s ease;
+                           white-space: nowrap;"
+                    onmouseover="this.style.background='linear-gradient(135deg,rgba(79,70,229,0.5),rgba(99,102,241,0.4))'; this.style.color='white';"
+                    onmouseout="this.style.background='linear-gradient(135deg,rgba(79,70,229,0.3),rgba(99,102,241,0.2))'; this.style.color='#a5b4fc';">
+                    <span style="font-size:1.1rem;">📄</span>
+                    <span>PDF</span>
+                </button>
+
+                <!-- Botón Generar Reporte Excel (todas las semanas) -->
+                <button id="btn-generar-excel" onclick="generarReporteExcel()"
+                    style="display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px;
+                           background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(5,150,105,0.15));
+                           border: 1px solid rgba(16,185,129,0.5); color: #6ee7b7; cursor: pointer;
+                           font-weight: 600; font-size: 0.9rem; transition: all 0.2s ease;
+                           white-space: nowrap;"
+                    onmouseover="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.45),rgba(5,150,105,0.35))'; this.style.color='white';"
+                    onmouseout="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.25),rgba(5,150,105,0.15))'; this.style.color='#6ee7b7';">
+                    <span style="font-size:1.1rem;">📊</span>
+                    <span>Excel</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flujo del Proceso -->
+    <div style="display: flex; gap: 8px; margin-bottom: 24px; align-items: center; flex-wrap: wrap;">
+        <div style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.4); border-radius: 10px; padding: 8px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+            <span>📋</span><strong style="color:#a78bfa;">Autorizado</strong><span style="color:var(--text-muted); font-size:0.75rem;">Monto semanal aprobado</span>
+        </div>
+        <span style="color: var(--text-muted); font-size: 1.2rem;">→</span>
+        <div style="background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35); border-radius: 10px; padding: 8px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+            <span>📝</span><strong style="color:#fbbf24;">Solicitado</strong><span style="color:var(--text-muted); font-size:0.75rem;">Pedido a gasolinería</span>
+        </div>
+        <span style="color: var(--text-muted); font-size: 1.2rem;">→</span>
+        <div style="background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35); border-radius: 10px; padding: 8px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+            <span>🧾</span><strong style="color:#60a5fa;">Facturado</strong><span style="color:var(--text-muted); font-size:0.75rem;">Despachado por gasolinería</span>
+        </div>
+        <span style="color: var(--text-muted); font-size: 1.2rem;">→</span>
+        <div style="background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); border-radius: 10px; padding: 8px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+            <span>⚙️</span><strong style="color:#34d399;">Consumido</strong><span style="color:var(--text-muted); font-size:0.75rem;">Cargado a maquinaria</span>
+        </div>
+    </div>
+
+    <!-- Menú de Pestañas para Módulos -->
+    <div class="admin-tabs" style="margin-bottom: 20px;">
+        <button id="btnTabDiesel" class="admin-tab active" onclick="switchModulo('diesel')">🛢 Diésel</button>
+        <button id="btnTabGasolina" class="admin-tab" onclick="switchModulo('gasolina')">⛽ Gasolina</button>
+        <button id="btnTabAcarreos" class="admin-tab" onclick="switchModulo('acarreos')">🚛 Acarreos (Próximamente)</button>
+        <button id="btnTabMezcla" class="admin-tab" onclick="switchModulo('mezcla')">🏗 Mezcla (Próximamente)</button>
+    </div>
+
+    <div class="split-view" style="grid-template-columns: 1fr;">
+        <!-- Panel Principal (Resumen Conciliación) -->
+        <div class="panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="panel-titulo" style="margin: 0; font-size: 1.1rem; color: var(--admin-primary);">Conciliación: Diésel</h3>
+                <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    Haz clic en una obra para desglosar por día
+                </div>
+            </div>
+            
+            <div style="overflow-x: auto;">
+                <table class="admin-table" id="tabla-resumen">
+                    <thead>
+                        <tr style="font-size: 0.82rem;">
+                            <th style="width: 220px;">Obra / Destino</th>
+                            <th style="text-align: right; color: #a78bfa;">📋 Autorizado (L)</th>
+                            <th style="text-align: right; color: #fbbf24;">📝 Solicitado (L)</th>
+                            <th style="text-align: right; color: #60a5fa;">🧾 Facturado (L)</th>
+                            <th style="text-align: right; color: #34d399;">⚙️ Consumido (L)</th>
+                            <th style="text-align: right;">Δ Sol-Fac</th>
+                            <th style="text-align: right;">Δ Fac-Con</th>
+                            <th style="text-align: right; width: 90px;">Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-resumen">
+                        <tr><td colspan="8" style="text-align:center;">Cargando resumen...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TABLA: REGISTROS EN OBSERVACIÓN ==================== -->
+    <div class="split-view" style="grid-template-columns: 1fr; margin-top: 24px;" id="panel-observaciones-wrapper">
+        <div class="panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.1rem; color: #22d3ee;">🔍 Registros en Observación (Disputa / Bajo Investigación)</h3>
+                <div style="font-size: 0.82rem; color: var(--text-muted);">Consumos o facturas congelados para auditoría</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="admin-table" id="tabla-observaciones">
+                    <thead>
+                        <tr style="font-size: 0.82rem;">
+                            <th>Módulo</th>
+                            <th>Folio</th>
+                            <th>Fecha / Semana</th>
+                            <th>Obra</th>
+                            <th>Equipo / Vehículo</th>
+                            <th>Litros / Importe</th>
+                            <th>Motivo / Observaciones</th>
+                            <th>Estatus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-observaciones">
+                        <tr><td colspan="8" style="text-align:center;">Cargando registros en observación...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TABLA: DESGLOSE POR DÍA ==================== -->
+    <div class="split-view" style="grid-template-columns: 1fr; margin-top: 24px;" id="panel-diario-wrapper">
+        <div class="panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="diario-titulo" style="margin: 0; font-size: 1.1rem; color: #34d399;">📅 Desglose por Día</h3>
+                <div style="font-size: 0.82rem; color: var(--text-muted);">Totales diarios de la semana seleccionada (todas las obras)</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="admin-table" id="tabla-diario">
+                    <thead>
+                        <tr style="font-size: 0.82rem;">
+                            <th style="width: 140px;">📅 Fecha</th>
+                            <th style="text-align: right; color: #fbbf24;">📝 Pedido (L)</th>
+                            <th style="text-align: right; color: #60a5fa;">🧾 Facturado (L)</th>
+                            <th style="text-align: right; color: #34d399;">⚙️ Consumido (L)</th>
+                            <th style="text-align: right;">Δ Ped–Fac</th>
+                            <th style="text-align: right;">Δ Fac–Con</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-diario">
+                        <tr><td colspan="6" style="text-align:center;">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TABLA: RESPONSABLES ==================== -->
+    <style>
+        #tabla-responsables td {
+            padding: 4px 12px !important;
+            font-size: 0.85rem;
+        }
+        #tabla-responsables th {
+            padding: 8px 12px !important;
+        }
+        /* Make the totals row slightly tighter as well */
+        #tabla-responsables .tot-row td {
+            padding: 8px 12px !important;
+        }
+    </style>
+    <div class="split-view" style="grid-template-columns: 1fr; margin-top: 12px;" id="panel-responsables-wrapper">
+        <div class="panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px;">
+                <h3 id="responsables-titulo" style="margin: 0; font-size: 1rem; color: #8b5cf6;">👤 Desglose por Responsable</h3>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Autorizado vs Consumido por Responsable (Sumando todas sus obras)</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="admin-table" id="tabla-responsables">
+                    <thead>
+                        <tr style="font-size: 0.8rem;">
+                            <th>👤 Responsable</th>
+                            <th style="width: 250px;">🏗️ Obras / Centros de Trabajo</th>
+                            <th style="text-align: right; color: #fbbf24;">📝 Autorizado (L)</th>
+                            <th style="text-align: right; color: #34d399;">⚙️ Consumido (L)</th>
+                            <th style="text-align: right;">Δ Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-responsables">
+                        <tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TABLA: PIVOTE CONTROL DIARIO ==================== -->
+    <style>
+        #tabla-pivot td {
+            padding: 4px 6px !important;
+            font-size: 0.8rem;
+        }
+        #tabla-pivot th {
+            padding: 6px 6px !important;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .pivot-resp-row td {
+            background: rgba(139, 92, 246, 0.12);
+            font-weight: 600;
+        }
+        .pivot-obra-row td {
+            color: var(--text-muted);
+        }
+        .pivot-total-row td {
+            background: var(--admin-primary);
+            color: white;
+            font-weight: 700;
+        }
+    </style>
+    <div class="split-view" style="grid-template-columns: 1fr; margin-top: 12px;" id="panel-pivot-wrapper">
+        <div class="panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px;">
+                <h3 id="pivot-titulo" style="margin: 0; font-size: 1rem; color: #1e293b;">📅 Control Diario por Responsable</h3>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">Tabla de control: Autorizado vs Consumido por dia (Tarifa fija diaria)</div>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="admin-table" id="tabla-pivot" style="min-width: 1200px;">
+                    <thead id="thead-pivot">
+                        <tr><th>Cargando...</th></tr>
+                    </thead>
+                    <tbody id="tbody-pivot">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TABLA 3: CARGAS POR GASOLINERÍA ==================== -->
+    <style>
+        #tabla-gasolinerias-cargas td { padding: 8px 14px !important; font-size: 0.85rem; }
+        #tabla-gasolinerias-cargas th { padding: 10px 14px !important; font-size: 0.8rem; }
+        .gas-header-row { cursor: pointer; user-select: none; transition: background 0.2s; }
+        .gas-header-row:hover { background: rgba(59, 130, 246, 0.15) !important; }
+        .gas-detail-row { background: rgba(0, 0, 0, 0.25); }
+        .gas-detail-table td { padding: 6px 10px !important; font-size: 0.8rem; }
+    </style>
+
+    <div style="padding: 0 0 16px; margin-top: 20px; display: none;" id="panel-gasolinerias-cargas-wrapper">
+        <div class="panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3rem;">⛽</span>
+                    <h3 id="titulo-gasolinerias-cargas" style="margin: 0; font-size: 1rem; color: #3b82f6;">Tabla 3 — Desglose de Cargas por Gasolinería</h3>
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">
+                    Haz clic en una gasolinería para desplegar sus cargas individuales
+                </div>
+            </div>
+
+            <div style="overflow-x: auto; padding: 0 8px 16px;">
+                <table class="admin-table" id="tabla-gasolinerias-cargas">
+                    <thead>
+                        <tr style="font-size: 0.8rem;">
+                            <th style="width: 320px;">⛽ Gasolinería / Estación</th>
+                            <th style="text-align: right;">⚙️ Total Gastado ($ / Litros)</th>
+                            <th style="text-align: center; width: 150px;">📋 Cantidad de Cargas</th>
+                            <th style="text-align: center; width: 140px;">🔍 Ver Detalle</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-gasolinerias-cargas">
+                        <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">
+                            Selecciona una semana para cargar datos por gasolinería…
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TABLA 4: CONCILIACIÓN FACTURAS VS CARGAS ==================== -->
+    <style>
+        #tabla-conciliacion-gasolineria td { padding: 8px 14px !important; font-size: 0.85rem; }
+        #tabla-conciliacion-gasolineria th { padding: 10px 14px !important; font-size: 0.8rem; }
+    </style>
+
+    <div style="padding: 0 0 16px; margin-top: 20px; display: none;" id="panel-conciliacion-gasolineria-wrapper">
+        <div class="panel">
+            <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3rem;">📑</span>
+                    <h3 id="titulo-conciliacion-gasolineria" style="margin: 0; font-size: 1rem; color: #a78bfa;">Tabla 4 — Conciliación: Facturas vs Cargas por Gasolinería</h3>
+                </div>
+                <div style="font-size: 0.8rem; color: #a78bfa;">
+                    Regla de Empate: <strong>MOBIL = DERIVADOS DE PETROLEO</strong>
+                </div>
+            </div>
+
+            <div style="overflow-x: auto; padding: 0 8px 16px;">
+                <table class="admin-table" id="tabla-conciliacion-gasolineria">
+                    <thead>
+                        <tr style="font-size: 0.8rem;">
+                            <th style="width: 300px;">⛽ Gasolinería / Proveedor</th>
+                            <th style="text-align: right; color: #60a5fa;">🧾 Total Facturado ($ / L)</th>
+                            <th style="text-align: right; color: #34d399;">⚙️ Total Capturado en Cargas ($ / L)</th>
+                            <th style="text-align: right;">Δ Diferencia ($)</th>
+                            <th style="text-align: center; width: 200px;">🏷️ Estatus de Conciliación</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-conciliacion-gasolineria">
+                        <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">
+                            Selecciona una semana para ver la conciliación…
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TABLA 5: CONSUMO DIARIO POR INGENIERO Y MAQUINARIA ==================== -->
+<style>
+    #tabla-diario-ing td, #tabla-diario-ing th {
+        padding: 5px 8px !important;
+        font-size: 0.78rem;
+        white-space: nowrap;
+    }
+    #tabla-diario-ing th {
+        background: #1e293b;
+        color: white;
+        font-size: 0.72rem;
+        text-align: center;
+    }
+    .dig-equipo-col { font-size: 0.75rem; color: #cbd5e1; min-width: 180px; }
+    .dig-dia-th { text-align: center !important; min-width: 90px; }
+    .dig-total-row td { background: rgba(56,189,248,0.08); font-weight: 700; border-top: 2px solid rgba(56,189,248,0.3); }
+    .dig-importe-row td { background: rgba(167,139,250,0.08); font-weight: 600; border-bottom: 2px solid rgba(167,139,250,0.3); }
+    .dig-obra-row td { color: #94a3b8; font-style: italic; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .dig-header-ing { background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15)); border-left: 3px solid #6366f1; padding: 10px 16px; border-radius: 6px; margin-bottom: 10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+</style>
+
+<div style="padding: 0 16px 16px; margin-top: 12px;" id="panel-diario-ing-wrapper" style="display:none;">
+    <div class="panel">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; flex-wrap: wrap; gap:10px;">
+            <h3 style="margin: 0; font-size: 1rem; color: #1e293b;">🏗️ Consumo Diario por Maquinaria — Detalle de Ingeniero</h3>
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <label style="font-size:0.82rem; color:var(--text-muted);">Ingeniero:</label>
+                <select id="filtro-ingeniero-dig" onchange="cargarDiarioIngeniero()"
+                    style="padding: 6px 12px; border-radius: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--admin-border); font-size:0.85rem;">
+                    <option value="">— Selecciona un ingeniero —</option>
+                </select>
+            </div>
+        </div>
+        <div id="dig-header-info" style="padding: 0 24px 12px;"></div>
+        <div style="overflow-x: auto; padding: 0 8px 16px;">
+            <table class="admin-table" id="tabla-diario-ing" style="min-width: 900px;">
+                <thead id="thead-diario-ing">
+                    <tr><th>Selecciona una semana e ingeniero para cargar el detalle</th></tr>
+                </thead>
+                <tbody id="tbody-diario-ing"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.obra-header-row {
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+}
+.obra-header-row:hover {
+    background: rgba(139, 92, 246, 0.18) !important;
+}
+.obra-detail-row {
+    transition: opacity 0.2s;
+    background: rgba(255,255,255,0.02);
+}
+.obra-detail-row td {
+    font-size: 0.85rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.chevron {
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.25s ease;
+    font-style: normal;
+    color: var(--admin-primary);
+}
+.chevron.open { transform: rotate(90deg); }
+.badge-diff {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+.badge-ok { background: rgba(16,185,129,0.15); color: #34d399; }
+.badge-warn { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.badge-bad { background: rgba(239,68,68,0.15); color: #ef4444; }
+.folio-tag { color: var(--text-muted); font-size: 0.72rem; font-style: italic; }
+</style>
+
+<!-- ==================== TABLA 6: RESUMEN DIARIO POR OBRA ==================== -->
+<style>
+    #tabla-t6 td { padding: 6px 14px !important; font-size: 0.85rem; }
+    #tabla-t6 th { padding: 8px 14px !important; font-size: 0.8rem; }
+    .t6-total-row td { background: #1E293B !important; color: white !important; font-weight: 700; }
+    .t6-data-row:nth-child(even) td { background: rgba(248,250,252,0.04); }
+    .t6-data-row:hover td { background: rgba(16,185,129,0.08); }
+    .t6-verde { color: #34d399; font-weight: 700; }
+    .t6-card-stat { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+                    border-radius: 10px; padding: 10px 18px; text-align: center; min-width: 130px; }
+</style>
+
+<div style="padding: 0 0 16px; margin-top: 20px;" id="panel-tabla6-wrapper">
+    <div class="panel">
+        <!-- Header con selector de obra -->
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 1.3rem;">📋</span>
+                <h3 style="margin: 0; font-size: 1rem; color: #10b981;">Tabla 6 — Resumen Diario de Consumo por Obra</h3>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <label style="font-size: 0.82rem; color: var(--text-muted);">Obra / Destino:</label>
+                <select id="filtro-obra-t6"
+                    style="padding: 7px 14px; border-radius: 8px; background: rgba(0,0,0,0.4);
+                           color: white; border: 1px solid rgba(16,185,129,0.5);
+                           font-size: 0.85rem; min-width: 220px; cursor: pointer;"
+                    onchange="cargarTabla6()">
+                    <option value="TODAS">— Todas las obras —</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tarjetas de totales -->
+        <div id="t6-stats" style="display: flex; gap: 16px; padding: 0 24px 14px; flex-wrap: wrap;"></div>
+
+        <!-- Tabla -->
+        <div style="overflow-x: auto; padding: 0 8px 16px;">
+            <table class="admin-table" id="tabla-t6" style="min-width: 500px;">
+                <thead id="thead-t6">
+                    <tr style="font-size: 0.8rem;">
+                        <th style="width: 160px;">📅 DÍA</th>
+                        <th style="text-align: right;">⚙️ Litros Consumidos</th>
+                        <th style="text-align: right;">💵 Precio Prom. ($/L)</th>
+                        <th style="text-align: right;">💰 Importe Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-t6">
+                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">
+                        Selecciona una semana para cargar los datos…
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TABLA JALISCO: RESUMEN SEMANAL ==================== -->
+<style>
+    #tabla-jalisco td { padding: 7px 16px !important; font-size: 0.85rem; }
+    #tabla-jalisco th { padding: 9px 16px !important; font-size: 0.8rem; }
+    .tj-tot-row td { background: #1E293B !important; color: white !important; font-weight: 700; }
+    .tj-row:hover td { background: rgba(251,191,36,0.07); }
+    .tj-saldo-neg { color: #ef4444 !important; font-weight: 700; }
+    .tj-saldo-pos { color: #34d399 !important; font-weight: 700; }
+</style>
+
+<div style="padding: 0 0 32px; margin-top: 8px;" id="panel-jalisco-wrapper">
+    <div class="panel">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 24px; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:1.4rem;">🚧</span>
+                <h3 style="margin:0; font-size:1rem; color:#fbbf24;">Jalisco — Resumen Semanal de Vales</h3>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button onclick="generarReporteExcelJalisco()" style="padding:6px 16px; border-radius:8px; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); color:#34d399; cursor:pointer; font-size:0.82rem; font-weight:600; display:flex; align-items:center; gap:6px;">
+                    📊 Exportar Excel Jalisco
+                </button>
+                <button onclick="cargarResumenJalisco()" style="padding:6px 16px; border-radius:8px; background:rgba(251,191,36,0.15); border:1px solid rgba(251,191,36,0.4); color:#fbbf24; cursor:pointer; font-size:0.82rem;">
+                    🔄 Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats cards -->
+        <div id="jalisco-stats" style="display:flex; gap:16px; padding:0 24px 14px; flex-wrap:wrap;"></div>
+
+        <!-- Tabla -->
+        <div style="overflow-x:auto; padding:0 8px 16px;">
+            <table class="admin-table" id="tabla-jalisco" style="min-width:640px;">
+                <thead>
+                    <tr style="font-size:0.8rem;">
+                        <th style="text-align:left;">📅 SEMANA</th>
+                        <th style="text-align:right;">💳 Saldo Inicial (Vales $)</th>
+                        <th style="text-align:right;">📤 Suma de Importe</th>
+                        <th style="text-align:right;">🔧 Ajuste ($)</th>
+                        <th style="text-align:right;">💰 Saldo Final (Vales $)</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-jalisco">
+                    <tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">
+                        Cargando datos de Jalisco…
+                    </td></tr>
+                </tbody>
+            </table>
+        <!-- Observación para Revisión con el Responsable -->
+        <div style="margin: 0 16px 20px 16px; padding: 16px 20px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom: 8px;">
+                <span style="font-size:1.2rem;">💡</span>
+                <strong style="color: #38bdf8; font-size: 0.95rem;">Nota de Conciliación de Vales (Para revisión con el Responsable):</strong>
+            </div>
+            <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;">
+                <p style="margin: 0 0 6px 0;">
+                    • <b>Diferencia detectada entre Total Ajustes ($465,535.80) y (Consumos + Saldo Final Actual) ($467,357.00):</b> La suma del <i>Total Importe Consumido acumulado</i> ($330,709.84) + <i>Saldo Final de la Semana 29</i> ($136,647.16) da <b>$467,357.00</b>, mientras que la columna <i>Ajuste ($)</i> acumula <b>$465,535.80</b> en recibos de vales registrados.
+                </p>
+                <p style="margin: 0 0 6px 0;">
+                    • <b>Origen de los $1,821.20 de diferencia:</b> En la <b>Semana 29</b>, el <i>Saldo Inicial</i> capturado es de <b>$233,925.00</b>, mientras que la suma de sus 2 recibos de vales registrados en la subtabla de ajustes es de <b>$232,765.80</b> (diferencia de $1,159.20 por remanente acumulado). La diferencia restante ($662.00) proviene de saldos sobrantes acumulados de semanas anteriores (S22 a S25).
+                </p>
+                <p style="margin: 0;">
+                    • <b>Punto a Validar:</b> Confirmar con el responsable si el <i>Saldo Inicial de la Semana 29</i> debe ajustarse exactamente al monto de sus dos recibos de vales ($232,765.80) o si se mantendrá el remanente histórico registrado de $233,925.00.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== SECCIÓN ESPECIAL: SINDICATO COSUM (FACTURAS) ==================== -->
+<div style="padding: 0 0 32px; margin-top: 8px;" id="panel-cosum-wrapper">
+    <div class="panel" style="border-left: 4px solid #3b82f6;">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; padding:14px 24px; flex-wrap:wrap; gap:12px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:1.4rem;">🚛</span>
+                <h3 style="margin:0; font-size:1rem; color:#60a5fa;">Sección Especial: Sindicato COSUM (Facturas de Renta y Gasolineras)</h3>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <button onclick="cargarResumenCOSUM()" style="padding:6px 16px; border-radius:8px; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.4); color:#60a5fa; cursor:pointer; font-size:0.82rem;">
+                    🔄 Actualizar
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats cards COSUM -->
+        <div id="cosum-stats" style="display:flex; gap:16px; padding:0 24px 14px; flex-wrap:wrap;"></div>
+
+        <!-- Tabla -->
+        <div style="overflow-x:auto; padding:0 8px 16px;">
+            <table class="admin-table" id="tabla-cosum" style="min-width:750px; width:100%;">
+                <thead>
+                    <tr style="font-size:0.8rem;">
+                        <th style="text-align:center;">⛽ COMBUSTIBLE</th>
+                        <th style="text-align:center;">📅 SEMANA</th>
+                        <th style="text-align:left;">🧾 FOLIO / FACTURA</th>
+                        <th style="text-align:center;">📆 FECHA</th>
+                        <th style="text-align:left;">🏭 PROVEEDOR / ORIGEN</th>
+                        <th style="text-align:right;">🛢️ LITROS</th>
+                        <th style="text-align:right;">💰 IMPORTE ($)</th>
+                        <th style="text-align:left;">📝 OBSERVACIONES / UUID</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-cosum">
+                    <tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">
+                        Cargando facturas de Sindicato COSUM…
+                    </td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+    let currentModulo = 'diesel';
+    let expandedObras = new Set();
+    let excludedObras = new Set();
+    let currentData = [];
+
+    // ─── Cambiar módulo ────────────────────────────────────────────────────────
+    function switchModulo(modulo) {
+        if(modulo === 'acarreos' || modulo === 'mezcla') return;
+        currentModulo = modulo;
+        expandedObras.clear();
+        excludedObras.clear();
+        
+        document.getElementById('btnTabDiesel').classList.remove('active');
+        document.getElementById('btnTabGasolina').classList.remove('active');
+        
+        if(modulo === 'diesel') {
+            document.getElementById('btnTabDiesel').classList.add('active');
+        } else if(modulo === 'gasolina') {
+            document.getElementById('btnTabGasolina').classList.add('active');
+        }
+        
+        cargarResumen();
+    }
+
+    function toggleObraFiltro(obra, event) {
+        if (event) event.stopPropagation();
+        if (excludedObras.has(obra)) {
+            excludedObras.delete(obra);
+        } else {
+            excludedObras.add(obra);
+        }
+        renderTable();
+    }
+
+    async function cargarSemanas() {
+        try {
+            const semRes = await fetch('/api/admin/semanas');
+            const semanas = await semRes.json();
+            const select = document.getElementById('filtro-semana');
+            select.innerHTML = '<option value="TODOS">Histórico (Todas las semanas)</option>';
+            semanas.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                select.appendChild(opt);
+            });
+            if(semanas.length > 0) {
+                select.value = semanas[0];
+            }
+            cargarResumen();
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    function badgeDiff(val) {
+        if(Math.abs(val) < 0.1) return '<span style="color:#10b981;">0.00</span>';
+        if(val > 0) return `<span class="badge-diff badge-diff-pos">+${fmt(val)}</span>`;
+        return `<span class="badge-diff badge-diff-neg">${fmt(val)}</span>`;
+    }
+
+    function fmt(val) { return parseFloat(val||0).toLocaleString('es-MX', {minimumFractionDigits: 2}); }
+
+    function toggleObra(headerRow) {
+        const obraKey = headerRow.dataset.obra;
+        const chevron = headerRow.querySelector('.chevron');
+        const isOpen = expandedObras.has(obraKey);
+
+        if (isOpen) {
+            expandedObras.delete(obraKey);
+            chevron.classList.remove('open');
+        } else {
+            expandedObras.add(obraKey);
+            chevron.classList.add('open');
+        }
+        renderTable();
+    }
+
+    async function cargarResumen() {
+        const semana = document.getElementById('filtro-semana').value;
+        
+        if (currentModulo === 'gasolina') {
+            cargarResumenGasolina();
+            return;
+        }
+
+        // Restore Diesel Table Headers and Sub-panels
+        document.getElementById('panel-titulo').textContent = 'Conciliación: Diésel';
+        document.getElementById('panel-diario-wrapper').style.display = '';
+        document.getElementById('panel-responsables-wrapper').style.display = '';
+        document.getElementById('panel-pivot-wrapper').style.display = '';
+        document.getElementById('panel-jalisco-wrapper').style.display = '';
+
+        const thead = document.querySelector('#tabla-resumen thead');
+        thead.innerHTML = `
+            <tr style="font-size: 0.82rem;">
+                <th style="width: 220px;">Obra / Destino</th>
+                <th style="text-align: right; color: #a78bfa;">📋 Autorizado (L)</th>
+                <th style="text-align: right; color: #fbbf24;">📝 Solicitado (L)</th>
+                <th style="text-align: right; color: #60a5fa;">🧾 Facturado (L)</th>
+                <th style="text-align: right; color: #34d399;">⚙️ Consumido (L)</th>
+                <th style="text-align: right;">Δ Sol-Fac</th>
+                <th style="text-align: right;">Δ Fac-Con</th>
+                <th style="text-align: right; width: 90px;">Fecha</th>
+            </tr>
+        `;
+
+        const tbody = document.getElementById('tbody-resumen');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Cargando resumen...</td></tr>';
+        
+        try {
+            const semanaParam = semana !== 'TODOS' ? semana.replace('Semana ', '').trim() : 'TODOS';
+            const url = `/api/admin/resumen/conciliacion?modulo=${currentModulo}&semana=${encodeURIComponent(semanaParam)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if(!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: #10b981;">No hay datos para este periodo.</td></tr>`;
+            } else {
+                currentData = data;
+                excludedObras.clear();
+                renderTable();
+            }
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error al cargar resumen.</td></tr>`;
+        }
+
+        // Also reload daily breakdown, observaciones and responsables breakdown
+        cargarObservaciones();
+        cargarDiario();
+        cargarResponsables();
+        cargarPivot();
+        poblarFiltroIngenieros();
+        cargarDiarioIngeniero();
+        cargarTabla6();
+        cargarResumenCOSUM();
+    }
+
+    async function cargarObservaciones() {
+        const semana = document.getElementById('filtro-semana').value;
+        const semanaParam = semana !== 'TODOS' ? semana.replace('Semana ', '').trim() : 'TODOS';
+        const tbody = document.getElementById('tbody-observaciones');
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Cargando registros en observación...</td></tr>';
+
+        try {
+            const res = await fetch(`/api/admin/resumen/observaciones?semana=${encodeURIComponent(semanaParam)}`);
+            const data = await res.json();
+
+            if (!data || !data.success || !data.data || data.data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#10b981;">✅ No hay registros en observación para este periodo.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.data.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.style.background = 'rgba(6, 182, 212, 0.08)';
+                tr.innerHTML = `
+                    <td><strong style="color:#06b6d4;">${r.modulo}</strong></td>
+                    <td style="font-family:monospace; color:#38bdf8;">${r.folio}</td>
+                    <td>${r.fecha} <small style="color:#94a3b8;">(Sem ${r.semana})</small></td>
+                    <td>${r.obra}</td>
+                    <td>${r.equipo}</td>
+                    <td><strong>${r.litros} L</strong> <br><small style="color:#10b981;">$${r.importe.toLocaleString('es-MX', {minimumFractionDigits:2})}</small></td>
+                    <td style="font-size:0.85rem; color:#cbd5e1;">${r.observaciones}</td>
+                    <td><span style="background:rgba(6,182,212,0.2); color:#22d3ee; border:1px solid rgba(6,182,212,0.4); padding:3px 8px; border-radius:6px; font-weight:bold; font-size:0.8rem;">🔍 En Observación</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444;">Error al cargar registros en observación.</td></tr>`;
+        }
+    }
+
+    async function cargarResumenGasolina() {
+        const semana = document.getElementById('filtro-semana').value;
+        const semanaParam = semana !== 'TODOS' ? semana.replace('Semana ', '').trim() : 'TODOS';
+        
+        document.getElementById('panel-titulo').textContent = `⛽ Bitácora de Cargas Aprobadas y Consumos de Gasolina — ${semana === 'TODOS' ? 'Histórico Total' : 'Semana ' + semanaParam}`;
+        
+        // Hide diesel specific extra tables, BUT show panel-responsables-wrapper for "Consumo por Obra"
+        document.getElementById('panel-diario-wrapper').style.display = 'none';
+        document.getElementById('panel-pivot-wrapper').style.display = 'none';
+        if(document.getElementById('panel-diario-ing-wrapper')) document.getElementById('panel-diario-ing-wrapper').style.display = 'none';
+        if(document.getElementById('panel-t6-wrapper')) document.getElementById('panel-t6-wrapper').style.display = 'none';
+        document.getElementById('panel-jalisco-wrapper').style.display = 'none';
+        
+        // Show panel-responsables-wrapper as "Resumen por Obra / Centro de Trabajo"
+        const panelResp = document.getElementById('panel-responsables-wrapper');
+        if (panelResp) {
+            panelResp.style.display = 'grid';
+            document.getElementById('responsables-titulo').textContent = '🏗️ Consumo de Gasolina Ocupada por Obra / Centro de Trabajo';
+        }
+
+        // Table 1: Main Cargas Table
+        const thead = document.querySelector('#tabla-resumen thead');
+        thead.innerHTML = `
+            <tr style="font-size: 0.82rem;">
+                <th style="width: 100px;">📅 Día (Fecha)</th>
+                <th>👤 Responsable</th>
+                <th>🏗️ Centro de Trabajo (Obra)</th>
+                <th>🚙 Unidad / Equipo (Placa)</th>
+                <th style="text-align: right; color: #a78bfa;">📋 Autorizado ($ MXN)</th>
+                <th style="text-align: right; color: #34d399;">⛽ Carga ($ / Litros)</th>
+                <th style="text-align: right; color: #38bdf8;">🟢 Cuánto le Queda ($)</th>
+            </tr>
+        `;
+
+        const tbody = document.getElementById('tbody-resumen');
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:18px;">⏳ Cargando bitácora de cargas de gasolina...</td></tr>';
+
+        // Table 2: Obras Table
+        const tbodyResp = document.getElementById('tbody-responsables');
+        const theadResp = document.querySelector('#tabla-responsables thead');
+        if (theadResp) {
+            theadResp.innerHTML = `
+                <tr style="font-size: 0.8rem;">
+                    <th>🏢 Centro de Trabajo / Obra</th>
+                    <th style="text-align: right; color: #a78bfa;">📋 Presupuesto Autorizado ($)</th>
+                    <th style="text-align: right; color: #34d399;">⚙️ Gasolina Ocupada ($ / Litros)</th>
+                    <th style="text-align: right; color: #38bdf8;">📊 Remanente ($)</th>
+                    <th style="text-align: right;">📈 % Uso</th>
+                    <th style="text-align: center;">📝 Cargas</th>
+                </tr>
+            `;
+        }
+        if (tbodyResp) {
+            tbodyResp.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:15px;">⏳ Cargando resumen por obra...</td></tr>';
+        }
+
+        try {
+            const res = await fetch(`/api/admin/resumen/gasolina?semana=${encodeURIComponent(semanaParam)}`);
+            const data = await res.json();
+
+            if (!data || !data.success) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: #ef4444;">Error al consultar datos de gasolina.</td></tr>`;
+                return;
+            }
+
+            const fmtM = v => '$' + Number(v).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            // RENDER TABLE 1: CONSUMOS INDIVIDUALES
+            const consumos = data.consumos || [];
+            if (consumos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: #10b981; padding:20px;">No hay cargas de gasolina registradas o aprobadas para esta semana.</td></tr>`;
+            } else {
+                let htmlC = '';
+                consumos.forEach((c, idx) => {
+                    const bg = idx % 2 === 0 ? '' : 'style="background:rgba(255,255,255,0.02);"';
+                    const qQuedaClass = c.cuanto_queda >= 0 
+                        ? 'color:#10b981; font-weight:bold;' 
+                        : 'color:#ef4444; font-weight:bold; background:rgba(239,68,68,0.15); padding:2px 6px; border-radius:4px;';
+                    
+                    const qQuedaTxt = c.cuanto_queda >= 0 
+                        ? fmtM(c.cuanto_queda)
+                        : `-${fmtM(Math.abs(c.cuanto_queda))} (Excedido)`;
+
+                    htmlC += `
+                        <tr ${bg}>
+                            <td><strong style="color:#cbd5e1;">${c.fecha}</strong> <small style="color:#94a3b8; display:block;">Sem ${c.semana}</small></td>
+                            <td><strong style="color:white;">${c.responsable}</strong></td>
+                            <td><span style="color:#a78bfa; font-size:0.85rem;">${c.centro_trabajo}</span></td>
+                            <td><span style="color:#38bdf8; font-weight:600;">${c.vehiculo}</span> <small style="color:#94a3b8; font-family:monospace;">(${c.placa})</small></td>
+                            <td style="text-align:right; font-weight:bold; color:#a78bfa;">${fmtM(c.autorizado_semanal)}</td>
+                            <td style="text-align:right;"><strong style="color:#34d399;">${fmtM(c.carga_monto)}</strong> <small style="color:#94a3b8; display:block;">(${c.litros} L @ $${c.costo_por_litro})</small></td>
+                            <td style="text-align:right;"><span style="${qQuedaClass}">${qQuedaTxt}</span></td>
+                        </tr>
+                    `;
+                });
+
+                if (data.totales) {
+                    const t = data.totales;
+                    htmlC += `
+                        <tr style="background:#0f172a; font-weight:bold; border-top:2px solid var(--admin-border);">
+                            <td colspan="4" style="color:white;">TOTALES DE CARGAS (SEMANA ${semanaParam})</td>
+                            <td style="text-align:right; color:#a78bfa; font-size:0.95rem;">${fmtM(t.presupuesto_autorizado)}</td>
+                            <td style="text-align:right; color:#34d399; font-size:0.95rem;">${fmtM(t.cargas_monto)} <small style="color:#94a3b8; display:block;">(${t.cargas_litros} L)</small></td>
+                            <td style="text-align:right; color:${t.remanente_total >= 0 ? '#10b981' : '#ef4444'}; font-size:0.95rem;">${fmtM(t.remanente_total)}</td>
+                        </tr>
+                    `;
+                }
+
+                tbody.innerHTML = htmlC;
+            }
+
+            // RENDER TABLE 2: RESUMEN POR OBRA
+            const obras = data.obras || [];
+            if (tbodyResp) {
+                if (obras.length === 0) {
+                    tbodyResp.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#10b981; padding:15px;">No hay resumen de obras para esta semana.</td></tr>`;
+                } else {
+                    let htmlO = '';
+                    obras.forEach((o, idx) => {
+                        const bg = idx % 2 === 0 ? '' : 'style="background:rgba(255,255,255,0.02);"';
+                        const remClass = o.remanente >= 0 ? 'color:#10b981; font-weight:bold;' : 'color:#ef4444; font-weight:bold;';
+                        const pctClass = o.porcentaje_uso > 100 ? 'color:#ef4444; font-weight:bold;' : 'color:#34d399;';
+
+                        htmlO += `
+                            <tr ${bg}>
+                                <td><strong style="color:#a78bfa; font-size:0.9rem;">${o.obra}</strong></td>
+                                <td style="text-align:right; font-weight:bold; color:#a78bfa;">${fmtM(o.monto_autorizado)}</td>
+                                <td style="text-align:right;"><strong style="color:#34d399;">${fmtM(o.consumo_real)}</strong> <small style="color:#94a3b8; display:block;">(${o.litros_consumidos} L)</small></td>
+                                <td style="text-align:right;"><span style="${remClass}">${fmtM(o.remanente)}</span></td>
+                                <td style="text-align:right;"><span style="${pctClass}">${o.porcentaje_uso}%</span></td>
+                                <td style="text-align:center;"><span style="background:rgba(255,255,255,0.08); padding:2px 8px; border-radius:4px; font-size:0.8rem;">${o.num_cargas} cargas</span></td>
+                            </tr>
+                        `;
+                    });
+
+                    if (data.totales) {
+                        const t = data.totales;
+                        const pctG = t.presupuesto_autorizado > 0 ? (t.cargas_monto / t.presupuesto_autorizado * 100.0).toFixed(1) : '0.0';
+                        htmlO += `
+                            <tr style="background:#0f172a; font-weight:bold; border-top:2px solid var(--admin-border);">
+                                <td style="color:white;">TOTAL GENERAL OBRAS</td>
+                                <td style="text-align:right; color:#a78bfa; font-size:0.95rem;">${fmtM(t.presupuesto_autorizado)}</td>
+                                <td style="text-align:right; color:#34d399; font-size:0.95rem;">${fmtM(t.cargas_monto)} <small style="color:#94a3b8; display:block;">(${t.cargas_litros} L)</small></td>
+                                <td style="text-align:right; color:${t.remanente_total >= 0 ? '#10b981' : '#ef4444'}; font-size:0.95rem;">${fmtM(t.remanente_total)}</td>
+                                <td style="text-align:right; color:#38bdf8;">${pctG}%</td>
+                                <td style="text-align:center; color:var(--text-muted);">${data.consumos ? data.consumos.length : 0} cargas</td>
+                            </tr>
+                        `;
+                    }
+
+                    tbodyResp.innerHTML = htmlO;
+                }
+            }
+
+            // RENDER TABLES 3 & 4: GASOLINERIAS Y CONCILIACION
+            await cargarResumenGasolinerias(semanaParam);
+
+        } catch(e) {
+            console.error('Error en cargarResumenGasolina:', e);
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error al cargar datos de gasolina: ${e.message}</td></tr>`;
+        }
+    }
+
+    async function cargarResumenGasolinerias(semanaParam) {
+        const wrapperCargas = document.getElementById('panel-gasolinerias-cargas-wrapper');
+        const wrapperConcil = document.getElementById('panel-conciliacion-gasolineria-wrapper');
+        
+        if (!wrapperCargas || !wrapperConcil) return;
+
+        if (currentModulo !== 'gasolina') {
+            wrapperCargas.style.display = 'none';
+            wrapperConcil.style.display = 'none';
+            return;
+        }
+        
+        wrapperCargas.style.display = '';
+        wrapperConcil.style.display = '';
+        
+        const tbodyCargas = document.getElementById('tbody-gasolinerias-cargas');
+        const tbodyConcil = document.getElementById('tbody-conciliacion-gasolineria');
+        
+        tbodyCargas.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:15px;">⏳ Cargando desglose por gasolinería...</td></tr>';
+        tbodyConcil.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:15px;">⏳ Cargando conciliación de facturas por gasolinería...</td></tr>';
+        
+        const semTxt = semanaParam === 'TODOS' ? 'Histórico Total' : `Semana ${semanaParam}`;
+        document.getElementById('titulo-gasolinerias-cargas').textContent = `Tabla 3 — Desglose de Cargas por Gasolinería (${semTxt})`;
+        document.getElementById('titulo-conciliacion-gasolineria').textContent = `Tabla 4 — Conciliación: Facturas vs Cargas por Gasolinería (${semTxt})`;
+        
+        try {
+            const res = await fetch(`/api/admin/resumen/gasolina/gasolinerias?semana=${encodeURIComponent(semanaParam)}`);
+            const data = await res.json();
+            
+            if (!data || !data.success) {
+                tbodyCargas.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#ef4444;">Error al consultar datos.</td></tr>';
+                tbodyConcil.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Error al consultar datos.</td></tr>';
+                return;
+            }
+            
+            const fmtM = v => '$' + Number(v).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            // --- TABLA 3: CARGAS POR GASOLINERÍA ---
+            const gasCargas = data.gasolinerias_cargas || [];
+            if (gasCargas.length === 0) {
+                tbodyCargas.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#10b981; padding:15px;">No hay cargas registradas para esta semana.</td></tr>';
+            } else {
+                let htmlG = '';
+                gasCargas.forEach((g, idx) => {
+                    const rowId = `gas-detail-${idx}`;
+                    htmlG += `
+                        <tr class="gas-header-row" onclick="toggleGasDetail('${rowId}')">
+                            <td>
+                                <span class="chevron" id="chevron-${rowId}">▶</span>
+                                <strong style="color:#38bdf8; font-size:0.95rem;">${g.nombre_gasolineria}</strong>
+                            </td>
+                            <td style="text-align:right;">
+                                <strong style="color:#34d399; font-size:0.95rem;">${fmtM(g.total_importe)}</strong>
+                                <small style="color:#94a3b8; display:block;">(${g.total_litros} L)</small>
+                            </td>
+                            <td style="text-align:center;">
+                                <span style="background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 10px; border-radius:12px; font-weight:bold; font-size:0.85rem;">
+                                    ${g.num_cargas} cargas
+                                </span>
+                            </td>
+                            <td style="text-align:center;">
+                                <button style="background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); color:#60a5fa; padding:4px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">
+                                    👁️ Desplegar (${g.num_cargas})
+                                </button>
+                            </td>
+                        </tr>
+                        <tr id="${rowId}" class="gas-detail-row" style="display:none;">
+                            <td colspan="4" style="padding:10px 15px !important;">
+                                <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
+                                    <table class="admin-table gas-detail-table" style="width:100%; margin:0;">
+                                        <thead>
+                                            <tr style="background:rgba(255,255,255,0.05); font-size:0.75rem;">
+                                                <th>Folio</th>
+                                                <th>Fecha</th>
+                                                <th>Obra / Destino</th>
+                                                <th>Vehículo / Placa</th>
+                                                <th>Conductor</th>
+                                                <th style="text-align:right;">Litros</th>
+                                                <th style="text-align:right;">Importe ($)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+                    
+                    g.cargas_lista.forEach(c => {
+                        htmlG += `
+                            <tr>
+                                <td><span style="color:#94a3b8; font-family:monospace; font-size:0.8rem;">${c.folio}</span></td>
+                                <td>${c.fecha} <small style="color:#94a3b8;">(Sem ${c.semana})</small></td>
+                                <td><span style="color:#a78bfa;">${c.obra}</span></td>
+                                <td><strong style="color:#38bdf8;">${c.vehiculo}</strong> <small style="color:#94a3b8;">(${c.placa})</small></td>
+                                <td>${c.conductor}</td>
+                                <td style="text-align:right; font-weight:bold; color:#a78bfa;">${c.litros} L</td>
+                                <td style="text-align:right; font-weight:bold; color:#34d399;">${fmtM(c.importe)}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    htmlG += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbodyCargas.innerHTML = htmlG;
+            }
+            
+            // --- TABLA 4: CONCILIACIÓN FACTURAS VS CARGAS ---
+            const concil = data.conciliacion_facturas || [];
+            if (concil.length === 0) {
+                tbodyConcil.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#10b981; padding:15px;">No hay información de conciliación.</td></tr>';
+            } else {
+                let htmlC = '';
+                concil.forEach((c, idx) => {
+                    const rowId = `concil-detail-${idx}`;
+                    
+                    let badgeClass = 'background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4);';
+                    let badgeIcon = '🟢';
+                    
+                    if (c.estatus === 'Excedente Cargas') {
+                        badgeClass = 'background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.4);';
+                        badgeIcon = '🔴';
+                    } else if (c.estatus === 'Pendiente Cargar Ticket') {
+                        badgeClass = 'background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.4);';
+                        badgeIcon = '🔵';
+                    }
+                    
+                    const diffColor = c.diferencia_importe >= 0 ? '#60a5fa' : '#ef4444';
+                    const diffTxt = (c.diferencia_importe >= 0 ? '+' : '') + fmtM(c.diferencia_importe);
+                    
+                    htmlC += `
+                        <tr class="gas-header-row" onclick="toggleGasDetail('${rowId}')">
+                            <td>
+                                <span class="chevron" id="chevron-${rowId}">▶</span>
+                                <strong style="color:#a78bfa; font-size:0.95rem;">${c.nombre_mostrar}</strong>
+                            </td>
+                            <td style="text-align:right;">
+                                <strong style="color:#60a5fa; font-size:0.95rem;">${fmtM(c.facturado_importe)}</strong>
+                                <small style="color:#94a3b8; display:block;">(${c.facturado_litros} L)</small>
+                            </td>
+                            <td style="text-align:right;">
+                                <strong style="color:#34d399; font-size:0.95rem;">${fmtM(c.capturado_importe)}</strong>
+                                <small style="color:#94a3b8; display:block;">(${c.capturado_litros} L)</small>
+                            </td>
+                            <td style="text-align:right;">
+                                <strong style="color:${diffColor}; font-size:0.95rem;">${diffTxt}</strong>
+                                <small style="color:#94a3b8; display:block;">(${c.diferencia_litros >= 0 ? '+' : ''}${c.diferencia_litros} L)</small>
+                            </td>
+                            <td style="text-align:center;">
+                                <span style="${badgeClass} padding:4px 12px; border-radius:12px; font-weight:bold; font-size:0.8rem; display:inline-block; margin-bottom:4px;">
+                                    ${badgeIcon} ${c.estatus}
+                                </span>
+                                <small style="display:block; color:#60a5fa; cursor:pointer;">
+                                    👁️ Desplegar Conciliación
+                                </small>
+                            </td>
+                        </tr>
+                        <tr id="${rowId}" class="gas-detail-row" style="display:none;">
+                            <td colspan="5" style="padding:14px !important;">
+                                <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(139,92,246,0.3); border-radius:10px; padding:14px;">
+                                    
+                                    <!-- SUB-TABLA 1: FACTURAS EMITIDAS -->
+                                    <div style="margin-bottom:16px;">
+                                        <h4 style="margin:0 0 8px 0; color:#60a5fa; font-size:0.9rem; display:flex; align-items:center; gap:6px;">
+                                            <span>📄</span> Facturas Registradas (${c.facturas_lista ? c.facturas_lista.length : 0})
+                                        </h4>
+                                        <div style="overflow-x:auto;">
+                                            <table class="admin-table gas-detail-table" style="width:100%; margin:0;">
+                                                <thead>
+                                                    <tr style="background:rgba(59,130,246,0.1); font-size:0.75rem;">
+                                                        <th>Folio Factura</th>
+                                                        <th>Fecha</th>
+                                                        <th>Obra Destino</th>
+                                                        <th>Placa</th>
+                                                        <th style="text-align:right;">Litros</th>
+                                                        <th style="text-align:right;">Importe ($)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                    `;
+                    
+                    if (!c.facturas_lista || c.facturas_lista.length === 0) {
+                        htmlC += `<tr><td colspan="6" style="text-align:center; color:#94a3b8;">Sin facturas registradas en esta semana.</td></tr>`;
+                    } else {
+                        c.facturas_lista.forEach(f => {
+                            htmlC += `
+                                <tr>
+                                    <td><strong style="color:#60a5fa; font-family:monospace;">${f.folio}</strong></td>
+                                    <td>${f.fecha}</td>
+                                    <td><span style="color:#cbd5e1;">${f.obra || '—'}</span></td>
+                                    <td><span style="color:#38bdf8; font-family:monospace;">${f.placa || '—'}</span></td>
+                                    <td style="text-align:right; font-weight:bold;">${f.litros} L</td>
+                                    <td style="text-align:right; font-weight:bold; color:#60a5fa;">${fmtM(f.importe)}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    
+                    htmlC += `
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- SUB-TABLA 2: CARGAS Y FOLIO FACTURA ASOCIADO -->
+                                    <div>
+                                        <h4 style="margin:0 0 8px 0; color:#34d399; font-size:0.9rem; display:flex; align-items:center; gap:6px;">
+                                            <span>⚙️</span> Tickets Capturados y Folio de Factura Relacionado (${c.cargas_lista ? c.cargas_lista.length : 0})
+                                        </h4>
+                                        <div style="overflow-x:auto;">
+                                            <table class="admin-table gas-detail-table" style="width:100%; margin:0;">
+                                                <thead>
+                                                    <tr style="background:rgba(16,185,129,0.1); font-size:0.75rem;">
+                                                        <th>Folio Ticket</th>
+                                                        <th>Fecha</th>
+                                                        <th>Obra / Destino</th>
+                                                        <th>Vehículo / Placa</th>
+                                                        <th>Conductor</th>
+                                                        <th style="text-align:right;">Litros</th>
+                                                        <th style="text-align:right;">Importe ($)</th>
+                                                        <th style="text-align:center;">📄 Folio Factura</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                    `;
+                    
+                    if (!c.cargas_lista || c.cargas_lista.length === 0) {
+                        htmlC += `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">Sin cargas capturadas en esta semana.</td></tr>`;
+                    } else {
+                        c.cargas_lista.forEach(ck => {
+                            const isMatched = ck.factura_relacionada && ck.factura_relacionada !== 'Sin Factura';
+                            const facBadge = isMatched 
+                                ? `<span style="background:rgba(59,130,246,0.2); border:1px solid rgba(59,130,246,0.5); color:#60a5fa; padding:2px 8px; border-radius:6px; font-weight:bold; font-family:monospace; font-size:0.78rem;">📄 ${ck.factura_relacionada}</span>`
+                                : `<span style="color:#94a3b8; font-size:0.78rem; font-style:italic;">Sin Factura</span>`;
+                                
+                            htmlC += `
+                                <tr>
+                                    <td><span style="color:#94a3b8; font-family:monospace;">${ck.folio}</span></td>
+                                    <td>${ck.fecha} <small style="color:#94a3b8;">(Sem ${ck.semana})</small></td>
+                                    <td><span style="color:#a78bfa;">${ck.obra}</span></td>
+                                    <td><strong style="color:#38bdf8;">${ck.vehiculo}</strong> <small style="color:#94a3b8;">(${ck.placa})</small></td>
+                                    <td>${ck.conductor}</td>
+                                    <td style="text-align:right; font-weight:bold; color:#a78bfa;">${ck.litros} L</td>
+                                    <td style="text-align:right; font-weight:bold; color:#34d399;">${fmtM(ck.importe)}</td>
+                                    <td style="text-align:center;">${facBadge}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    
+                    htmlC += `
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbodyConcil.innerHTML = htmlC;
+            }
+            
+        } catch(e) {
+            console.error('Error en cargarResumenGasolinerias:', e);
+            tbodyCargas.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444;">Error al cargar: ${e.message}</td></tr>`;
+            tbodyConcil.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ef4444;">Error al cargar: ${e.message}</td></tr>`;
+        }
+    }
+
+    function toggleGasDetail(rowId) {
+        const row = document.getElementById(rowId);
+        const chevron = document.getElementById(`chevron-${rowId}`);
+        if (row) {
+            if (row.style.display === 'none') {
+                row.style.display = '';
+                if (chevron) chevron.classList.add('open');
+            } else {
+                row.style.display = 'none';
+                if (chevron) chevron.classList.remove('open');
+            }
+        }
+    }
+
+    async function cargarDiario() {
+        const semana = document.getElementById('filtro-semana').value;
+        const tbody  = document.getElementById('tbody-diario');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Cargando...</td></tr>';
+
+        // Only show for a specific week (not 'TODOS')
+        const wrapper = document.getElementById('panel-diario-wrapper');
+        if (semana === 'TODOS') {
+            wrapper.style.display = 'none';
+            return;
+        }
+        wrapper.style.display = '';
+
+        const semanaParam = semana.replace('Semana ', '').trim();
+        document.getElementById('diario-titulo').textContent = `📅 Desglose por Día — Semana ${semanaParam}`;
+
+        try {
+            const url = `/api/admin/resumen/por-dia?modulo=${currentModulo}&semana=${encodeURIComponent(semanaParam)}`;
+            const res  = await fetch(url);
+            const data = await res.json();
+
+            tbody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">Sin datos para esta semana.</td></tr>';
+                return;
+            }
+
+            let totPed = 0, totFac = 0, totCon = 0;
+
+            data.forEach(r => {
+                const ped = parseFloat(r.pedido  || 0);
+                const fac = parseFloat(r.facturado || 0);
+                const con = parseFloat(r.consumido || 0);
+                const dPF = ped - fac;
+                const dFC = fac - con;
+                totPed += ped; totFac += fac; totCon += con;
+
+                // Day of week label
+                let diaLabel = r.dia;
+                try {
+                    const d = new Date(r.dia + 'T12:00:00');
+                    const dias = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+                    diaLabel = `${dias[d.getDay()]} ${r.dia}`;
+                } catch(e){}
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-family: monospace; color: #94a3b8;">${diaLabel}</td>
+                    <td style="text-align:right; color:#fbbf24; font-weight:600;">${ped > 0 ? fmt(ped)+' L' : '<span style="color:var(--text-muted)">—</span>'}</td>
+                    <td style="text-align:right; color:#60a5fa; font-weight:600;">${fac > 0 ? fmt(fac)+' L' : '<span style="color:var(--text-muted)">—</span>'}</td>
+                    <td style="text-align:right; color:#34d399; font-weight:600;">${con > 0 ? fmt(con)+' L' : '<span style="color:var(--text-muted)">—</span>'}</td>
+                    <td style="text-align:right;">${badgeDiff(dPF)}</td>
+                    <td style="text-align:right;">${badgeDiff(dFC)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Totals row
+            const trTot = document.createElement('tr');
+            trTot.style.cssText = 'background: rgba(16,185,129,0.12); border-top: 2px solid #34d399; font-weight: bold;';
+            const dTotPF = totPed - totFac;
+            const dTotFC = totFac - totCon;
+            trTot.innerHTML = `
+                <td style="color: #34d399; padding: 12px;">TOTAL SEMANA ${semanaParam}</td>
+                <td style="text-align:right; color:#fbbf24; padding:12px;">${fmt(totPed)} L</td>
+                <td style="text-align:right; color:#60a5fa; padding:12px;">${fmt(totFac)} L</td>
+                <td style="text-align:right; color:#34d399; padding:12px;">${fmt(totCon)} L</td>
+                <td style="text-align:right; padding:12px;">${badgeDiff(dTotPF)}</td>
+                <td style="text-align:right; padding:12px;">${badgeDiff(dTotFC)}</td>
+            `;
+            tbody.appendChild(trTot);
+
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#ef4444;">Error al cargar desglose diario.</td></tr>';
+        }
+    }
+
+
+    async function cargarPivot() {
+        const thead = document.getElementById('thead-pivot');
+        const tbody = document.getElementById('tbody-pivot');
+        const semanaParam = document.getElementById('filtro-semana').value;
+        const wrapper = document.getElementById('panel-pivot-wrapper');
+        
+        if (semanaParam === 'TODOS' || currentModulo !== 'diesel') {
+            wrapper.style.display = 'none';
+            return;
+        }
+        wrapper.style.display = '';
+        
+        const semanaLimpia = semanaParam.replace('Semana ', '').trim();
+        document.getElementById('pivot-titulo').textContent = `📊 Consumo Semana ${semanaLimpia} (Ingenieros y Obras)`;
+        
+        try {
+            const url = `/api/admin/resumen/pivot?modulo=${currentModulo}&semana=${encodeURIComponent(semanaParam)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            
+            if (data.error) { throw new Error(data.error); }
+            
+            const authMap = data.auth_map || {};
+            const consumos = data.datos || [];
+            
+            // Contar días trabajados en la semana a nivel global
+            const globalFechas = new Set();
+            consumos.forEach(r => globalFechas.add(r.fecha));
+            const diasTrabajados = globalFechas.size > 0 ? globalFechas.size : 7;
+
+            // Agrupar consumos por Responsable -> Obra
+            const respObras = {}; // resp -> obra -> litros
+            
+            consumos.forEach(r => {
+                if (!respObras[r.resp]) respObras[r.resp] = {};
+                respObras[r.resp][r.obra] = (respObras[r.resp][r.obra] || 0) + r.consumido;
+            });
+            
+            // Unir todos los responsables (los que tienen consumos y los que tienen autorizaciones)
+            const todosResps = new Set([...Object.keys(respObras), ...Object.keys(authMap)]);
+            const resps = Array.from(todosResps).sort();
+            
+            if (resps.length === 0) {
+                thead.innerHTML = '<tr><th>Sin datos para mostrar</th></tr>';
+                tbody.innerHTML = '';
+                return;
+            }
+
+            // --- HEADER ---
+            let headerHtml = `<tr>
+                <th style="background:#1e293b; color:white; padding:10px;">RESPONSABLE</th>
+                <th style="background:#1e293b; color:white; padding:10px;">OBRA</th>
+                <th style="background:#1e293b; color:white; padding:10px; text-align:right;">AUTORIZADO DIARIO</th>
+                <th style="background:#1e293b; color:white; padding:10px; text-align:right;">SEMANAL (${diasTrabajados} DÍAS)</th>
+                <th style="background:#1e293b; color:white; padding:10px; text-align:right;">CONSUMO POR OBRA</th>
+                <th style="background:#1e293b; color:white; padding:10px; text-align:right;">CONSUMO POR INGENIERO</th>
+                <th style="background:#1e293b; color:white; padding:10px; text-align:right;">REMANENTE POR INGENIERO</th>
+            </tr>`;
+            thead.innerHTML = headerHtml;
+
+            // --- BODY ---
+            let htmlBody = '';
+            
+            let totSemanal = 0;
+            let totConsumo = 0;
+            let totRemanente = 0;
+
+            resps.forEach((resp, respIdx) => {
+                const autoDia = authMap[resp] || 0;
+                const autoSemanal = autoDia * diasTrabajados;
+                const obrasDict = respObras[resp] || {};
+                let obrasSorted = Object.keys(obrasDict).sort();
+                
+                let consumoIngeniero = 0;
+                Object.values(obrasDict).forEach(val => consumoIngeniero += val);
+                
+                // Ocultar S/R si no tiene consumo
+                if (resp === 'S/R' && consumoIngeniero === 0) {
+                    return;
+                }
+                
+                if (obrasSorted.length === 0) {
+                    obrasSorted = ['SIN CONSUMOS'];
+                }
+                
+                const numObras = obrasSorted.length;
+                
+                const remanente = autoSemanal - consumoIngeniero;
+                const remColor = remanente < 0 ? '#ef4444' : '#10b981'; // Rojo si excedió, verde si está bien
+
+                totSemanal += autoSemanal;
+                totConsumo += consumoIngeniero;
+                totRemanente += remanente;
+
+                // Alternate row background for the block of rows belonging to this 'resp'
+                const bgBase = (respIdx % 2 === 0) ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.05)';
+
+                obrasSorted.forEach((obra, idx) => {
+                    let rHtml = `<tr style="background:${bgBase}; border-bottom: 1px solid rgba(255,255,255,0.1); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='${bgBase}'">`;
+                    if (idx === 0) {
+                        rHtml += `<td rowspan="${numObras}" style="vertical-align:middle; border-right:1px solid rgba(255,255,255,0.1); font-size:0.9rem; padding:10px 15px;"><strong>${resp}</strong></td>`;
+                        rHtml += `<td style="border-right:1px solid rgba(255,255,255,0.1); padding:8px 15px; color:#e2e8f0;">${obra}</td>`;
+                        rHtml += `<td rowspan="${numObras}" style="vertical-align:middle; text-align:right; border-right:1px solid rgba(255,255,255,0.1); padding:10px 15px;">${autoDia > 0 ? fmt(autoDia) : ''}</td>`;
+                        rHtml += `<td rowspan="${numObras}" style="vertical-align:middle; text-align:right; border-right:1px solid rgba(255,255,255,0.1); padding:10px 15px;">${autoSemanal > 0 ? fmt(autoSemanal) : ''}</td>`;
+                        rHtml += `<td style="text-align:right; border-right:1px solid rgba(255,255,255,0.1); padding:8px 15px; color:#94a3b8;">${obrasDict[obra] ? fmt(obrasDict[obra]) : ''}</td>`;
+                        rHtml += `<td rowspan="${numObras}" style="vertical-align:middle; text-align:right; border-right:1px solid rgba(255,255,255,0.1); font-size:0.95rem; padding:10px 15px;"><strong>${consumoIngeniero > 0 ? fmt(consumoIngeniero) : ''}</strong></td>`;
+                        rHtml += `<td rowspan="${numObras}" style="vertical-align:middle; text-align:right; color:${remColor}; font-weight:bold; font-size:0.95rem; padding:10px 15px;">${fmt(remanente)}</td>`;
+                    } else {
+                        rHtml += `<td style="border-right:1px solid rgba(255,255,255,0.1); padding:8px 15px; color:#e2e8f0;">${obra}</td>`;
+                        rHtml += `<td style="text-align:right; border-right:1px solid rgba(255,255,255,0.1); padding:8px 15px; color:#94a3b8;">${obrasDict[obra] ? fmt(obrasDict[obra]) : ''}</td>`;
+                    }
+                    rHtml += '</tr>';
+                    htmlBody += rHtml;
+                });
+            });
+            
+            // --- TOTALES ---
+            htmlBody += `
+                <tr style="background:#1e293b; font-weight:bold; font-size:0.95rem; border-top: 2px solid rgba(255,255,255,0.2);">
+                    <td colspan="3" style="text-align:right; padding:15px; border-right:1px solid rgba(255,255,255,0.1);">TOTALES:</td>
+                    <td style="text-align:right; color:#38bdf8; padding:15px; border-right:1px solid rgba(255,255,255,0.1);">${fmt(totSemanal)}</td>
+                    <td style="text-align:right; color:#34d399; padding:15px; border-right:1px solid rgba(255,255,255,0.1);">${fmt(totConsumo)}</td>
+                    <td style="text-align:right; color:#f472b6; padding:15px; border-right:1px solid rgba(255,255,255,0.1);">${fmt(totConsumo)}</td>
+                    <td style="text-align:right; color:${totRemanente < 0 ? '#ef4444' : '#10b981'}; padding:15px;">${fmt(totRemanente)}</td>
+                </tr>
+            `;
+            
+            tbody.innerHTML = htmlBody;
+
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#ef4444;">Error al cargar datos.</td></tr>`;
+        }
+    }
+
+    async function cargarResponsables() {
+        const semana = document.getElementById('filtro-semana').value;
+        const tbody  = document.getElementById('tbody-responsables');
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Cargando...</td></tr>';
+
+        const wrapper = document.getElementById('panel-responsables-wrapper');
+        // Solo aplica para Diesel y por semana específica
+        if (semana === 'TODOS' || currentModulo !== 'diesel') {
+            wrapper.style.display = 'none';
+            return;
+        }
+        wrapper.style.display = '';
+
+        const semanaParam = semana.replace('Semana ', '').trim();
+        document.getElementById('responsables-titulo').textContent = `👤 Desglose por Responsable — Semana ${semanaParam}`;
+
+        try {
+            const url = `/api/admin/resumen/responsables?modulo=${currentModulo}&semana=${encodeURIComponent(semanaParam)}`;
+            const res  = await fetch(url);
+            const data = await res.json();
+
+            tbody.innerHTML = '';
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8;">Sin datos para esta semana.</td></tr>';
+                return;
+            }
+
+            let totAuto = 0, totCon = 0;
+
+            data.forEach(r => {
+                const auto = parseFloat(r.autorizado || 0);
+                const con = parseFloat(r.consumido || 0);
+                const diff = auto - con;
+                totAuto += auto; totCon += con;
+
+                let diffBadge = '';
+                if (Math.abs(diff) < 0.1) {
+                    diffBadge = `<span style="color:#10b981;">0.00</span>`;
+                } else if (diff > 0) {
+                    diffBadge = `<span style="color:#34d399; background:rgba(52,211,153,0.1); padding:2px 8px; border-radius:12px; font-weight:bold;">+${fmt(diff)}</span>`;
+                } else {
+                    diffBadge = `<span style="color:#ef4444; background:rgba(239,68,68,0.1); padding:2px 8px; border-radius:12px; font-weight:bold;">${fmt(diff)}</span>`;
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${r.responsable}</td>
+                    <td>${r.obras || '—'}</td>
+                    <td style="text-align:right; color:#ffffff; font-weight:600;">${auto > 0 ? fmt(auto)+' L' : '<span style="color:var(--text-muted)">—</span>'}</td>
+                    <td style="text-align:right; color:#ffffff; font-weight:600;">${con > 0 ? fmt(con)+' L' : '<span style="color:var(--text-muted)">—</span>'}</td>
+                    <td style="text-align:right;">${diffBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Totals row
+            const trTot = document.createElement('tr');
+            trTot.className = 'tot-row';
+            trTot.style.cssText = 'background: rgba(139, 92, 246, 0.12); border-top: 2px solid #8b5cf6; font-weight: bold;';
+            const dTot = totAuto - totCon;
+            
+            let dTotBadge = '';
+            if (Math.abs(dTot) < 0.1) {
+                dTotBadge = `<span style="color:#10b981;">0.00</span>`;
+            } else if (dTot > 0) {
+                dTotBadge = `<span style="color:#34d399; background:rgba(52,211,153,0.1); padding:2px 8px; border-radius:12px; font-weight:bold;">+${fmt(dTot)}</span>`;
+            } else {
+                dTotBadge = `<span style="color:#ef4444; background:rgba(239,68,68,0.1); padding:2px 8px; border-radius:12px; font-weight:bold;">${fmt(dTot)}</span>`;
+            }
+
+            trTot.innerHTML = `
+                <td colspan="2" style="color: #8b5cf6; padding: 6px 12px; text-align: right;">TOTAL RESPONSABLES</td>
+                <td style="text-align:right; color:#ffffff; padding:6px 12px;">${fmt(totAuto)} L</td>
+                <td style="text-align:right; color:#ffffff; padding:6px 12px;">${fmt(totCon)} L</td>
+                <td style="text-align:right; padding:6px 12px;">${dTotBadge}</td>
+            `;
+            tbody.appendChild(trTot);
+
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444;">Error al cargar desglose de responsables.</td></tr>';
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tbody-resumen');
+        tbody.innerHTML = '';
+        const data = currentData;
+        
+        // Group by obra
+        const agrupado = {};
+        data.forEach(r => {
+            if(!agrupado[r.obra]) agrupado[r.obra] = { rows: [], autorizado: r.autorizado || 0 };
+            agrupado[r.obra].rows.push(r);
+        });
+        
+        for(const [obra, info] of Object.entries(agrupado)) {
+            const { rows: registros, autorizado } = info;
+            const obraKey = obra;
+            const isExpanded = expandedObras.has(obraKey);
+            const isExcluded = excludedObras.has(obraKey);
+
+            // Totals row
+            let totalSol = 0, totalCon = 0, totalFac = 0;
+            registros.forEach(r => {
+                totalSol += parseFloat(r.solicitado || 0);
+                totalCon += parseFloat(r.consumido || 0);
+                totalFac += parseFloat(r.facturado || 0);
+            });
+            const diffSF = totalSol - totalFac;
+            const diffFC = totalFac - totalCon;
+            const autLabel = autorizado > 0
+                ? `<span style="color:#a78bfa; font-weight:bold;">${fmt(autorizado)}</span>`
+                : `<span style="color:var(--text-muted);">—</span>`;
+
+            const trHeader = document.createElement('tr');
+            trHeader.className = 'obra-header-row';
+            trHeader.dataset.obra = obra;  // use data attribute for selection
+            trHeader.style.backgroundColor = isExcluded ? 'rgba(0,0,0,0.2)' : 'rgba(139, 92, 246, 0.1)';
+            trHeader.style.opacity = isExcluded ? '0.4' : '1';
+            trHeader.onclick = () => toggleObra(trHeader);
+            trHeader.innerHTML = `
+                <td>
+                    <input type="checkbox" ${!isExcluded ? 'checked' : ''} onclick="toggleObraFiltro('${obra}', event)" style="margin-right: 8px; cursor: pointer; transform: scale(1.2);" title="Incluir en el Total General">
+                    <i class="chevron ${isExpanded ? 'open' : ''}">▶</i>
+                    <strong style="color: var(--admin-primary); ${isExcluded ? 'text-decoration: line-through;' : ''}">🏗 ${obra}</strong>
+                </td>
+                <td style="text-align: right;">${autLabel}</td>
+                <td style="text-align: right; font-weight: bold; color: #fbbf24;">${fmt(totalSol)} L</td>
+                <td style="text-align: right; font-weight: bold; color: #60a5fa;">${fmt(totalFac)} L</td>
+                <td style="text-align: right; font-weight: bold; color: #34d399;">${fmt(totalCon)} L</td>
+                <td style="text-align: right;">${badgeDiff(diffSF)}</td>
+                <td style="text-align: right;">${badgeDiff(diffFC)}</td>
+                <td style="text-align: right; color: var(--text-muted); font-size:0.8rem;">Semana</td>
+            `;
+            tbody.appendChild(trHeader);
+            
+            // Detail rows
+            registros.forEach(r => {
+                const sol = parseFloat(r.solicitado || 0);
+                const con = parseFloat(r.consumido || 0);
+                const fac = parseFloat(r.facturado || 0);
+                const dSF = sol - fac;
+                const dFC = fac - con;
+
+                const folSol = r.folios_sol ? `<br><span class="folio-tag">📄 ${r.folios_sol}</span>` : '';
+                const folCon = r.folios_con ? `<br><span class="folio-tag">📄 ${r.folios_con}</span>` : '';
+                const folFac = r.folios_fac ? `<br><span class="folio-tag">📄 ${r.folios_fac}</span>` : '';
+
+                const hasEquipos = r.detalle_equipos && r.detalle_equipos.length > 0 && r.detalle_equipos[0] !== null;
+                const diaId = `dia-${obra.replace(/[^a-zA-Z0-9]/g, '')}-${r.fecha}`;
+                const chevronDia = hasEquipos ? `<i class="chevron chevron-dia" onclick="toggleDia('${diaId}', event)" style="font-size:0.7rem; cursor:pointer;">▶</i>` : '&nbsp;&nbsp;';
+
+                const tr = document.createElement('tr');
+                tr.className = 'obra-detail-row';
+                tr.dataset.obra = obra;  // use data attribute for grouping
+                tr.style.display = isExpanded ? '' : 'none';
+                tr.style.opacity = isExcluded ? '0.4' : '1';
+                tr.innerHTML = `
+                    <td style="padding-left: 44px; color: var(--text-muted); font-size: 0.85rem;">
+                        ${chevronDia} <span style="font-family: monospace; color: #94a3b8;">${r.fecha || 'N/A'}</span>
+                    </td>
+                    <td style="text-align: right; color: var(--text-muted);">—</td>
+                    <td style="text-align: right;">${sol > 0 ? fmt(sol)+' L' : '<span style="color:var(--text-muted);">—</span>'}${folSol}</td>
+                    <td style="text-align: right;">${fac > 0 ? fmt(fac)+' L' : '<span style="color:var(--text-muted);">—</span>'}${folFac}</td>
+                    <td style="text-align: right;">${con > 0 ? fmt(con)+' L' : '<span style="color:var(--text-muted);">—</span>'}${folCon}</td>
+                    <td style="text-align: right;">${badgeDiff(dSF)}</td>
+                    <td style="text-align: right;">${badgeDiff(dFC)}</td>
+                    <td style="text-align: right; font-size: 0.82rem; color: var(--text-muted);">Día</td>
+                `;
+                tbody.appendChild(tr);
+
+                if (hasEquipos) {
+                    r.detalle_equipos.forEach(eq => {
+                        if (!eq) return;
+                        const trEq = document.createElement('tr');
+                        trEq.className = `obra-detail-row equipo-row-${diaId}`;
+                        trEq.dataset.obra = obra;
+                        trEq.style.display = 'none'; // Hidden by default, even if parent is expanded
+                        trEq.style.opacity = isExcluded ? '0.4' : '1';
+                        trEq.style.background = 'rgba(0,0,0,0.15)';
+                        trEq.innerHTML = `
+                            <td style="padding-left: 74px; color: #64748b; font-size: 0.8rem;">
+                                🚜 ${eq.equipo || 'Sin equipo'}
+                            </td>
+                            <td colspan="3"></td>
+                            <td style="text-align: right; color: #34d399; font-size: 0.82rem;">
+                                ${fmt(eq.litros)} L<br>
+                                <span class="folio-tag" style="opacity:0.7;">📄 ${eq.folio || ''}</span>
+                            </td>
+                            <td colspan="3"></td>
+                        `;
+                        tbody.appendChild(trEq);
+                    });
+                }
+            });
+        }
+        
+        // Grand Totals Row
+        let grandAut = 0, grandSol = 0, grandFac = 0, grandCon = 0;
+        
+        for(const [obra, info] of Object.entries(agrupado)) {
+            if (excludedObras.has(obra)) continue; // IGNORAMOS OBRA DESELECCIONADA
+            
+            grandAut += parseFloat(info.autorizado || 0);
+            info.rows.forEach(r => {
+                grandSol += parseFloat(r.solicitado || 0);
+                grandFac += parseFloat(r.facturado || 0);
+                grandCon += parseFloat(r.consumido || 0);
+            });
+        }
+        
+        const diffGrandSF = grandSol - grandFac;
+        const diffGrandFC = grandFac - grandCon;
+        
+        const trGrand = document.createElement('tr');
+        trGrand.style.backgroundColor = 'rgba(16, 185, 129, 0.15)'; // green tint for totals
+        trGrand.style.borderTop = '2px solid var(--admin-primary)';
+        const precio = parseFloat(document.getElementById('precio-combustible').value || 0);
+        
+        trGrand.innerHTML = `
+            <td style="text-align: right; font-weight: bold; color: var(--admin-primary); padding: 15px;">TOTAL GENERAL SEMANA</td>
+            <td style="text-align: right; font-weight: bold; color: #a78bfa; padding: 15px;">
+                ${grandAut > 0 ? fmt(grandAut) : '—'}<br>
+                <small style="color:var(--text-muted); font-weight:normal;">$${fmt(grandAut * precio)}</small>
+            </td>
+            <td style="text-align: right; font-weight: bold; color: #fbbf24; padding: 15px;">
+                ${fmt(grandSol)} L<br>
+                <small style="color:var(--text-muted); font-weight:normal;">$${fmt(grandSol * precio)}</small>
+            </td>
+            <td style="text-align: right; font-weight: bold; color: #60a5fa; padding: 15px;">
+                ${fmt(grandFac)} L<br>
+                <small style="color:var(--text-muted); font-weight:normal;">$${fmt(grandFac * precio)}</small>
+            </td>
+            <td style="text-align: right; font-weight: bold; color: #34d399; padding: 15px;">
+                ${fmt(grandCon)} L<br>
+                <small style="color:var(--text-muted); font-weight:normal;">$${fmt(grandCon * precio)}</small>
+            </td>
+            <td style="text-align: right; padding: 15px;">
+                ${badgeDiff(diffGrandSF)}<br>
+                <small style="color:var(--text-muted); font-weight:normal;">$${fmt(diffGrandSF * precio)}</small>
+            </td>
+            <td style="text-align: right; padding: 15px;">
+                ${badgeDiff(diffGrandFC)}<br>
+                <small style="color:var(--text-muted); font-weight:normal;">$${fmt(diffGrandFC * precio)}</small>
+            </td>
+            <td style="text-align: right; color: var(--text-muted); font-size: 0.85rem; padding: 15px;">Σ</td>
+        `;
+        tbody.appendChild(trGrand);
+    }
+
+    function toggleDia(diaId, event) {
+        if(event) event.stopPropagation();
+        const icon = event.target;
+        const rows = document.querySelectorAll(`.equipo-row-${diaId}`);
+        const isOpening = !icon.classList.contains('open');
+        
+        if (isOpening) {
+            icon.classList.add('open');
+            rows.forEach(r => r.style.display = '');
+        } else {
+            icon.classList.remove('open');
+            rows.forEach(r => r.style.display = 'none');
+        }
+    }
+
+    function generarReportePDF() {
+        const semana = document.getElementById('filtro-semana').value;
+        const modulo = currentModulo || 'diesel';
+        
+        const btn = document.getElementById('btn-generar-pdf');
+        btn.innerHTML = '<span style="animation: spin 1s linear infinite; display:inline-block;">⏳</span> Generando...';
+        btn.disabled = true;
+        
+        const url = `/api/admin/reporte/pdf?semana=${encodeURIComponent(semana)}&modulo=${encodeURIComponent(modulo)}`;
+        
+        // Crear un link temporal para disparar la descarga
+        fetch(url)
+            .then(res => {
+                if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Error al generar el reporte'); });
+                return res.blob();
+            })
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const semLabel = semana === 'TODOS' ? 'Historico' : semana.replace(' ', '_');
+                a.href = blobUrl;
+                a.download = `Reporte_Combustible_${modulo}_${semLabel}_${new Date().toISOString().slice(0,10)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+                
+                // Toast de éxito
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:rgba(79,70,229,0.95); color:white; padding:14px 22px; border-radius:10px; font-weight:600; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.4); display:flex; align-items:center; gap:10px;';
+                toast.innerHTML = '📄 Reporte PDF generado exitosamente';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            })
+            .catch(err => {
+                alert('Error al generar reporte: ' + err.message);
+            })
+            .finally(() => {
+                btn.innerHTML = '<span style="font-size:1.2rem;">📄</span><span>Generar Reporte PDF</span>';
+                btn.disabled = false;
+            });
+    }
+
+    function generarReporteExcel() {
+        const modulo = currentModulo || 'diesel';
+        const btn = document.getElementById('btn-generar-excel');
+        btn.innerHTML = '<span style="animation: spin 1s linear infinite; display:inline-block;">⏳</span> Generando...';
+        btn.disabled = true;
+
+        const url = `/api/admin/reporte/excel?modulo=${encodeURIComponent(modulo)}`;
+
+        fetch(url)
+            .then(res => {
+                if (!res.ok) return res.json().then(d => { throw new Error(d.error || 'Error al generar el reporte Excel'); });
+                return res.blob();
+            })
+            .then(blob => {
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = `Reporte_Diesel_Semanal_${new Date().toISOString().slice(0,10)}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed; bottom:24px; right:24px; background:rgba(16,185,129,0.95); color:white; padding:14px 22px; border-radius:10px; font-weight:600; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.4); display:flex; align-items:center; gap:10px;';
+                toast.innerHTML = '📊 Reporte Excel generado exitosamente';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            })
+            .catch(err => {
+                alert('Error al generar reporte Excel: ' + err.message);
+            })
+            .finally(() => {
+                btn.innerHTML = '<span style="font-size:1.2rem;">📊</span><span>Reporte Excel Total</span>';
+                btn.disabled = false;
+            });
+    }
+
+
+    // ====================================================================
+    // TABLA 5: CONSUMO DIARIO POR INGENIERO Y MAQUINARIA
+    // ====================================================================
+
+    async function poblarFiltroIngenieros() {
+        const semana = document.getElementById('filtro-semana').value;
+        const sel = document.getElementById('filtro-ingeniero-dig');
+        const wrapper = document.getElementById('panel-diario-ing-wrapper');
+
+        if (semana === 'TODOS' || currentModulo !== 'diesel') {
+            wrapper.style.display = 'none';
+            return;
+        }
+        wrapper.style.display = '';
+
+        // Build list from auth_map (already available in pivot) — query responsables endpoint
+        try {
+            const semanaNum = semana.replace('Semana ', '').trim();
+            const res = await fetch(`/api/admin/resumen/responsables?modulo=diesel&semana=${encodeURIComponent(semanaNum)}`);
+            const data = await res.json();
+            const prev = sel.value;
+            sel.innerHTML = '<option value="">— Selecciona un ingeniero —</option>';
+            data.forEach(r => {
+                if (r.responsable && r.responsable !== 'S/R') {
+                    const opt = document.createElement('option');
+                    opt.value = r.responsable;
+                    opt.textContent = r.responsable;
+                    if (r.responsable === prev) opt.selected = true;
+                    sel.appendChild(opt);
+                }
+            });
+            // Auto-select first if none selected
+            if (!sel.value && sel.options.length > 1) {
+                sel.selectedIndex = 1;
+            }
+        } catch(e) { console.error('poblarFiltroIngenieros:', e); }
+    }
+
+    async function cargarDiarioIngeniero() {
+        const semana = document.getElementById('filtro-semana').value;
+        const responsable = document.getElementById('filtro-ingeniero-dig').value;
+        const thead = document.getElementById('thead-diario-ing');
+        const tbody = document.getElementById('tbody-diario-ing');
+        const headerInfo = document.getElementById('dig-header-info');
+        const wrapper = document.getElementById('panel-diario-ing-wrapper');
+
+        if (semana === 'TODOS' || currentModulo !== 'diesel') {
+            wrapper.style.display = 'none';
+            return;
+        }
+        wrapper.style.display = '';
+
+        if (!responsable) {
+            thead.innerHTML = '<tr><th style="text-align:center; color:#94a3b8;">Selecciona un ingeniero</th></tr>';
+            tbody.innerHTML = '';
+            headerInfo.innerHTML = '';
+            return;
+        }
+
+        thead.innerHTML = '<tr><th colspan="20" style="text-align:center;">Cargando...</th></tr>';
+        tbody.innerHTML = '';
+        headerInfo.innerHTML = '';
+
+        try {
+            const semanaNum = semana.replace('Semana ', '').trim();
+            const res = await fetch(`/api/admin/resumen/diario-ingeniero?responsable=${encodeURIComponent(responsable)}&semana=${encodeURIComponent(semanaNum)}`);
+            const d = await res.json();
+
+            if (d.error) throw new Error(d.error);
+
+            const dias = d.dias || [];
+            const equipos = d.equipos || [];
+            const consumos = d.consumos || {};
+            const obrasPorDia = d.obras_por_dia || {};
+            const totalPorDia = d.total_por_dia || {};
+            const totalPorEquipo = d.total_por_equipo || {};
+            const costoPorDia = d.costo_por_dia || {};
+            const diasTrab = dias.length || 1;
+
+            const fmtN = n => n != null ? Number(n).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2}) : '—';
+            const fmtFecha = f => {
+                const dt = new Date(f + 'T12:00:00');
+                return dt.toLocaleDateString('es-MX', {weekday:'short', day:'2-digit', month:'2-digit'});
+            };
+
+            // === Header info banner ===
+            const autoSemanal = d.autorizado_dia * diasTrab;
+            const remColor = d.gran_total > autoSemanal ? '#ef4444' : '#10b981';
+            headerInfo.innerHTML = `
+                <div class="dig-header-ing">
+                    <div>
+                        <span style="font-size:1.1rem; font-weight:700; color:#e2e8f0;">👤 ${responsable}</span>
+                        <span style="margin-left:16px; color:#94a3b8; font-size:0.82rem;">Semana ${semanaNum} — ${diasTrab} día${diasTrab!==1?'s':''} trabajados</span>
+                    </div>
+                    <div style="display:flex; gap:24px; font-size:0.85rem;">
+                        <div><span style="color:#94a3b8;">Autorizado/día:</span> <strong style="color:#fbbf24;">${fmtN(d.autorizado_dia)} L</strong></div>
+                        <div><span style="color:#94a3b8;">Autorizado semanal:</span> <strong style="color:#38bdf8;">${fmtN(autoSemanal)} L</strong></div>
+                        <div><span style="color:#94a3b8;">Consumido total:</span> <strong style="color:#f472b6;">${fmtN(d.gran_total)} L</strong></div>
+                        <div><span style="color:#94a3b8;">Remanente:</span> <strong style="color:${remColor};">${fmtN(autoSemanal - d.gran_total)} L</strong></div>
+                        <div><span style="color:#94a3b8;">Importe total:</span> <strong style="color:#a78bfa;">$${fmtN(d.costo_total)}</strong></div>
+                    </div>
+                </div>
+            `;
+
+            // === TABLE HEADER ===
+            // Row 1: Importe autorizado cell + dates
+            let thRow = `<tr>
+                <th style="background:#1e293b; text-align:left; min-width:200px;">EQUIPO / MAQUINARIA</th>
+                <th style="background:#0f172a; color:#fbbf24; text-align:center;">IMPORTE SEMaNAL<br>AUTORIZADO</th>`;
+            dias.forEach(f => {
+                thRow += `<th class="dig-dia-th" style="background:#0f172a; color:#38bdf8;">${fmtFecha(f)}</th>`;
+            });
+            thRow += `<th style="background:#0f172a; color:#f472b6; text-align:right;">LITROS<br>TOTAL</th></tr>`;
+
+            // Row 2: obra per day
+            let obraRow = `<tr class="dig-obra-row">
+                <td style="color:#64748b; font-size:0.7rem;">OBRA</td>
+                <td></td>`;
+            dias.forEach(f => {
+                obraRow += `<td style="text-align:center; font-size:0.7rem; color:#64748b;">${obrasPorDia[f] || '—'}</td>`;
+            });
+            obraRow += `<td></td></tr>`;
+
+            thead.innerHTML = thRow;
+
+            // === TABLE BODY — one row per machine ===
+            let htmlBody = obraRow;
+            const autoSemFmt = fmtN(autoSemanal) + ' L';
+
+            equipos.forEach((eq, idx) => {
+                const bgAlt = idx % 2 === 0 ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.04)';
+                let row = `<tr style="background:${bgAlt};">
+                    <td class="dig-equipo-col" style="text-align:left; padding-left:12px;">${eq}</td>
+                    <td style="text-align:center; color:#fbbf24; font-size:0.75rem;">${idx === 0 ? autoSemFmt : ''}</td>`;
+                dias.forEach(f => {
+                    const val = (consumos[eq] || {})[f];
+                    const disp = val != null && val > 0 ? `<strong style="color:#e2e8f0;">${fmtN(val)}</strong>` : `<span style="color:#334155;">—</span>`;
+                    row += `<td style="text-align:center;">${disp}</td>`;
+                });
+                row += `<td style="text-align:right; color:#f472b6;"><strong>${fmtN(totalPorEquipo[eq] || 0)}</strong></td>`;
+                row += '</tr>';
+                htmlBody += row;
+            });
+
+            // TOTAL LITROS ROW
+            let totRow = `<tr class="dig-total-row">
+                <td style="text-align:right; padding-right:12px; color:#38bdf8;">TOTAL LITROS</td>
+                <td></td>`;
+            dias.forEach(f => {
+                totRow += `<td style="text-align:center; color:#38bdf8;">${fmtN(totalPorDia[f] || 0)}</td>`;
+            });
+            totRow += `<td style="text-align:right; color:#38bdf8;">${fmtN(d.gran_total)}</td></tr>`;
+            htmlBody += totRow;
+
+            // IMPORTE ROW
+            let impRow = `<tr class="dig-importe-row">
+                <td style="text-align:right; padding-right:12px; color:#a78bfa;">IMPORTE ($${fmtN(d.costo_unitario)}/L)</td>
+                <td style="text-align:center; color:#a78bfa;">$${fmtN(d.costo_total)}</td>`;
+            dias.forEach(f => {
+                impRow += `<td style="text-align:center; color:#a78bfa;">$${fmtN(costoPorDia[f] || 0)}</td>`;
+            });
+            impRow += `<td style="text-align:right; color:#a78bfa;"><strong>$${fmtN(d.costo_total)}</strong></td></tr>`;
+            htmlBody += impRow;
+
+            tbody.innerHTML = htmlBody;
+
+        } catch(e) {
+            console.error(e);
+            thead.innerHTML = '<tr><th colspan="20" style="text-align:center; color:#ef4444;">Error al cargar datos.</th></tr>';
+            tbody.innerHTML = '';
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // TABLA 6 — Resumen Diario de Consumo por Obra
+    // ═══════════════════════════════════════════════════════════════════
+    async function cargarTabla6() {
+        const semana  = document.getElementById('filtro-semana')?.value || 'TODOS';
+        const obra    = document.getElementById('filtro-obra-t6')?.value || 'TODAS';
+        const tbody   = document.getElementById('tbody-t6');
+        const stats   = document.getElementById('t6-stats');
+
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:18px; color:var(--text-muted);">
+            <span style="animation: spin 1s linear infinite; display:inline-block; font-size:1.3rem;">⏳</span> Cargando...
+        </td></tr>`;
+
+        try {
+            let url = `/api/admin/resumen/tabla6?semana=${encodeURIComponent(semana)}&obra=${encodeURIComponent(obra)}`;
+            const res  = await fetch(url);
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            // Actualizar el combo de obras (solo si hay datos nuevos)
+            const sel = document.getElementById('filtro-obra-t6');
+            const obraActual = sel.value;
+            sel.innerHTML = '<option value="TODAS">— Todas las obras —</option>';
+            (data.obras || []).forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o;
+                opt.textContent = o;
+                if (o === obraActual) opt.selected = true;
+                sel.appendChild(opt);
+            });
+
+            // Tarjetas de resumen
+            const fmtL = v => Number(v).toLocaleString('es-MX', {minimumFractionDigits:3, maximumFractionDigits:3});
+            const fmtM = v => '$' + Number(v).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+            stats.innerHTML = `
+                <div class="t6-card-stat">
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">DÍAS TRABAJADOS</div>
+                    <div style="font-size:1.4rem; font-weight:700; color:#10b981;">${(data.filas||[]).length}</div>
+                </div>
+                <div class="t6-card-stat">
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">LITROS TOTALES</div>
+                    <div style="font-size:1.4rem; font-weight:700; color:#10b981;">${fmtL(data.total?.litros || 0)}</div>
+                </div>
+                <div class="t6-card-stat">
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">IMPORTE TOTAL</div>
+                    <div style="font-size:1.4rem; font-weight:700; color:#f59e0b;">${fmtM(data.total?.importe || 0)}</div>
+                </div>`;
+
+            // Filas de datos
+            if (!data.filas || data.filas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">
+                    Sin datos para la selección actual.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            data.filas.forEach((f, i) => {
+                const bg = i % 2 === 0 ? '' : 'style="background:rgba(255,255,255,0.03);"';
+                const prec = f.precio_prom > 0 ? fmtM(f.precio_prom) : '<span style="color:var(--text-muted)">—</span>';
+                html += `<tr class="t6-data-row" ${bg}>
+                    <td><strong>${f.fecha_label}</strong></td>
+                    <td style="text-align:right; color:#34d399; font-weight:600;">${fmtL(f.litros)}</td>
+                    <td style="text-align:right; color:#94a3b8;">${prec}</td>
+                    <td style="text-align:right; color:#fbbf24; font-weight:700;">${fmtM(f.importe)}</td>
+                </tr>`;
+            });
+
+            // Fila total
+            html += `<tr class="t6-total-row">
+                <td style="font-weight:700; letter-spacing:0.05em;">TOTAL SEMANA</td>
+                <td style="text-align:right; font-size:1rem;">${fmtL(data.total.litros)}</td>
+                <td style="text-align:right;"></td>
+                <td style="text-align:right; font-size:1rem; color:#fbbf24;">${fmtM(data.total.importe)}</td>
+            </tr>`;
+
+            tbody.innerHTML = html;
+
+        } catch(e) {
+            console.error('T6 error:', e);
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:16px;">
+                Error: ${e.message}</td></tr>`;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        cargarSemanas();
+        cargarResumenJalisco();
+    });
+
+    function generarReporteExcelJalisco() {
+        window.location.href = '/api/admin/jalisco/reporte/excel';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // TABLA JALISCO — Resumen Semanal de Vales
+    // ═══════════════════════════════════════════════════════════════════════════
+    async function cargarResumenJalisco() {
+        const tbody  = document.getElementById('tbody-jalisco');
+        const stats  = document.getElementById('jalisco-stats');
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:18px; color:var(--text-muted);">⏳ Cargando...</td></tr>`;
+
+        try {
+            const res  = await fetch('/api/admin/resumen/jalisco');
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            const fmtM = v => '$' + Number(v).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+            // Tarjetas de resumen
+            const tots = data.totales || {};
+            const lastF = (data.filas||[])[data.filas.length-1] || {};
+            stats.innerHTML = `
+                <div class="t6-card-stat" style="border-color:rgba(251,191,36,0.4); background:rgba(251,191,36,0.08);">
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">TOTAL IMPORTE</div>
+                    <div style="font-size:1.3rem; font-weight:700; color:#fbbf24;">${fmtM(tots.importe||0)}</div>
+                </div>
+                <div class="t6-card-stat" style="border-color:rgba(251,191,36,0.4); background:rgba(251,191,36,0.08);">
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">SALDO FINAL ACTUAL</div>
+                    <div style="font-size:1.3rem; font-weight:700; color:${(lastF.saldo_final||0)>=0?'#34d399':'#ef4444'};">${fmtM(lastF.saldo_final||0)}</div>
+                </div>
+                <div class="t6-card-stat" style="border-color:rgba(251,191,36,0.4); background:rgba(251,191,36,0.08);">
+                    <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">SEMANAS</div>
+                    <div style="font-size:1.3rem; font-weight:700; color:#fbbf24;">${(data.filas||[]).length}</div>
+                </div>`;
+
+            if (!data.filas || data.filas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:20px;">Sin datos de Jalisco.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            data.filas.forEach((f, i) => {
+                const bg = i%2===0 ? '' : 'style="background:rgba(255,255,255,0.03);"';
+                const saldoFinalClass = f.saldo_final < 0 ? 'tj-saldo-neg' : 'tj-saldo-pos';
+                html += `<tr class="tj-row" ${bg}>
+                    <td><strong>${f.semana}</strong></td>
+                    <td style="text-align:right; color:#94a3b8;">${fmtM(f.saldo_inicial)}</td>
+                    <td style="text-align:right; color:#fbbf24; font-weight:600;">${fmtM(f.importe)}</td>
+                    <td style="text-align:right; color:#a78bfa;">${f.ajuste > 0 ? fmtM(f.ajuste) : '<span style="color:#334155;">—</span>'}</td>
+                    <td style="text-align:right;" class="${saldoFinalClass}">${fmtM(f.saldo_final)}</td>
+                </tr>`;
+            });
+
+            // Fila de totales usando los totales del servidor
+            const lastFila = data.filas[data.filas.length-1];
+            const saldoFinalTotClass = lastFila.saldo_final < 0 ? 'tj-saldo-neg' : 'tj-saldo-pos';
+            const t = data.totales || {};
+            html += `<tr class="tj-tot-row">
+                <td>TOTAL GENERAL</td>
+                <td style="text-align:right;">${fmtM(t.saldo_inicial||0)}</td>
+                <td style="text-align:right;">${fmtM(t.importe||0)}</td>
+                <td style="text-align:right;">${fmtM(t.ajuste||0)}</td>
+                <td style="text-align:right;" class="${saldoFinalTotClass}">${fmtM(lastFila.saldo_final)}</td>
+            </tr>`;
+
+            tbody.innerHTML = html;
+
+        } catch(e) {
+            console.error('Jalisco error:', e);
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#ef4444; padding:16px;">Error: ${e.message}</td></tr>`;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SECCIÓN ESPECIAL: SINDICATO COSUM (FACTURAS)
+    // ═══════════════════════════════════════════════════════════════════════════
+    async function cargarResumenCOSUM() {
+        const tbody = document.getElementById('tbody-cosum');
+        const stats = document.getElementById('cosum-stats');
+        const selSemana = document.getElementById('filtro-semana');
+        const semanaVal = selSemana ? selSemana.value : 'TODOS';
+
+        if (!tbody) return;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:18px; color:var(--text-muted);">⏳ Cargando facturas de COSUM...</td></tr>`;
+
+        try {
+            const res = await fetch(`/api/admin/resumen/cosum?semana=${encodeURIComponent(semanaVal)}`);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Error al obtener datos de COSUM');
+
+            const fmtL = v => Number(v).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+            const fmtM = v => '$' + Number(v).toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+
+            const tots = data.totales || {};
+            if (stats) {
+                stats.innerHTML = `
+                    <div class="t6-card-stat" style="border-color:rgba(59,130,246,0.4); background:rgba(59,130,246,0.08);">
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">CANTIDAD FACTURAS</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:#60a5fa;">${tots.cantidad || 0}</div>
+                    </div>
+                    <div class="t6-card-stat" style="border-color:rgba(59,130,246,0.4); background:rgba(59,130,246,0.08);">
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">TOTAL LITROS</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:#34d399;">${fmtL(tots.litros || 0)}</div>
+                    </div>
+                    <div class="t6-card-stat" style="border-color:rgba(59,130,246,0.4); background:rgba(59,130,246,0.08);">
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">TOTAL IMPORTE ($)</div>
+                        <div style="font-size:1.3rem; font-weight:700; color:#fbbf24;">${fmtM(tots.importe || 0)}</div>
+                    </div>`;
+            }
+
+            if (!data.facturas || data.facturas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:20px;">No hay facturas registradas para Sindicato COSUM en la selección actual.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            data.facturas.forEach((f, i) => {
+                const bg = i % 2 === 0 ? '' : 'style="background:rgba(255,255,255,0.03);"';
+                const fol = f.folio_factura || f.folio_conciliacion || 'S/F';
+                const obs = f.observaciones || f.uuid_cfdi || '—';
+                html += `<tr ${bg}>
+                    <td style="text-align:center;"><span style="background:rgba(59,130,246,0.2); color:#93c5fd; padding:3px 8px; border-radius:6px; font-weight:600; font-size:0.8rem;">${f.combustible}</span></td>
+                    <td style="text-align:center;"><strong>Semana ${f.semana || 'N/A'}</strong></td>
+                    <td style="font-weight:bold; color:var(--primary);">${fol}</td>
+                    <td style="text-align:center; color:#94a3b8;">${f.fecha_str || f.fecha_factura || ''}</td>
+                    <td>${f.proveedor || 'N/A'}</td>
+                    <td style="text-align:right; color:#34d399; font-weight:bold;">${fmtL(f.litros_facturados || 0)}</td>
+                    <td style="text-align:right; color:#fbbf24; font-weight:bold;">${fmtM(f.importe_total || 0)}</td>
+                    <td style="font-size:0.82rem; color:#94a3b8;">${obs}</td>
+                </tr>`;
+            });
+
+            // Fila Total
+            html += `<tr style="background:rgba(30,58,138,0.4); font-weight:bold; border-top:2px solid #3b82f6;">
+                <td colspan="5" style="text-align:right; color:#93c5fd;">TOTAL SINDICATO COSUM:</td>
+                <td style="text-align:right; color:#34d399; font-size:1rem;">${fmtL(tots.litros)}</td>
+                <td style="text-align:right; color:#fbbf24; font-size:1rem;">${fmtM(tots.importe)}</td>
+                <td></td>
+            </tr>`;
+
+            tbody.innerHTML = html;
+        } catch(e) {
+            console.error('COSUM error:', e);
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#ef4444; padding:16px;">Error: ${e.message}</td></tr>`;
+        }
+    }
+
+</script>
+{% endblock %}

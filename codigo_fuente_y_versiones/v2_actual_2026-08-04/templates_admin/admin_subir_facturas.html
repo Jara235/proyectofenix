@@ -1,0 +1,1230 @@
+{% extends "layout_admin.html" %}
+
+{% block content %}
+<div class="panel-header" style="border:none; margin-bottom: 20px;">
+    <div>
+        <h1 style="margin:0; font-size: 1.8rem; font-weight: 700; color: #a855f7;">🧾 Módulo de Facturas de Combustible</h1>
+        <p style="margin:5px 0 0 0; color: var(--text-muted);">Módulo unificado para captura masiva y consulta general de facturas de Diésel y Gasolina.</p>
+    </div>
+</div>
+
+<style>
+    .btn-subtab {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        font-weight: 600;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    .btn-subtab.active {
+        color: #a855f7;
+        border-bottom: 3px solid #a855f7;
+    }
+</style>
+
+<!-- Sub-Navegación de Pestañas -->
+<div style="display:flex; gap:15px; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; max-width: 1650px; margin-left: auto; margin-right: auto; padding-bottom: 5px;">
+    <button id="tab-btn-captura" class="btn-subtab active" onclick="switchModoFacturas('captura')">
+        📥 Captura y Carga Masiva
+    </button>
+    <button id="tab-btn-visualizacion" class="btn-subtab" onclick="switchModoFacturas('visualizacion')">
+        🔍 Visualización de Todas las Facturas
+    </button>
+    <button id="tab-btn-impresion" class="btn-subtab" onclick="switchModoFacturas('impresion')">
+        🖨️ Impresión de Facturas
+    </button>
+</div>
+
+<!-- ==================== OPCIÓN 1: CAPTURA Y CARGA MASIVA ==================== -->
+<div id="seccion-captura">
+<div class="panel" style="max-width: 1650px; margin: 0 auto; text-align: center;">
+    <h2 style="margin-top: 0;">Paso 1: Tipo de Documento</h2>
+    <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 30px;">
+        <label style="cursor: pointer; padding: 15px 30px; background: rgba(16, 185, 129, 0.1); border: 2px solid #10b981; border-radius: 8px; color: #10b981; font-weight: bold; width: 50%;" id="label-modo-auto">
+            <input type="radio" name="modo_carga" value="auto" checked style="margin-right: 10px;"> 
+            <div style="font-size:1.2rem; margin-bottom:5px;">Factura (XML + PDF)</div>
+            <div style="font-size:0.8rem; font-weight:normal;">Extracción 100% Automática</div>
+        </label>
+        <label style="cursor: pointer; padding: 15px 30px; background: rgba(245, 158, 11, 0.1); border: 2px solid transparent; border-radius: 8px; color: #f59e0b; font-weight: bold; transition: all 0.3s; width: 50%;" id="label-modo-manual">
+            <input type="radio" name="modo_carga" value="manual" style="margin-right: 10px;"> 
+            <div style="font-size:1.2rem; margin-bottom:5px;">Estado de Cuenta (Solo PDF)</div>
+            <div style="font-size:0.8rem; font-weight:normal;">Captura Manual Rápida</div>
+        </label>
+    </div>
+
+    <!-- Dropzone Area -->
+    <div id="dropzone" style="border: 2px dashed var(--border-color); border-radius: 12px; padding: 50px 20px; background: var(--bg-dark); cursor: pointer; transition: all 0.3s ease;">
+        <div style="font-size: 4rem; margin-bottom: 10px;">📥</div>
+        <h3 style="margin:0; color: #fff;" id="dropzone-title">Sube tus archivos XML y PDF</h3>
+        <p style="color: var(--text-muted); font-size: 0.9rem;" id="dropzone-desc">Soporta múltiples facturas a la vez</p>
+        <input type="file" id="fileInput" multiple accept=".xml,.pdf" style="display: none;">
+    </div>
+
+    <!-- Lista de Archivos y Previsualización -->
+    <div id="previewArea" style="margin-top: 30px; text-align: left; display: none;">
+        <div style="display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 25px;">
+            <!-- Izquierda: Lista de Facturas -->
+            <div>
+                <h3 style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-top:0;">Facturas Detectadas</h3>
+                <div id="facturasList" style="display: flex; flex-direction: column; gap: 15px; max-height: 600px; overflow-y: auto; padding-right: 10px;">
+                    <!-- Render via JS -->
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 8px; border: 1px solid #10b981;">
+                    <div>
+                        <h3 style="margin: 0; color: #10b981;">Total a Inyectar: <span id="totalLitros">0.00</span> Lts</h3>
+                        <p style="margin: 5px 0 0 0; font-size: 0.9rem; color: var(--text-muted);">Archivos procesados: <span id="totalArchivos">0</span></p>
+                    </div>
+                    <button class="btn btn-success" id="btnGuardar" style="font-size: 1.1rem; padding: 12px 20px;" disabled>
+                        🚀 Inyectar a Base de Datos
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Derecha: Visor PDF -->
+            <div style="background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; height: 680px;">
+                <iframe id="pdfViewer" style="width: 100%; height: 100%; border: none;" src=""></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== HISTORIAL DE CAPTURAS ==================== -->
+<h3 style="margin-top: 3rem; margin-bottom: 1rem; color: #fff; max-width: 1650px; margin-left: auto; margin-right: auto;">Últimas Facturas Inyectadas</h3>
+<div class="panel" style="max-width: 1650px; margin: 0 auto; padding: 1rem; overflow-x: auto; margin-bottom: 3rem;">
+    <table style="width: 100%; text-align: left; border-collapse: collapse;">
+        <tr style="border-bottom: 1px solid var(--border-color);">
+            <th style="padding: 0.5rem; color: var(--text-muted);">Combustible</th>
+            <th style="padding: 0.5rem; color: var(--text-muted);">Folio</th>
+            <th style="padding: 0.5rem; color: var(--text-muted);">Proveedor</th>
+            <th style="padding: 0.5rem; color: var(--text-muted);">Obra</th>
+            <th style="padding: 0.5rem; color: var(--text-muted);">Placa</th>
+            <th style="padding: 0.5rem; color: var(--text-muted);">Fecha</th>
+            <th style="padding: 0.5rem; color: var(--text-muted);">Litros</th>
+            <th style="padding: 0.5rem; color: var(--text-muted);">Importe</th>
+        </tr>
+        {% for h in historial_facturas %}
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 0.5rem;">
+                {% if h['combustible'] == 'Diésel' %}
+                <span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">🛢 Diésel</span>
+                {% else %}
+                <span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">⛽ Gasolina</span>
+                {% endif %}
+            </td>
+            <td style="padding: 0.5rem; font-weight: bold;">{{ h['folio_factura'] }}</td>
+            <td style="padding: 0.5rem;">{{ h['proveedor'][:25] ~ '...' if h['proveedor']|length > 25 else h['proveedor'] }}</td>
+            <td style="padding: 0.5rem;">{{ h['obra_destino'] }}</td>
+            <td style="padding: 0.5rem;">{{ h['placa'] if h['placa'] else '-' }}</td>
+            <td style="padding: 0.5rem;">{{ h['fecha_factura'] }}</td>
+            <td style="padding: 0.5rem;">{{ h['litros_facturados'] }} Lts</td>
+            <td style="padding: 0.5rem; font-weight: bold; color: #10b981;">${{ h['importe_total'] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" style="padding: 1rem; text-align: center; color: var(--text-muted);">No hay facturas recientes inyectadas.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+</div>
+
+<!-- ==================== OPCIÓN 2: VISUALIZACIÓN Y BÚSQUEDA DE FACTURAS ==================== -->
+<div id="seccion-visualizacion" style="display: none; max-width: 1650px; margin: 0 auto;">
+    <div class="panel" style="padding: 20px; margin-bottom: 25px;">
+        <h2 style="margin-top:0; margin-bottom: 15px; color: #a855f7; display: flex; align-items: center; gap: 10px;">
+            🔍 Visualización Unificada de Facturas (Diésel y Gasolina)
+        </h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+            Busca y consulta cualquier factura registrada en el sistema filtrando principalmente por su <strong>Folio de Factura</strong>, combustible, o estatus de revisión.
+        </p>
+
+        <!-- Barra de Filtros -->
+        <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; border: 1px solid var(--border-color);">
+            <!-- Búsqueda Principal por Folio -->
+            <div style="flex: 2; min-width: 280px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); font-weight: bold; margin-bottom: 5px;">🧾 Buscar por Folio de Factura / Proveedor:</label>
+                <div style="position: relative;">
+                    <input type="text" id="vis-search-q" placeholder="Escribe folio (ej. A10268, A10386, 10267)..." oninput="buscarTodasFacturas()" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.05); color: #fff; font-size: 1rem; font-family: monospace;">
+                </div>
+            </div>
+
+            <!-- Filtro Tipo Combustible -->
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); font-weight: bold; margin-bottom: 5px;">🛢️ Combustible:</label>
+                <select id="vis-filter-tipo" onchange="buscarTodasFacturas()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.4); color: #fff; font-size: 0.9rem;">
+                    <option value="TODOS">Todos (Diésel + Gasolina)</option>
+                    <option value="GASOLINA">⛽ Gasolina</option>
+                    <option value="DIESEL">🛢️ Diésel</option>
+                </select>
+            </div>
+
+            <!-- Filtro Estatus -->
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); font-weight: bold; margin-bottom: 5px;">📌 Estatus:</label>
+                <select id="vis-filter-estatus" onchange="buscarTodasFacturas()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.4); color: #fff; font-size: 0.9rem;">
+                    <option value="TODOS">Todos los Estatus</option>
+                    <option value="PENDIENTE">Pendientes</option>
+                    <option value="APROBADO">Aprobadas</option>
+                    <option value="OBSERVACION">En Observación 🔍</option>
+                    <option value="RECHAZADO">Rechazadas ❌</option>
+                    <option value="CANCELADA">Canceladas 🚫</option>
+                </select>
+            </div>
+
+            <div style="display: flex; align-items: flex-end;">
+                <button onclick="limpiarFiltrosVisualizacion()" style="padding: 10px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold; height: 42px;">
+                    🧹 Limpiar
+                </button>
+            </div>
+        </div>
+
+        <!-- Resumen de Resultados -->
+        <div id="vis-resumen-badges" style="margin-top: 15px; display: flex; gap: 20px; align-items: center; font-size: 0.9rem;">
+            <span style="color: var(--text-muted);">Resultados: <strong id="vis-total-count" style="color: #a855f7;">0</strong> facturas</span>
+            <span style="color: var(--text-muted);">Litros Totales: <strong id="vis-total-litros" style="color: #38bdf8;">0.00 L</strong></span>
+            <span style="color: var(--text-muted);">Importe Total: <strong id="vis-total-monto" style="color: #10b981;">$0.00 MXN</strong></span>
+        </div>
+    </div>
+
+    <!-- Vista Dividida: Tabla de Resultados + Visor PDF -->
+    <div style="display: grid; grid-template-columns: 1fr 480px; gap: 20px; align-items: start;">
+        <!-- Tabla de Resultados -->
+        <div class="panel" style="padding: 15px; overflow-x: auto;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem;">
+                        <th style="padding: 10px;">Combustible</th>
+                        <th style="padding: 10px;">Folio Factura</th>
+                        <th style="padding: 10px;">Fecha</th>
+                        <th style="padding: 10px;">Proveedor</th>
+                        <th style="padding: 10px; text-align: right;">Litros</th>
+                        <th style="padding: 10px; text-align: right;">Importe</th>
+                        <th style="padding: 10px; text-align: center;">Estatus</th>
+                        <th style="padding: 10px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="vis-tbody-facturas">
+                    <tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--text-muted);">Cargando facturas...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Visor PDF Panel -->
+        <div class="panel" style="padding: 15px; position: sticky; top: 100px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <span style="font-weight: bold; color: #fff;">📄 Visor de Evidencia PDF</span>
+                <span id="vis-visor-folio" style="color: #a855f7; font-family: monospace; font-weight: bold;">Sin selección</span>
+            </div>
+            <div style="height: 520px; background: rgba(0,0,0,0.3); border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;" id="vis-container-pdf">
+                <div style="text-align: center; color: var(--text-muted); padding: 20px;">
+                    👈 Haz clic en cualquier factura para ver su archivo PDF aquí.
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- ==================== OPCIÓN 3: IMPRESIÓN Y EXPORTACIÓN DE FACTURAS ==================== -->
+<div id="seccion-impresion" style="display: none; max-width: 1650px; margin: 0 auto;">
+    <div class="panel" style="padding: 20px; margin-bottom: 25px;">
+        <h2 style="margin-top:0; margin-bottom: 10px; color: #38bdf8; display: flex; align-items: center; gap: 10px;">
+            🖨️ Impresión y Consulta de Facturas por Semana / Folio
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+            Filtra por semana o folio de factura, selecciona facturas individualmente o de forma masiva para previsualizar, imprimir o generar un PDF consolidado en lote.
+        </p>
+
+        <!-- Filtros y Selectores Bar -->
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border: 1px solid var(--border-color);">
+            
+            <!-- Selector por Semana -->
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: bold;">📅 Filtrar por Semana:</label>
+                <select id="imp-filter-semana" onchange="buscarFacturasImpresion()" style="width: 100%; padding: 10px 14px; background: var(--bg-dark); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; font-size: 0.9rem;">
+                    <option value="TODAS">🗓️ Todas las Semanas</option>
+                    <!-- Populated dynamically via JS -->
+                </select>
+            </div>
+
+            <!-- Búsqueda por Folio / Proveedor -->
+            <div style="flex: 2; min-width: 250px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: bold;">🔍 Folio de Factura / Proveedor:</label>
+                <input type="text" id="imp-search-q" placeholder="Escribe folio (ej. A10268, A10386)..." onkeyup="if(event.key==='Enter') buscarFacturasImpresion()" style="width: 100%; padding: 10px 14px; background: var(--bg-dark); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; font-size: 0.9rem;">
+            </div>
+
+            <!-- Tipo Combustible -->
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: bold;">⛽ Combustible:</label>
+                <select id="imp-filter-tipo" onchange="buscarFacturasImpresion()" style="width: 100%; padding: 10px 14px; background: var(--bg-dark); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; font-size: 0.9rem;">
+                    <option value="TODOS">Todos (Diésel + Gasolina)</option>
+                    <option value="DIESEL">🛢️ Solo Diésel</option>
+                    <option value="GASOLINA">⛽ Solo Gasolina</option>
+                </select>
+            </div>
+
+            <!-- Estatus -->
+            <div style="flex: 1; min-width: 180px;">
+                <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; font-weight: bold;">📌 Estatus:</label>
+                <select id="imp-filter-estatus" onchange="buscarFacturasImpresion()" style="width: 100%; padding: 10px 14px; background: var(--bg-dark); border: 1px solid var(--border-color); color: #fff; border-radius: 8px; font-size: 0.9rem;">
+                    <option value="TODOS">Todos los Estatus</option>
+                    <option value="APROBADO">Aprobadas</option>
+                    <option value="PENDIENTE">Pendientes</option>
+                    <option value="OBSERVACION">Observaciones</option>
+                    <option value="RECHAZADO">Rechazadas</option>
+                </select>
+            </div>
+
+            <!-- Botones -->
+            <div style="display: flex; gap: 10px;">
+                <button onclick="buscarFacturasImpresion()" style="padding: 10px 18px; background: #38bdf8; border: none; color: #000; font-weight: bold; border-radius: 8px; cursor: pointer; height: 42px; display: flex; align-items: center; gap: 6px;">
+                    🔍 Buscar
+                </button>
+                <button onclick="limpiarFiltrosImpresion()" style="padding: 10px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold; height: 42px;">
+                    🧹 Limpiar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de Selección Masiva y Acciones de Impresión -->
+    <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); padding: 15px 20px; border-radius: 12px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        
+        <!-- Stats & Select All -->
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold; color: #38bdf8; font-size: 0.95rem; user-select: none;">
+                <input type="checkbox" id="imp-chk-select-all" onchange="toggleSelectAllImpresion(this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
+                <span>Seleccionar Todas</span>
+            </label>
+
+            <div style="font-size: 0.88rem; color: #e2e8f0; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 15px;">
+                Seleccionadas: <span id="imp-stat-count" style="font-weight: bold; color: #38bdf8;">0</span> / <span id="imp-stat-total" style="font-weight: bold;">0</span> | 
+                Monto: <span id="imp-stat-monto" style="font-weight: bold; color: #10b981;">$0.00 MXN</span> | 
+                Litros: <span id="imp-stat-litros" style="font-weight: bold; color: #38bdf8;">0.00 L</span>
+            </div>
+        </div>
+
+        <!-- Botones Imprimir Lote -->
+        <div style="display: flex; gap: 12px;">
+            <button onclick="imprimirFacturasLotePDF()" style="padding: 10px 18px; background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);">
+                🖨️ Imprimir PDFs Seleccionados (Lote)
+            </button>
+            <button onclick="imprimirListadoResumen()" style="padding: 10px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                📋 Imprimir Listado Resumen
+            </button>
+        </div>
+    </div>
+
+    <!-- Vista Dividida: Tabla + Visor Live -->
+    <div style="display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 25px; align-items: start;">
+        
+        <!-- Tabla de Facturas con Checkbox -->
+        <div class="panel" style="padding: 15px; overflow-x: auto;">
+            <table style="width: 100%; text-align: left; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-muted); font-size: 0.85rem;">
+                        <th style="padding: 10px; width: 40px; text-align: center;">✓</th>
+                        <th style="padding: 10px;">Tipo</th>
+                        <th style="padding: 10px;">Folio</th>
+                        <th style="padding: 10px;">Sem.</th>
+                        <th style="padding: 10px;">Fecha</th>
+                        <th style="padding: 10px;">Proveedor</th>
+                        <th style="padding: 10px; text-align: right;">Litros</th>
+                        <th style="padding: 10px; text-align: right;">Importe</th>
+                        <th style="padding: 10px; text-align: center;">Estatus</th>
+                        <th style="padding: 10px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="imp-tbody-facturas">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Visor PDF En Vivo -->
+        <div class="panel" style="padding: 15px; height: 750px; display: flex; flex-direction: column; position: sticky; top: 100px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <h3 style="margin: 0; color: #38bdf8; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                    📄 Visor de Evidencia: <span id="imp-visor-folio" style="color: #fff; font-family: monospace;">Sin selección</span>
+                </h3>
+            </div>
+            <div id="imp-container-pdf" style="flex: 1; background: var(--bg-dark); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">📄</div>
+                    <div>Selecciona una factura de la lista para previsualizar su PDF en tiempo real.</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const radioModoAuto = document.querySelector('input[value="auto"]');
+    const radioModoManual = document.querySelector('input[value="manual"]');
+    const labelModoAuto = document.getElementById('label-modo-auto');
+    const labelModoManual = document.getElementById('label-modo-manual');
+    const dropzoneTitle = document.getElementById('dropzone-title');
+    const dropzoneDesc = document.getElementById('dropzone-desc');
+
+    radioModoAuto.addEventListener('change', () => {
+        if(radioModoAuto.checked) {
+            labelModoAuto.style.borderColor = '#10b981';
+            labelModoManual.style.borderColor = 'transparent';
+            dropzoneTitle.textContent = 'Sube tus archivos XML y PDF';
+            dropzoneDesc.textContent = 'Extraeremos todos los datos automáticamente del XML';
+            fileInput.accept = ".xml,.pdf";
+        }
+    });
+    radioModoManual.addEventListener('change', () => {
+        if(radioModoManual.checked) {
+            labelModoManual.style.borderColor = '#f59e0b';
+            labelModoAuto.style.borderColor = 'transparent';
+            dropzoneTitle.textContent = 'Sube solo tu archivo PDF';
+            dropzoneDesc.textContent = 'Te pediremos que teclees los montos tú mismo';
+            fileInput.accept = ".pdf";
+        }
+    });
+
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const previewArea = document.getElementById('previewArea');
+    const facturasList = document.getElementById('facturasList');
+    const totalLitrosEl = document.getElementById('totalLitros');
+    const totalArchivosEl = document.getElementById('totalArchivos');
+    const btnGuardar = document.getElementById('btnGuardar');
+
+    let facturasParsed = [];
+    let obrasOptions = `<option value="">-- Usar Obra Sugerida o Detectada --</option>`;
+
+    window.cambiarCombustible = function(index, nuevoValor) {
+        if (facturasParsed[index] && facturasParsed[index].data) {
+            facturasParsed[index].data.combustible = nuevoValor;
+            renderFacturas();
+        }
+    }
+
+    // Cargar el catálogo de obras dinámicamente
+    async function cargarObras() {
+        try {
+            const res = await fetch('/api/admin/catalogos/obras');
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                obrasOptions = `<option value="">-- Usar Obra Sugerida o Detectada --</option>`;
+                data.forEach(o => {
+                    obrasOptions += `<option value="${o.nombre}">${o.nombre}</option>`;
+                });
+                if (facturasParsed.length > 0) renderFacturas();
+            }
+        } catch(e) {
+            console.error("Error cargando obras:", e);
+        }
+    }
+    document.addEventListener('DOMContentLoaded', cargarObras);
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#a855f7'; dropzone.style.background = 'rgba(168, 85, 247, 0.05)'; });
+    dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = 'var(--border-color)'; dropzone.style.background = 'var(--bg-dark)'; });
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--border-color)';
+        dropzone.style.background = 'var(--bg-dark)';
+        handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+    async function handleFiles(files) {
+        if (files.length === 0) return;
+        
+        btnGuardar.disabled = true;
+        btnGuardar.innerHTML = 'Procesando... ⏳';
+        
+        const modo = document.querySelector('input[name="modo_carga"]:checked').value;
+        
+        const pares = {};
+        for (let i = 0; i < files.length; i++) {
+            const f = files[i];
+            const name = f.name.toLowerCase();
+            const base = name.substring(0, name.lastIndexOf('.'));
+            if (!pares[base]) pares[base] = { pdf: null, xml: null };
+            
+            if (name.endsWith('.pdf')) pares[base].pdf = f;
+            if (name.endsWith('.xml')) pares[base].xml = f;
+        }
+        
+        for (const [base, pair] of Object.entries(pares)) {
+            if (modo === 'auto' && !pair.xml) continue;
+            if (modo === 'manual' && pair.xml) continue;
+            if (!pair.xml && !pair.pdf) continue;
+            
+            const formData = new FormData();
+            formData.append('tipo', 'auto');
+            if (pair.xml) formData.append('archivo_xml', pair.xml);
+            if (pair.pdf) formData.append('archivo_pdf', pair.pdf);
+            
+            try {
+                const res = await fetch('/api/admin/parse_factura', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                facturasParsed.push({
+                    data: data,
+                    xmlFile: pair.xml,
+                    pdfFile: pair.pdf,
+                    baseName: base,
+                    isManual: (modo === 'manual' || !pair.xml)
+                });
+            } catch (error) {
+                console.error('Error parseando', base, error);
+            }
+        }
+        
+        renderFacturas();
+        
+        const firstWithPdf = facturasParsed.find(f => f.pdfFile);
+        if (firstWithPdf) {
+            document.getElementById('pdfViewer').src = URL.createObjectURL(firstWithPdf.pdfFile);
+        } else {
+            document.getElementById('pdfViewer').src = '';
+        }
+        
+        if(facturasParsed.length > 0) btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '🚀 Inyectar a Base de Datos';
+        fileInput.value = '';
+    }
+
+    function renderFacturas() {
+        if(facturasParsed.length > 0) {
+            previewArea.style.display = 'block';
+            dropzone.style.padding = '20px';
+        }
+
+        facturasList.innerHTML = '';
+        let sumaLitros = 0;
+
+        facturasParsed.forEach((itemData, index) => {
+            const fac = itemData.data;
+            const isGasolina = (fac.combustible === 'gasolina');
+            
+            let totalFacLitros = 0;
+            let totalFacDinero = 0;
+            
+            if(fac.cargas && fac.cargas.length > 0) {
+                fac.cargas.forEach(c => {
+                    totalFacLitros += parseFloat(c.litros || 0);
+                    totalFacDinero += parseFloat(c.total || 0);
+                });
+            }
+            sumaLitros += totalFacLitros;
+            
+            const isDup = fac.es_duplicada;
+            
+            const item = document.createElement('div');
+            item.style.background = isDup ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0,0,0,0.25)';
+            item.style.padding = '18px';
+            item.style.borderRadius = '10px';
+            item.style.borderLeft = `5px solid ${isDup ? '#ef4444' : (isGasolina ? '#f43f5e' : '#3b82f6')}`;
+            item.style.display = 'flex';
+            item.style.flexDirection = 'column';
+            item.style.gap = '12px';
+            
+            let selectorCombustible = `
+                <select onchange="cambiarCombustible(${index}, this.value)" class="admin-input" style="padding: 3px 8px; font-size: 0.8rem; font-weight: bold; background: ${isGasolina ? 'rgba(244, 63, 94, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${isGasolina ? '#f43f5e' : '#60a5fa'}; border: 1px solid ${isGasolina ? '#f43f5e' : '#3b82f6'}; border-radius: 6px; cursor: pointer;">
+                    <option value="diesel" ${!isGasolina ? 'selected' : ''}>🛢 Diésel</option>
+                    <option value="gasolina" ${isGasolina ? 'selected' : ''}>⛽ Gasolina</option>
+                </select>
+            `;
+
+            let extraInfo = selectorCombustible + ' ';
+            if (fac.obra_sugerida) {
+                extraInfo += `<span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem;">Sugerida: ${fac.obra_sugerida}</span>`;
+            } else if (fac.obra_texto) {
+                extraInfo += `<span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem;">Detectado PDF: ${fac.obra_texto}</span>`;
+            }
+
+            if (isGasolina && fac.placa) {
+                extraInfo += `<span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">🚗 Placa: ${fac.placa}</span>`;
+            }
+
+            let dupBanner = '';
+            if (isDup) {
+                dupBanner = `
+                    <div style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; border-radius: 6px; padding: 10px 14px; color: #fca5a5; font-size: 0.85rem; font-weight: bold;">
+                        ${fac.duplicado_info || '⚠️ DUPLICADO DETECTADO'}
+                        <div style="margin-top: 6px; font-weight: normal; color: #fff;">
+                            <label style="cursor: pointer;">
+                                <input type="checkbox" id="chk_allow_dup_${index}" style="margin-right: 6px;"> Permitir re-ingresar esta factura duplicada
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if(itemData.isManual) {
+                // Modo manual (Sin XML)
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <h4 style="margin:0; font-size: 1.05rem; color:#fff;">
+                                Solo PDF: ${itemData.baseName}
+                            </h4>
+                            ${extraInfo}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <button onclick="removerFactura(${index})" style="background: none; border: none; color: #ef4444; font-size: 1.3rem; cursor: pointer;" title="Descartar">✖</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end;">
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Litros:</span>
+                            <input type="number" step="0.01" id="man_lts_${index}" value="${fac.litros_pdf || ''}" placeholder="Total Litros" class="admin-input" style="width:110px;" required>
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Importe ($):</span>
+                            <input type="number" step="0.01" id="man_imp_${index}" placeholder="Importe Total" class="admin-input" style="width:130px;" required>
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Folio:</span>
+                            <input type="text" id="man_fol_${index}" value="${fac.folio_factura || ''}" placeholder="Folio" class="admin-input" style="width:110px;">
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Proveedor:</span>
+                            <input type="text" id="man_prov_${index}" value="${fac.proveedor || ''}" placeholder="Proveedor" class="admin-input" style="width:180px;">
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Placa:</span>
+                            <input type="text" id="man_placa_${index}" value="${isGasolina ? (fac.placa || '') : ''}" 
+                                placeholder="${isGasolina ? 'Placa (Opcional)' : 'N/A (Diésel)'}" 
+                                class="admin-input" style="width:140px; ${!isGasolina ? 'opacity:0.5; background:rgba(255,255,255,0.05);' : ''}" 
+                                ${!isGasolina ? 'disabled' : ''}>
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Fecha:</span>
+                            <input type="date" id="man_fec_${index}" value="${fac.fecha || ''}" class="admin-input" style="width:145px;" required>
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Obra:</span>
+                            <select id="sel_obra_${index}" class="admin-input" style="width: 220px;">
+                                ${obrasOptions}
+                            </select>
+                        </div>
+                        ${itemData.pdfFile ? `<button type="button" onclick="verPDF(${index})" style="padding: 8px 14px; background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4); border-radius: 6px; cursor: pointer; font-size: 0.85rem;">👁 Ver en Visor</button>` : ''}
+                    </div>
+                    ${dupBanner}
+                `;
+            } else {
+                // Modo Automático (Con XML)
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; width:100%;">
+                        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                            <h4 style="margin: 0; font-size: 1.1rem; color:#fff;">
+                                ${fac.folio_factura || itemData.baseName} - ${fac.proveedor || 'Proveedor'}
+                            </h4>
+                            ${extraInfo}
+                        </div>
+                        <div style="display:flex; align-items:center; gap:16px;">
+                            <div style="text-align:right;">
+                                <div style="font-size: 1.25rem; font-weight: bold; color: #10b981;">${totalFacLitros.toFixed(2)} Lts</div>
+                                <div style="font-size: 0.85rem; color: var(--text-muted);">$${totalFacDinero.toFixed(2)}</div>
+                            </div>
+                            <button onclick="removerFactura(${index})" style="background: none; border: none; color: #ef4444; font-size: 1.3rem; cursor: pointer; padding: 2px 6px;" title="Descartar">✖</button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap; margin-top: 4px;">
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Obra Destino:</span>
+                            <select id="sel_obra_${index}" class="admin-input" style="width: 280px; padding: 6px 10px; font-size: 0.9rem;">
+                                ${obrasOptions}
+                            </select>
+                        </div>
+                        <div>
+                            <span style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:2px;">Placa Vehículo:</span>
+                            <input type="text" id="auto_placa_${index}" value="${isGasolina ? (fac.placa || '') : ''}" 
+                                placeholder="${isGasolina ? 'Placa (Opcional)' : 'N/A (Diésel)'}" 
+                                class="admin-input" style="width:160px; padding: 6px 10px; font-size: 0.9rem; ${!isGasolina ? 'opacity:0.5; background:rgba(255,255,255,0.05);' : ''}" 
+                                ${!isGasolina ? 'disabled' : ''}>
+                        </div>
+                        ${itemData.pdfFile ? `
+                        <div>
+                            <button type="button" onclick="verPDF(${index})" style="padding: 6px 14px; background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4); border-radius: 6px; cursor: pointer; font-size: 0.85rem; display:flex; align-items:center; gap:5px;">👁 Ver en Visor</button>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div style="font-size: 0.8rem; color: var(--text-muted);">
+                        UUID: ${fac.uuid || 'N/A'} | Fecha: ${fac.fecha || 'N/A'} | Archivos: XML ${itemData.pdfFile ? '+ PDF' : ''}
+                    </div>
+                    ${dupBanner}
+                `;
+            }
+            
+            facturasList.appendChild(item);
+        });
+
+        totalLitrosEl.textContent = facturasParsed.some(f => f.isManual) ? 'Calculando...' : sumaLitros.toFixed(2);
+        totalArchivosEl.textContent = facturasParsed.length;
+    }
+
+    window.removerFactura = function(index) {
+        facturasParsed.splice(index, 1);
+        renderFacturas();
+        if(facturasParsed.length === 0) {
+            btnGuardar.disabled = true;
+            previewArea.style.display = 'none';
+            dropzone.style.padding = '50px 20px';
+        }
+    }
+    
+    window.verPDF = function(index) {
+        const file = facturasParsed[index].pdfFile;
+        if(file) {
+            const url = URL.createObjectURL(file);
+            document.getElementById('pdfViewer').src = url;
+        }
+    }
+
+    btnGuardar.addEventListener('click', async () => {
+        if(facturasParsed.length === 0) return;
+        
+        let sucessCount = 0;
+        
+        for (let i = 0; i < facturasParsed.length; i++) {
+            const item = facturasParsed[i];
+            const tipo = item.data.combustible || 'diesel';
+            
+            // Verificar si es duplicada y no se autorizó re-ingresar
+            if (item.data.es_duplicada) {
+                const chk = document.getElementById(`chk_allow_dup_${i}`);
+                if (!chk || !chk.checked) {
+                    alert(`La factura "${item.baseName}" está detectada como DUPLICADA y no se ha marcado la casilla para forzar su guardado. Se omitirá.`);
+                    continue;
+                }
+            }
+
+            btnGuardar.disabled = true;
+            btnGuardar.innerHTML = 'Guardando...';
+
+            // Recoger data manual si aplica
+            let cargas = item.data.cargas || [];
+            let proveedor = item.data.proveedor || '';
+            let fecha = item.data.fecha || '';
+            let uuid = item.data.uuid || '';
+            let folio = item.data.folio_factura || '';
+            let placa = tipo === 'diesel' ? '' : (item.data.placa || '');
+            let tipo_gasolina = item.data.tipo_gasolina || 'EXTRA';
+            
+            if (item.isManual) {
+                const lts = parseFloat(document.getElementById(`man_lts_${i}`).value) || 0;
+                const imp = parseFloat(document.getElementById(`man_imp_${i}`).value) || 0;
+                proveedor = document.getElementById(`man_prov_${i}`).value || 'Estado de Cuenta';
+                fecha = document.getElementById(`man_fec_${i}`).value || '';
+                folio = document.getElementById(`man_fol_${i}`).value || '';
+                if (tipo === 'gasolina') {
+                    placa = (document.getElementById(`man_placa_${i}`)?.value || '').trim();
+                }
+                cargas = [{litros: lts, total: imp}];
+            } else {
+                if (tipo === 'gasolina') {
+                    const elPlaca = document.getElementById(`auto_placa_${i}`);
+                    if (elPlaca && elPlaca.value) placa = elPlaca.value.trim();
+                }
+            }
+            
+            const selObra = document.getElementById(`sel_obra_${i}`);
+            const obraFinal = (selObra && selObra.value) ? selObra.value : (item.data.obra_sugerida || 'No identificada');
+            
+            const formData = new FormData();
+            formData.append('tipo', tipo);
+            formData.append('datos_json', JSON.stringify({
+                semana: item.data.semana,
+                obra: obraFinal,
+                cargas: cargas,
+                proveedor: proveedor,
+                fecha: fecha,
+                uuid: uuid,
+                folio_factura: folio,
+                placa: placa,
+                tipo_gasolina: tipo_gasolina
+            }));
+            
+            if (item.xmlFile) formData.append('archivo_xml', item.xmlFile);
+            if (item.pdfFile) formData.append('archivo_pdf', item.pdfFile);
+            
+            try {
+                const res = await fetch('/api/admin/guardar_facturas', {
+                    method: 'POST',
+                    body: formData
+                });
+                const responseData = await res.json();
+                if (responseData.success) {
+                    sucessCount++;
+                } else {
+                    console.error("Error backend:", responseData.error);
+                    alert("Error guardando " + item.baseName + ":\n" + responseData.error);
+                }
+            } catch (e) {
+                console.error("Error fetch", item.baseName, e);
+                alert("Error de conexión al guardar " + item.baseName);
+            }
+        }
+        
+        alert(`¡Proceso completado! Se guardaron ${sucessCount} de ${facturasParsed.length} facturas/archivos.`);
+        facturasParsed = [];
+        renderFacturas();
+        previewArea.style.display = 'none';
+        dropzone.style.padding = '50px 20px';
+        btnGuardar.innerHTML = '🚀 Inyectar a Base de Datos';
+    });
+
+    // ────────────────────────────────────────────────────────
+    // LÓGICA DE VISUALIZACIÓN Y BÚSQUEDA UNIFICADA DE FACTURAS
+    // ────────────────────────────────────────────────────────
+    function switchModoFacturas(modo) {
+        const btnCaptura = document.getElementById('tab-btn-captura');
+        const btnVis = document.getElementById('tab-btn-visualizacion');
+        const btnImp = document.getElementById('tab-btn-impresion');
+
+        const secCaptura = document.getElementById('seccion-captura');
+        const secVis = document.getElementById('seccion-visualizacion');
+        const secImp = document.getElementById('seccion-impresion');
+
+        btnCaptura.classList.remove('active');
+        btnVis.classList.remove('active');
+        if (btnImp) btnImp.classList.remove('active');
+
+        secCaptura.style.display = 'none';
+        secVis.style.display = 'none';
+        if (secImp) secImp.style.display = 'none';
+
+        if (modo === 'captura') {
+            btnCaptura.classList.add('active');
+            secCaptura.style.display = 'block';
+        } else if (modo === 'visualizacion') {
+            btnVis.classList.add('active');
+            secVis.style.display = 'block';
+            buscarTodasFacturas();
+        } else if (modo === 'impresion') {
+            if (btnImp) btnImp.classList.add('active');
+            if (secImp) secImp.style.display = 'block';
+            cargarSemanasImpresion();
+            buscarFacturasImpresion();
+        }
+    }
+
+    let todasFacturasData = [];
+
+    async function buscarTodasFacturas() {
+        const q = document.getElementById('vis-search-q') ? document.getElementById('vis-search-q').value.trim() : '';
+        const tipo = document.getElementById('vis-filter-tipo') ? document.getElementById('vis-filter-tipo').value : 'TODOS';
+        const estatus = document.getElementById('vis-filter-estatus') ? document.getElementById('vis-filter-estatus').value : 'TODOS';
+
+        const tbody = document.getElementById('vis-tbody-facturas');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--text-muted);">Cargando facturas... ⏳</td></tr>';
+        }
+
+        try {
+            const url = `/api/admin/todas_las_facturas?q=${encodeURIComponent(q)}&tipo=${encodeURIComponent(tipo)}&estatus=${encodeURIComponent(estatus)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            todasFacturasData = data || [];
+
+            renderTablaTodasFacturas(todasFacturasData);
+        } catch (e) {
+            console.error(e);
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #ef4444;">Error al cargar las facturas.</td></tr>';
+            }
+        }
+    }
+
+    function renderTablaTodasFacturas(data) {
+        const tbody = document.getElementById('vis-tbody-facturas');
+        if (!tbody) return;
+
+        let totalLts = 0;
+        let totalMonto = 0;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #10b981; font-weight: bold;">No se encontraron facturas con los criterios de búsqueda.</td></tr>';
+            document.getElementById('vis-total-count').textContent = '0';
+            document.getElementById('vis-total-litros').textContent = '0.00 L';
+            document.getElementById('vis-total-monto').textContent = '$0.00 MXN';
+            return;
+        }
+
+        tbody.innerHTML = '';
+        data.forEach(r => {
+            const lts = parseFloat(r.litros_facturados || 0);
+            const monto = parseFloat(r.importe_total || 0);
+            totalLts += lts;
+            totalMonto += monto;
+
+            const isGasolina = (r.tipo_combustible === 'GASOLINA');
+            const badgeTipo = isGasolina
+                ? `<span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(244, 63, 94, 0.4);">⛽ Gasolina</span>`
+                : `<span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(59, 130, 246, 0.4);">🛢️ Diésel</span>`;
+
+            let badgeEstatus = `<span style="color:#f59e0b; background:rgba(245, 158, 11, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Pendiente</span>`;
+            if (r.estatus_revision === 'APROBADO') {
+                badgeEstatus = `<span style="color:#10b981; background:rgba(16, 185, 129, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Aprobada</span>`;
+            } else if (r.estatus_revision === 'OBSERVACION') {
+                badgeEstatus = `<span style="color:#38bdf8; background:rgba(56, 189, 248, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Observación 🔍</span>`;
+            } else if (r.estatus_revision === 'RECHAZADO') {
+                badgeEstatus = `<span style="color:#ef4444; background:rgba(239, 68, 68, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Rechazada ❌</span>`;
+            } else if (r.estatus_revision === 'CANCELADA') {
+                badgeEstatus = `<span style="color:#06b6d4; background:rgba(6, 182, 212, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Cancelada 🚫</span>`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.style.cursor = 'pointer';
+            tr.onclick = () => verVisorPdfUnificado(r.tipo_combustible.toLowerCase(), r.id, r.folio_factura);
+
+            tr.innerHTML = `
+                <td style="padding: 10px;">${badgeTipo}</td>
+                <td style="padding: 10px; font-family: monospace; font-weight: bold; color: #a855f7; font-size: 0.95rem;">${r.folio_factura || 'S/F'}</td>
+                <td style="padding: 10px; font-size: 0.85rem;">${r.fecha_factura || '-'}</td>
+                <td style="padding: 10px; font-size: 0.85rem;" title="${r.proveedor || ''}">${(r.proveedor || '').length > 25 ? (r.proveedor.substring(0,25) + '...') : (r.proveedor || '-')}</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold;">${lts.toLocaleString('es-MX', {minimumFractionDigits: 2})} L</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold; color: #10b981;">$${monto.toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                <td style="padding: 10px; text-align: center;">${badgeEstatus}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <button style="background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); color: #c084fc; border-radius: 6px; padding: 4px 10px; cursor: pointer; font-size: 0.8rem; font-weight: bold;" onclick="event.stopPropagation(); verVisorPdfUnificado('${r.tipo_combustible.toLowerCase()}', ${r.id}, '${r.folio_factura}')">
+                        👁️ Ver PDF
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('vis-total-count').textContent = data.length.toString();
+        document.getElementById('vis-total-litros').textContent = totalLts.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' L';
+        document.getElementById('vis-total-monto').textContent = '$' + totalMonto.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' MXN';
+    }
+
+    function verVisorPdfUnificado(schema, id, folio) {
+        document.getElementById('vis-visor-folio').textContent = folio || `ID #${id}`;
+        const container = document.getElementById('vis-container-pdf');
+        container.innerHTML = `<iframe src="/api/evidencia/${schema}/facturas/${id}?t=${Date.now()}" width="100%" height="100%" style="border:none;"></iframe>`;
+    }
+
+    function limpiarFiltrosVisualizacion() {
+        if (document.getElementById('vis-search-q')) document.getElementById('vis-search-q').value = '';
+        if (document.getElementById('vis-filter-tipo')) document.getElementById('vis-filter-tipo').value = 'TODOS';
+        if (document.getElementById('vis-filter-estatus')) document.getElementById('vis-filter-estatus').value = 'TODOS';
+        buscarTodasFacturas();
+    }
+
+    // ────────────────────────────────────────────────────────
+    // LÓGICA DE IMPRESIÓN Y CONSULTA AVANZADA DE FACTURAS
+    // ────────────────────────────────────────────────────────
+    let semanasImpresionCargadas = false;
+    async function cargarSemanasImpresion() {
+        if (semanasImpresionCargadas) return;
+        const select = document.getElementById('imp-filter-semana');
+        if (!select) return;
+
+        try {
+            const res = await fetch('/api/admin/facturas/semanas');
+            const semanas = await res.json();
+            if (Array.isArray(semanas)) {
+                select.innerHTML = '<option value="TODAS">🗓️ Todas las Semanas</option>';
+                semanas.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = `Semana ${s}`;
+                    select.appendChild(opt);
+                });
+                semanasImpresionCargadas = true;
+            }
+        } catch (e) {
+            console.error("Error al cargar semanas:", e);
+        }
+    }
+
+    let impresionFacturasData = [];
+
+    async function buscarFacturasImpresion() {
+        const semana = document.getElementById('imp-filter-semana') ? document.getElementById('imp-filter-semana').value : 'TODAS';
+        const q = document.getElementById('imp-search-q') ? document.getElementById('imp-search-q').value.trim() : '';
+        const tipo = document.getElementById('imp-filter-tipo') ? document.getElementById('imp-filter-tipo').value : 'TODOS';
+        const estatus = document.getElementById('imp-filter-estatus') ? document.getElementById('imp-filter-estatus').value : 'TODOS';
+
+        const tbody = document.getElementById('imp-tbody-facturas');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px; color: var(--text-muted);">Cargando facturas... ⏳</td></tr>';
+        }
+
+        try {
+            const url = `/api/admin/todas_las_facturas?semana=${encodeURIComponent(semana)}&q=${encodeURIComponent(q)}&tipo=${encodeURIComponent(tipo)}&estatus=${encodeURIComponent(estatus)}`;
+            const res = await fetch(url);
+            const data = await res.json();
+            impresionFacturasData = data || [];
+
+            renderTablaImpresion(impresionFacturasData);
+        } catch (e) {
+            console.error(e);
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 20px; color: #ef4444;">Error al cargar las facturas.</td></tr>';
+            }
+        }
+    }
+
+    function renderTablaImpresion(data) {
+        const tbody = document.getElementById('imp-tbody-facturas');
+        if (!tbody) return;
+
+        const chkSelectAll = document.getElementById('imp-chk-select-all');
+        if (chkSelectAll) chkSelectAll.checked = false;
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align: center; padding: 25px; color: #10b981; font-weight: bold;">No se encontraron facturas con los criterios seleccionados.</td></tr>';
+            updateImpSelectionStats();
+            return;
+        }
+
+        tbody.innerHTML = '';
+        data.forEach(r => {
+            const lts = parseFloat(r.litros_facturados || 0);
+            const monto = parseFloat(r.importe_total || 0);
+            const isGasolina = (r.tipo_combustible === 'GASOLINA');
+            const badgeTipo = isGasolina
+                ? `<span style="background: rgba(244, 63, 94, 0.2); color: #fb7185; padding: 3px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(244, 63, 94, 0.4);">⛽ Gasolina</span>`
+                : `<span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-size: 0.78rem; font-weight: bold; border: 1px solid rgba(59, 130, 246, 0.4);">🛢️ Diésel</span>`;
+
+            let badgeEstatus = `<span style="color:#f59e0b; background:rgba(245, 158, 11, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Pendiente</span>`;
+            if (r.estatus_revision === 'APROBADO') {
+                badgeEstatus = `<span style="color:#10b981; background:rgba(16, 185, 129, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Aprobada</span>`;
+            } else if (r.estatus_revision === 'OBSERVACION') {
+                badgeEstatus = `<span style="color:#38bdf8; background:rgba(56, 189, 248, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Observación 🔍</span>`;
+            } else if (r.estatus_revision === 'RECHAZADO') {
+                badgeEstatus = `<span style="color:#ef4444; background:rgba(239, 68, 68, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Rechazada ❌</span>`;
+            } else if (r.estatus_revision === 'CANCELADA') {
+                badgeEstatus = `<span style="color:#06b6d4; background:rgba(6, 182, 212, 0.15); padding:2px 8px; border-radius:4px; font-size:0.75rem;">Cancelada 🚫</span>`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.style.cursor = 'pointer';
+            tr.onclick = (e) => {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+                    verVisorPdfImpresion(r.tipo_combustible.toLowerCase(), r.id, r.folio_factura);
+                }
+            };
+
+            const provEscaped = (r.proveedor || '').replace(/"/g, '&quot;');
+
+            tr.innerHTML = `
+                <td style="padding: 10px; text-align: center;">
+                    <input type="checkbox" class="imp-chk-row" data-schema="${r.tipo_combustible.toLowerCase()}" data-id="${r.id}" data-monto="${monto}" data-litros="${lts}" data-folio="${r.folio_factura || 'S/F'}" data-fecha="${r.fecha_factura || '-'}" data-proveedor="${provEscaped}" data-semana="${r.semana || '-'}" onchange="updateImpSelectionStats()" style="width: 17px; height: 17px; cursor: pointer;">
+                </td>
+                <td style="padding: 10px;">${badgeTipo}</td>
+                <td style="padding: 10px; font-family: monospace; font-weight: bold; color: #38bdf8; font-size: 0.92rem;">${r.folio_factura || 'S/F'}</td>
+                <td style="padding: 10px; font-size: 0.82rem; color: #a855f7; font-weight: bold;">Sem. ${r.semana || '-'}</td>
+                <td style="padding: 10px; font-size: 0.82rem;">${r.fecha_factura || '-'}</td>
+                <td style="padding: 10px; font-size: 0.82rem;" title="${r.proveedor || ''}">${(r.proveedor || '').length > 20 ? (r.proveedor.substring(0,20) + '...') : (r.proveedor || '-')}</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold; font-size: 0.85rem;">${lts.toLocaleString('es-MX', {minimumFractionDigits: 2})} L</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold; color: #10b981; font-size: 0.85rem;">$${monto.toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                <td style="padding: 10px; text-align: center;">${badgeEstatus}</td>
+                <td style="padding: 10px; text-align: center;">
+                    <button style="background: rgba(56, 189, 248, 0.2); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; border-radius: 6px; padding: 4px 8px; cursor: pointer; font-size: 0.78rem; font-weight: bold;" onclick="event.stopPropagation(); verVisorPdfImpresion('${r.tipo_combustible.toLowerCase()}', ${r.id}, '${r.folio_factura}')">
+                        👁️ Ver
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        updateImpSelectionStats();
+    }
+
+    function toggleSelectAllImpresion(checked) {
+        const chks = document.querySelectorAll('.imp-chk-row');
+        chks.forEach(c => c.checked = checked);
+        updateImpSelectionStats();
+    }
+
+    function updateImpSelectionStats() {
+        const allChks = document.querySelectorAll('.imp-chk-row');
+        const checkedChks = document.querySelectorAll('.imp-chk-row:checked');
+
+        let selMonto = 0;
+        let selLitros = 0;
+
+        checkedChks.forEach(c => {
+            selMonto += parseFloat(c.dataset.monto || 0);
+            selLitros += parseFloat(c.dataset.litros || 0);
+        });
+
+        const statCount = document.getElementById('imp-stat-count');
+        const statTotal = document.getElementById('imp-stat-total');
+        const statMonto = document.getElementById('imp-stat-monto');
+        const statLitros = document.getElementById('imp-stat-litros');
+
+        if (statCount) statCount.textContent = checkedChks.length.toString();
+        if (statTotal) statTotal.textContent = allChks.length.toString();
+        if (statMonto) statMonto.textContent = '$' + selMonto.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' MXN';
+        if (statLitros) statLitros.textContent = selLitros.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' L';
+
+        const chkSelectAll = document.getElementById('imp-chk-select-all');
+        if (chkSelectAll && allChks.length > 0) {
+            chkSelectAll.checked = (checkedChks.length === allChks.length);
+        }
+    }
+
+    function verVisorPdfImpresion(schema, id, folio) {
+        const visorFolio = document.getElementById('imp-visor-folio');
+        if (visorFolio) visorFolio.textContent = folio || `ID #${id}`;
+
+        const container = document.getElementById('imp-container-pdf');
+        if (container) {
+            container.innerHTML = `<iframe src="/api/evidencia/${schema}/facturas/${id}?t=${Date.now()}" width="100%" height="100%" style="border:none;"></iframe>`;
+        }
+    }
+
+    function limpiarFiltrosImpresion() {
+        if (document.getElementById('imp-filter-semana')) document.getElementById('imp-filter-semana').value = 'TODAS';
+        if (document.getElementById('imp-search-q')) document.getElementById('imp-search-q').value = '';
+        if (document.getElementById('imp-filter-tipo')) document.getElementById('imp-filter-tipo').value = 'TODOS';
+        if (document.getElementById('imp-filter-estatus')) document.getElementById('imp-filter-estatus').value = 'TODOS';
+        buscarFacturasImpresion();
+    }
+
+    async function imprimirFacturasLotePDF() {
+        const checkedChks = Array.from(document.querySelectorAll('.imp-chk-row:checked'));
+        if (checkedChks.length === 0) {
+            alert('Por favor selecciona al menos una factura marcando su casilla de verificación (✓).');
+            return;
+        }
+
+        const items = checkedChks.map(c => ({
+            tipo: c.dataset.schema,
+            id: parseInt(c.dataset.id)
+        }));
+
+        try {
+            const res = await fetch('/api/admin/facturas/pdf_combinado', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ items })
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                alert('Error al generar PDF combinado: ' + errText);
+                return;
+            }
+
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            window.open(blobUrl, '_blank');
+        } catch (e) {
+            console.error(e);
+            alert('Ocurrió un error al procesar la solicitud de impresión masiva.');
+        }
+    }
+
+    function imprimirListadoResumen() {
+        let checkedChks = Array.from(document.querySelectorAll('.imp-chk-row:checked'));
+        if (checkedChks.length === 0) {
+            checkedChks = Array.from(document.querySelectorAll('.imp-chk-row'));
+        }
+
+        if (checkedChks.length === 0) {
+            alert('No hay facturas en la lista para imprimir.');
+            return;
+        }
+
+        let totalLts = 0;
+        let totalMonto = 0;
+
+        let rowsHtml = '';
+        checkedChks.forEach((c, idx) => {
+            const folio = c.dataset.folio;
+            const fecha = c.dataset.fecha;
+            const proveedor = c.dataset.proveedor;
+            const semana = c.dataset.semana;
+            const tipo = c.dataset.schema === 'gasolina' ? 'Gasolina' : 'Diésel';
+            const lts = parseFloat(c.dataset.litros || 0);
+            const monto = parseFloat(c.dataset.monto || 0);
+
+            totalLts += lts;
+            totalMonto += monto;
+
+            rowsHtml += `
+                <tr>
+                    <td style="padding:6px; border:1px solid #ccc; text-align:center;">${idx + 1}</td>
+                    <td style="padding:6px; border:1px solid #ccc;">${tipo}</td>
+                    <td style="padding:6px; border:1px solid #ccc; font-weight:bold;">${folio}</td>
+                    <td style="padding:6px; border:1px solid #ccc; text-align:center;">Sem. ${semana}</td>
+                    <td style="padding:6px; border:1px solid #ccc; text-align:center;">${fecha}</td>
+                    <td style="padding:6px; border:1px solid #ccc;">${proveedor}</td>
+                    <td style="padding:6px; border:1px solid #ccc; text-align:right;">${lts.toLocaleString('es-MX', {minimumFractionDigits:2})} L</td>
+                    <td style="padding:6px; border:1px solid #ccc; text-align:right; font-weight:bold;">$${monto.toLocaleString('es-MX', {minimumFractionDigits:2})}</td>
+                </tr>
+            `;
+        });
+
+        const printWin = window.open('', '_blank');
+        printWin.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Reporte de Impresión de Facturas</title>
+                <style>
+                    body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+                    h2 { margin-bottom: 5px; color: #1e3a5f; }
+                    p { margin-top: 0; color: #555; font-size: 0.9rem; }
+                    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+                    th { background: #1e3a5f; color: #fff; padding: 8px; border: 1px solid #1e3a5f; text-align: left; }
+                    tfoot tr td { background: #f1f5f9; font-weight: bold; }
+                    @media print {
+                        button { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <button onclick="window.print()" style="padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-bottom: 15px;">🖨️ Imprimir Este Listado</button>
+                <h2>📋 Reporte Consolidado de Facturas de Combustible</h2>
+                <p>Generado el: ${new Date().toLocaleString('es-MX')} | Total de registros: ${checkedChks.length}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align:center;">#</th>
+                            <th>Combustible</th>
+                            <th>Folio Factura</th>
+                            <th style="text-align:center;">Semana</th>
+                            <th style="text-align:center;">Fecha</th>
+                            <th>Proveedor</th>
+                            <th style="text-align:right;">Litros</th>
+                            <th style="text-align:right;">Importe ($)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="6" style="padding:8px; border:1px solid #ccc; text-align:right;">TOTALES ACUMULADOS:</td>
+                            <td style="padding:8px; border:1px solid #ccc; text-align:right;">${totalLts.toLocaleString('es-MX', {minimumFractionDigits:2})} L</td>
+                            <td style="padding:8px; border:1px solid #ccc; text-align:right; color:#065f46;">$${totalMonto.toLocaleString('es-MX', {minimumFractionDigits:2})} MXN</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <` + `script>
+                    setTimeout(() => { window.print(); }, 500);
+                <` + `/script>
+            </body>
+            </html>
+        `);
+        printWin.document.close();
+    }
+</script>
+{% endblock %}

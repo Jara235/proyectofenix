@@ -1,0 +1,940 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Datalists de Catálogos para Autocompletado en Filas -->
+<datalist id="listaEquiposCatalogos">
+    {% for eq in equipos %}
+        <option value="{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}"></option>
+        <option value="{{ eq['numero_economico'] }}"></option>
+    {% endfor %}
+</datalist>
+
+<datalist id="listaObrasCatalogos">
+    {% for ob in obras %}
+        <option value="{{ ob['nombre'] }}"></option>
+    {% endfor %}
+</datalist>
+
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.25rem;">
+    <div>
+        <h1 class="header-title" style="text-align: left; margin-bottom: 0.2rem;">Diésel</h1>
+        <p class="header-subtitle" style="text-align: left; margin-bottom: 0;">Ingreso de bitácoras y captura masiva de reportes en PDF al sistema.</p>
+    </div>
+    
+    <!-- Tab Toggle -->
+    <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 4px; display: flex; gap: 4px;">
+        <button id="btnTabConsumo" class="tab-btn active" onclick="switchTab('consumo')" style="padding: 0.6rem 1.25rem; border-radius: 8px; border: none; background: var(--primary); color: white; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Consumos Individuales</button>
+        <button id="btnTabMasiva" class="tab-btn" onclick="switchTab('masiva')" style="padding: 0.6rem 1.25rem; border-radius: 8px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-size: 0.95rem;">📄 Captura Masiva (Bitácora PDF)</button>
+    </div>
+</div>
+
+<!-- ==================== FORMULARIO DE CONSUMOS INDIVIDUALES ==================== -->
+<div class="glass-card" id="formConsumoContainer" style="max-width: 1000px; margin: 0 auto;">
+    <form id="dieselForm">
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" name="fecha" id="fechaInputDiesel" value="{{ current_date }}" required>
+            </div>
+            <div class="form-group">
+                <label>Semana</label>
+                <input type="number" name="semana" id="semanaInputDiesel" value="{{ current_week }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Origen de Carga</label>
+                <select name="origen" required>
+                    {% for ori in origenes %}
+                        <option value="{{ ori }}">{{ ori }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Tipo de Operación</label>
+                <select id="opSelect" onchange="updateOperacion(this)" required>
+                    {% for op in operaciones %}
+                        <option value="{{ op['codigo_operacion'] }}|{{ op['tipo_operacion'] }}" 
+                        {% if op['codigo_operacion'] == 'CMQ' %}selected{% endif %}>
+                            {{ op['tipo_operacion'] }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <input type="hidden" name="tipo_movimiento_codigo" id="opCodigo" value="CMQ">
+                <input type="hidden" name="tipo_movimiento_nombre" id="opNombre" value="CARGA MAQUINARIA">
+            </div>
+            
+            <div class="form-group">
+                <label>Obra Destino</label>
+                <select name="obra_destino" id="obraSelect" required placeholder="Escribe para buscar...">
+                    <option value="">Selecciona la obra...</option>
+                    {% for o in obras %}
+                        <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ing. Responsable</label>
+                <select name="responsable" id="responsableSelect" required placeholder="Selecciona el responsable...">
+                    <option value="">Selecciona el responsable...</option>
+                    {% for r in responsables %}
+                        <option value="{{ r['nombre'] }}">{{ r['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 2rem 0;">
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Equipo Económico / Maquinaria</label>
+                <select name="equipo_economico" id="equipoSelect" required placeholder="Escribe para buscar...">
+                    <option value="">Selecciona unidad...</option>
+                    {% for eq in equipos %}
+                        <option value="{{ eq['numero_economico'] }}">{{ eq['numero_economico'] }} - {{ eq['descripcion'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color: var(--primary);">Litros Cargados</label>
+                <input type="number" step="0.01" name="litros" placeholder="Ej. 250.00" required>
+            </div>
+            <div class="form-group">
+                <label>Costo por Litro (Autocálculo)</label>
+                <input type="number" step="0.01" name="costo_por_litro" value="27.00">
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label>Fotografías de Evidencia (Puedes seleccionar varias, arrastrar o pegar con Ctrl+V / Portapapeles)</label>
+            <div class="file-upload-wrapper" id="dropAreaConsumo" style="height: auto; min-height: 120px; padding: 1.25rem; position: relative;">
+                <input type="file" name="foto_evidencia" accept="image/*" id="fileInputConsumo" multiple style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 2;">
+                <div class="file-upload-text" id="uploadTextConsumo" style="pointer-events: none; z-index: 1;">📸 Toca para abrir la cámara, selecciona fotos, arrastra o pega desde el portapapeles (Ctrl + V)</div>
+                <div id="previewConsumo" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; position: relative; z-index: 3;"></div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtnConsumo">Guardar Consumo</button>
+    </form>
+</div>
+
+<!-- ==================== CAPTURA MASIVA DE BITÁCORAS PDF (GRID ESPACIOSO 63% / 35%) ==================== -->
+<div class="glass-card" id="formMasivaContainer" style="display: none; padding: 1.5rem; width: 100%;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div>
+            <h3 style="margin: 0; color: var(--accent); font-size: 1.35rem;">📄 Lectura y Captura Masiva de Bitácoras PDF</h3>
+            <p style="margin: 0.25rem 0 0 0; color: var(--text-muted); font-size: 0.92rem;">Sube o arrastra el reporte semanal en PDF para extracción automática, detección de duplicados y edición fluida.</p>
+        </div>
+    </div>
+    
+    <!-- Grid Optimizado (63% Tabla Espaciosa / 35% PDF Compacto) -->
+    <div style="display: grid; grid-template-columns: 63% 35%; gap: 2%; width: 100%;">
+        
+        <!-- Lado Izquierdo: Tabla Espaciosa y Controles -->
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            
+            <!-- Zona Drag and Drop -->
+            <div id="dropZoneMasiva" style="border: 2px dashed rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 1.25rem; text-align: center; background: rgba(15, 23, 42, 0.4); cursor: pointer; transition: all 0.3s ease;">
+                <input type="file" id="archivoPdfMasiva" accept=".pdf" style="display: none;">
+                <div style="font-size: 2rem; margin-bottom: 0.25rem;">📂</div>
+                <div style="font-weight: 600; color: var(--text-main); font-size: 1.05rem;">Arrastra aquí el reporte PDF o haz clic para seleccionar</div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">Soporta formatos GC-COMB-006 (Marimba M-01, Pegaso, Plantas, Obra)</div>
+            </div>
+
+            <div id="loaderMasiva" style="display: none; text-align: center; padding: 1.25rem; color: var(--accent); font-weight: 600; font-size: 1.05rem;">
+                ⏳ Extrayendo información, leyendo PDF a fondo y verificando duplicados...
+            </div>
+
+            <!-- Banner Alerta de Duplicados -->
+            <div id="alertDuplicadosMasiva" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid #f87171; color: #fca5a5; padding: 0.85rem 1.25rem; border-radius: 10px; font-size: 0.9rem; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>⚠️ Atención:</strong> Se detectaron <strong id="lblCantDuplicados">0</strong> registros que coinciden con cargas ya existentes en la base de datos.
+                </div>
+                <button type="button" onclick="desmarcarTodosDuplicados()" style="background: #ef4444; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer;">Excluir Duplicados</button>
+            </div>
+
+            <!-- Panel de Controles Generales Horizontal -->
+            <div id="controlesGeneralesMasiva" style="display: none; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); padding: 1rem 1.25rem; border-radius: 12px;">
+                <h4 style="margin: 0 0 0.75rem 0; color: var(--primary); font-size: 0.95rem;">⚙️ Configuración General de la Bitácora</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;">
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Obra Destino General</label>
+                        <select id="obraMasivaSelect" style="width: 100%; padding: 0.55rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;" onchange="actualizarObraTodasFilas(this.value)">
+                            <option value="">Seleccionar Obra...</option>
+                            {% for ob in obras %}
+                                <option value="{{ ob['nombre'] }}">{{ ob['nombre'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Ing. Responsable General</label>
+                        <select id="responsableMasivaSelect" style="width: 100%; padding: 0.55rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;" onchange="actualizarResponsableTodasFilas(this.value)">
+                            <option value="">Seleccionar Responsable...</option>
+                            {% for r in responsables %}
+                                <option value="{{ r['nombre'] }}">{{ r['nombre'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Semana No.</label>
+                        <input type="number" id="semanaMasivaInput" value="{{ current_week }}" style="width: 100%; padding: 0.5rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">Origen de Carga</label>
+                        <input type="text" id="origenMasivaInput" value="Marimba M-01" style="width: 100%; padding: 0.5rem; border-radius: 8px; background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); font-size: 0.88rem;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla Espaciosa con Día Compacto y Litros / Obra / Responsable Visibles -->
+            <div id="contenedorTablaMasiva" style="display: none; flex-direction: column; gap: 0.85rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 0.25rem;">
+                    <h4 style="margin: 0; color: var(--text-main); font-size: 1.05rem;">📋 Partidas Detectadas (<span id="countPartidas">0</span>)</h4>
+                    <div style="font-size: 1.1rem; font-weight: bold; color: #34d399;">Total a Guardar: <span id="totalLitrosMasiva">0.00</span> Lts</div>
+                </div>
+
+                <div style="max-height: 540px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; background: rgba(0,0,0,0.3);">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; text-align: left;">
+                        <thead>
+                            <tr style="background: rgba(30, 41, 59, 0.95); position: sticky; top: 0; z-index: 10; color: var(--text-muted); font-size: 0.82rem; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                                <th style="padding: 0.65rem 0.4rem; width: 35px; text-align: center;">Inc.</th>
+                                <th style="padding: 0.65rem 0.4rem; width: 55px; text-align: center;">Día</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 32%;">Equipo / Maquinaria</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 90px; text-align: center;">Litros</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 170px;">Obra</th>
+                                <th style="padding: 0.65rem 0.5rem; width: 170px;">Ing. Responsable</th>
+                                <th style="padding: 0.65rem 0.4rem; width: 35px; text-align: center;">✕</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyFilasMasiva">
+                            <!-- Filas dinámicas -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="button" class="btn-primary" id="btnGuardarMasiva" style="margin-top: 0.5rem; padding: 0.85rem; font-size: 1.05rem; font-weight: bold; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);" onclick="guardarBitacoraMasiva()">
+                    💾 Guardar Bitácora Completa (<span id="btnCountPartidas">0</span> Registros)
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Lado Derecho: Visualizador Interactivo PDF (35% de Ancho) -->
+        <div style="background: rgba(15, 23, 42, 0.85); border-radius: 14px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; height: calc(100vh - 200px); min-height: 780px; display: flex; flex-direction: column;">
+            <div style="background: rgba(30, 41, 59, 0.95); padding: 0.65rem 1rem; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight: 600; color: var(--text-main);">👁️ Vista Previa PDF</span>
+                <span id="pdfStatusLabel" style="color: var(--accent); font-weight: 500; font-size: 0.8rem;">Sin archivo</span>
+            </div>
+            <iframe id="pdfViewerMasiva" style="width: 100%; height: 100%; border: none; background: #0f172a;" src=""></iframe>
+        </div>
+
+    </div>
+</div>
+
+<!-- ==================== HISTORIAL DE CAPTURAS ==================== -->
+<h3 id="historicoTitle" style="margin-top: 3rem; margin-bottom: 1rem; color: var(--text-main);">Últimos Registros Capturados</h3>
+<div class="glass-card" style="padding: 1rem; overflow-x: auto;" id="historyConsumo">
+    <table style="width: 100%; text-align: left; border-collapse: collapse;">
+        <tr style="border-bottom: 1px solid var(--border-color);">
+            <th style="padding: 0.5rem;">Folio</th>
+            <th style="padding: 0.5rem;">Fecha</th>
+            <th style="padding: 0.5rem;">Obra</th>
+            <th style="padding: 0.5rem;">Equipo</th>
+            <th style="padding: 0.5rem;">Litros</th>
+        </tr>
+        {% for h in historial_consumos %}
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 0.5rem; color: var(--primary);">{{ h['folio_conciliacion'] }}</td>
+            <td style="padding: 0.5rem;">{{ h['fecha'] }}</td>
+            <td style="padding: 0.5rem;">{{ h['obra_destino'] }}</td>
+            <td style="padding: 0.5rem;">{{ h['equipo_economico'] or h['equipo'] or 'N/A' }}</td>
+            <td style="padding: 0.5rem; font-weight: bold;">{{ h['litros'] }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" style="padding: 1rem; text-align: center;">No hay consumos recientes.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Variables y Selects
+    initTomSelect("#obraSelect");
+    initTomSelect("#equipoSelect");
+    let tomSelectResponsable = initTomSelect("#responsableSelect", { create: true });
+    let filasExtraidas = [];
+
+    // Auxiliares para manejo de días
+    function extraerDia(fechaStr) {
+        if(!fechaStr) return '';
+        if(fechaStr.includes('-')) {
+            const parts = fechaStr.split('-');
+            if(parts.length === 3) return parts[2];
+        }
+        if(fechaStr.includes('/')) {
+            const parts = fechaStr.split('/');
+            if(parts.length === 3) return parts[0];
+        }
+        return fechaStr;
+    }
+
+    function actualizarDiaEnFecha(idx, nuevoDia) {
+        let f = filasExtraidas[idx];
+        if(!f || !f.fecha) return;
+        let diaPadded = String(nuevoDia).padStart(2, '0');
+        if(f.fecha.includes('-')) {
+            let parts = f.fecha.split('-');
+            if(parts.length === 3) parts[2] = diaPadded;
+            f.fecha = parts.join('-');
+        } else if(f.fecha.includes('/')) {
+            let parts = f.fecha.split('/');
+            if(parts.length === 3) parts[0] = diaPadded;
+            f.fecha = parts.join('/');
+        }
+    }
+
+    function updateOperacion(selectElement) {
+        let val = selectElement.value;
+        let parts = val.split("|");
+        if(parts.length === 2) {
+            document.getElementById('opCodigo').value = parts[0];
+            document.getElementById('opNombre').value = parts[1];
+        }
+    }
+
+    // Tab Switcher
+    function switchTab(tab) {
+        document.getElementById('formConsumoContainer').style.display = 'none';
+        document.getElementById('formMasivaContainer').style.display = 'none';
+        
+        document.getElementById('btnTabConsumo').style.background = 'transparent';
+        document.getElementById('btnTabConsumo').style.color = 'var(--text-muted)';
+        document.getElementById('btnTabMasiva').style.background = 'transparent';
+        document.getElementById('btnTabMasiva').style.color = 'var(--text-muted)';
+
+        if (tab === 'consumo') {
+            document.getElementById('formConsumoContainer').style.display = 'block';
+            document.getElementById('btnTabConsumo').style.background = 'var(--primary)';
+            document.getElementById('btnTabConsumo').style.color = 'white';
+        } else if (tab === 'masiva') {
+            document.getElementById('formMasivaContainer').style.display = 'block';
+            document.getElementById('btnTabMasiva').style.background = 'var(--primary)';
+            document.getElementById('btnTabMasiva').style.color = 'white';
+        }
+    }
+
+    // Auto-fill Responsable en formulario individual
+    document.getElementById('obraSelect').addEventListener('change', async function(e) {
+        const val = e.target.value;
+        if(val) {
+            const res = await fetch('/api/get_responsable/' + encodeURIComponent(val));
+            const data = await res.json();
+            if(data.responsable && tomSelectResponsable) {
+                tomSelectResponsable.addOption({value: data.responsable, text: data.responsable});
+                tomSelectResponsable.setValue(data.responsable);
+            }
+        }
+    });
+
+    // Auto-fill Responsable en Captura Masiva al cambiar Obra General y revalidar duplicados
+    document.getElementById('obraMasivaSelect').addEventListener('change', async function(e) {
+        const val = e.target.value;
+        if(val) {
+            actualizarObraTodasFilas(val);
+            const res = await fetch('/api/get_responsable/' + encodeURIComponent(val));
+            const data = await res.json();
+            if(data.responsable) {
+                document.getElementById('responsableMasivaSelect').value = data.responsable;
+                actualizarResponsableTodasFilas(data.responsable);
+            }
+        }
+        if(filasExtraidas && filasExtraidas.length > 0) {
+            revalidarDuplicadosLive();
+        }
+    });
+
+    document.getElementById('semanaMasivaInput').addEventListener('change', function() {
+        if(filasExtraidas && filasExtraidas.length > 0) {
+            revalidarDuplicadosLive();
+        }
+    });
+
+    async function revalidarDuplicadosLive() {
+        const sem = document.getElementById('semanaMasivaInput').value;
+        const ob = document.getElementById('obraMasivaSelect').value;
+        try {
+            const res = await fetch('/api/diesel/validar_duplicados', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ semana: sem, filas: filasExtraidas, obra_general: ob })
+            });
+            const data = await res.json();
+            if (data.success) {
+                filasExtraidas = data.filas || [];
+                filasExtraidas.forEach(f => {
+                    if (f.es_duplicado) f.incluir = false;
+                });
+                if (data.duplicados_count > 0) {
+                    document.getElementById('lblCantDuplicados').innerText = data.duplicados_count;
+                    document.getElementById('alertDuplicadosMasiva').style.display = 'flex';
+                } else {
+                    document.getElementById('alertDuplicadosMasiva').style.display = 'none';
+                }
+                renderizarTablaFilasMasiva();
+            }
+        } catch(e) { console.error('Error revalidando duplicados:', e); }
+    }
+
+    // Drag and Drop para PDF Masiva
+    const dropZone = document.getElementById('dropZoneMasiva');
+    const inputPdf = document.getElementById('archivoPdfMasiva');
+
+    dropZone.addEventListener('click', () => inputPdf.click());
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'var(--primary)';
+            dropZone.style.background = 'rgba(59, 130, 246, 0.15)';
+        }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+            dropZone.style.background = 'rgba(15, 23, 42, 0.4)';
+        }, false);
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if(files.length > 0 && files[0].type === 'application/pdf') {
+            inputPdf.files = files;
+            procesarBitacoraPdf(files[0]);
+        }
+    });
+
+    inputPdf.addEventListener('change', function() {
+        if(this.files.length > 0) {
+            procesarBitacoraPdf(this.files[0]);
+        }
+    });
+
+    // Procesar PDF subido con la API de extracción profunda
+    async function procesarBitacoraPdf(pdfFile) {
+        document.getElementById('loaderMasiva').style.display = 'block';
+        document.getElementById('controlesGeneralesMasiva').style.display = 'none';
+        document.getElementById('contenedorTablaMasiva').style.display = 'none';
+        document.getElementById('alertDuplicadosMasiva').style.display = 'none';
+        document.getElementById('pdfStatusLabel').innerText = 'Cargando ' + pdfFile.name + '...';
+
+        const fd = new FormData();
+        fd.append('archivo_pdf', pdfFile);
+
+        try {
+            const res = await fetch('/api/diesel/extraer_bitacora_pdf', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            document.getElementById('loaderMasiva').style.display = 'none';
+
+            if(data.success) {
+                // Mostrar PDF en iframe
+                document.getElementById('pdfViewerMasiva').src = data.pdf_url;
+                document.getElementById('pdfStatusLabel').innerText = '📄 ' + pdfFile.name;
+
+                // Cargar Metadatos
+                if(data.semana) document.getElementById('semanaMasivaInput').value = data.semana;
+                if(data.marimba) document.getElementById('origenMasivaInput').value = data.marimba;
+
+                if(data.obra_detectada) {
+                    const selObra = document.getElementById('obraMasivaSelect');
+                    for(let i=0; i<selObra.options.length; i++) {
+                        if(selObra.options[i].value.toLowerCase().includes(data.obra_detectada.toLowerCase())) {
+                            selObra.selectedIndex = i;
+                            break;
+                        }
+                    }
+                    selObra.dispatchEvent(new Event('change'));
+                }
+
+                filasExtraidas = data.filas || [];
+
+                // Asignar estado de inclusión e ingeniero por defecto
+                const respGen = document.getElementById('responsableMasivaSelect').value;
+                filasExtraidas.forEach(f => {
+                    f.incluir = !f.es_duplicado;
+                    if(!f.responsable) f.responsable = respGen;
+                });
+
+                if(data.duplicados_count > 0) {
+                    document.getElementById('lblCantDuplicados').innerText = data.duplicados_count;
+                    document.getElementById('alertDuplicadosMasiva').style.display = 'flex';
+                }
+
+                renderizarTablaFilasMasiva();
+
+                document.getElementById('controlesGeneralesMasiva').style.display = 'block';
+                document.getElementById('contenedorTablaMasiva').style.display = 'flex';
+                
+                if(data.duplicados_count > 0) {
+                    showToast('Bitácora leída. ¡Atención! Se detectaron ' + data.duplicados_count + ' posibles duplicados.', 'warning');
+                } else {
+                    showToast('Bitácora leída exitosamente. ' + filasExtraidas.length + ' partidas detectadas sin duplicados.', 'success');
+                }
+            } else {
+                showToast(data.error || 'Error leyendo la bitácora PDF', 'error');
+            }
+        } catch(e) {
+            console.error(e);
+            document.getElementById('loaderMasiva').style.display = 'none';
+            showToast('Error de conexión al procesar el PDF', 'error');
+        }
+    }
+
+    // Renderizar filas editables de la tabla con Día Compacto y espacio amplio para Litros, Obra y Responsable
+    function renderizarTablaFilasMasiva() {
+        const tbody = document.getElementById('tbodyFilasMasiva');
+        tbody.innerHTML = '';
+
+        let totalLts = 0;
+        let countIncluidos = 0;
+
+        if(filasExtraidas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="padding: 1rem; text-align: center; color: var(--danger);">No se detectaron partidas de combustible en este PDF.</td></tr>';
+        }
+
+        const obraGen = document.getElementById('obraMasivaSelect').value;
+        const respGen = document.getElementById('responsableMasivaSelect').value;
+
+        filasExtraidas.forEach((f, idx) => {
+            const lts = parseFloat(f.salida || f.litros || 0);
+            const isInc = f.incluir !== false;
+            
+            if(isInc) {
+                totalLts += lts;
+                countIncluidos++;
+            }
+
+            const obraFila = f.origen_obra || obraGen;
+            const respFila = f.responsable || respGen;
+            const diaSolo = extraerDia(f.fecha);
+
+            const rowStyle = f.es_duplicado ? 
+                'background: rgba(239, 68, 68, 0.12); border-left: 3px solid #ef4444;' : 
+                'border-bottom: 1px solid rgba(255,255,255,0.05);';
+
+            const msjDupText = f.msj_duplicado || 'Coincide con un registro existente en la semana';
+            const badgeDup = f.es_duplicado ? 
+                `<span style="background: #ef4444; color: white; border-radius: 4px; padding: 2px 5px; font-size: 0.68rem; font-weight: bold; margin-left: 4px; cursor: help;" title="${msjDupText}">⚠️ ${msjDupText}</span>` : '';
+
+            // Construir select de responsable para esta fila
+            let selectRespOptions = `<option value="">Seleccionar Responsable...</option>`;
+            {% for r in responsables %}
+                selectRespOptions += `<option value="{{ r['nombre'] }}" ${respFila === '{{ r["nombre"] }}' ? 'selected' : ''}>{{ r['nombre'] }}</option>`;
+            {% endfor %}
+
+            tbody.innerHTML += `
+                <tr style="${rowStyle}">
+                    <td style="padding: 0.4rem 0.3rem; text-align: center;">
+                        <input type="checkbox" ${isInc ? 'checked' : ''} onchange="filasExtraidas[${idx}].incluir=this.checked; recuentarTotalesMasiva();" style="accent-color: var(--primary); transform: scale(1.15); cursor: pointer;">
+                    </td>
+                    <td style="padding: 0.4rem 0.3rem; text-align: center;">
+                        <input type="text" value="${diaSolo}" title="Fecha completa: ${f.fecha}" onchange="actualizarDiaEnFecha(${idx}, this.value)" style="width: 48px; text-align: center; padding: 0.35rem 0.2rem; font-size: 0.88rem; font-weight: 600; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <div style="display: flex; align-items: center;">
+                            <input type="text" list="listaEquiposCatalogos" value="${f.equipo}" onchange="filasExtraidas[${idx}].equipo=this.value" placeholder="🔍 Buscar equipo..." style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                            ${badgeDup}
+                        </div>
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <input type="number" step="0.01" value="${lts}" onchange="filasExtraidas[${idx}].salida=parseFloat(this.value); recuentarTotalesMasiva();" style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.88rem; font-weight: bold; border-radius: 6px; background: rgba(15,23,42,0.85); color: #34d399; border: 1px solid rgba(255,255,255,0.12); text-align: right;">
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <input type="text" list="listaObrasCatalogos" value="${obraFila}" onchange="filasExtraidas[${idx}].origen_obra=this.value" placeholder="🔍 Buscar obra..." style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                    </td>
+                    <td style="padding: 0.4rem 0.4rem;">
+                        <select onchange="filasExtraidas[${idx}].responsable=this.value" style="width: 100%; padding: 0.35rem 0.5rem; font-size: 0.85rem; border-radius: 6px; background: rgba(15,23,42,0.85); color: white; border: 1px solid rgba(255,255,255,0.12);">
+                            ${selectRespOptions}
+                        </select>
+                    </td>
+                    <td style="padding: 0.4rem 0.3rem; text-align: center;">
+                        <button type="button" onclick="eliminarFilaMasiva(${idx})" style="background: rgba(239,68,68,0.2); color: #f87171; border: 1px solid rgba(239,68,68,0.4); border-radius: 6px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.82rem;">✕</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('countPartidas').innerText = countIncluidos + ' / ' + filasExtraidas.length;
+        document.getElementById('btnCountPartidas').innerText = countIncluidos;
+        document.getElementById('totalLitrosMasiva').innerText = totalLts.toFixed(2);
+    }
+
+    function desmarcarTodosDuplicados() {
+        filasExtraidas.forEach(f => {
+            if(f.es_duplicado) f.incluir = false;
+        });
+        renderizarTablaFilasMasiva();
+        showToast('Registros duplicados excluidos de la lista a guardar.', 'info');
+    }
+
+    function recuentarTotalesMasiva() {
+        let totalLts = 0;
+        let countIncluidos = 0;
+        filasExtraidas.forEach(f => {
+            if(f.incluir !== false) {
+                totalLts += parseFloat(f.salida || f.litros || 0);
+                countIncluidos++;
+            }
+        });
+        document.getElementById('countPartidas').innerText = countIncluidos + ' / ' + filasExtraidas.length;
+        document.getElementById('btnCountPartidas').innerText = countIncluidos;
+        document.getElementById('totalLitrosMasiva').innerText = totalLts.toFixed(2);
+    }
+
+    function eliminarFilaMasiva(idx) {
+        filasExtraidas.splice(idx, 1);
+        renderizarTablaFilasMasiva();
+    }
+
+    function actualizarObraTodasFilas(nuevaObra) {
+        if(!nuevaObra) return;
+        filasExtraidas.forEach(f => f.origen_obra = nuevaObra);
+        renderizarTablaFilasMasiva();
+    }
+
+    function actualizarResponsableTodasFilas(nuevoResp) {
+        if(!nuevoResp) return;
+        filasExtraidas.forEach(f => f.responsable = nuevoResp);
+        renderizarTablaFilasMasiva();
+    }
+
+    // Guardar la bitácora completa
+    async function guardarBitacoraMasiva() {
+        const filasAEnviar = filasExtraidas.filter(f => f.incluir !== false);
+
+        if(filasAEnviar.length === 0) {
+            showToast('No hay filas seleccionadas para guardar', 'error');
+            return;
+        }
+
+        const obraGen = document.getElementById('obraMasivaSelect').value;
+        if(!obraGen) {
+            showToast('Por favor selecciona la Obra Destino General', 'error');
+            document.getElementById('obraMasivaSelect').focus();
+            return;
+        }
+
+        const btn = document.getElementById('btnGuardarMasiva');
+        btn.disabled = true;
+        btn.innerText = '💾 Guardando Bitácora...';
+
+        const payload = {
+            semana: document.getElementById('semanaMasivaInput').value,
+            obra_general: obraGen,
+            responsable_general: document.getElementById('responsableMasivaSelect').value,
+            origen: document.getElementById('origenMasivaInput').value,
+            filas: filasAEnviar
+        };
+
+        try {
+            const res = await fetch('/api/diesel/guardar_bitacora_masiva', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if(data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(data.error || 'Error al guardar la bitácora', 'error');
+                btn.disabled = false;
+                btn.innerText = '💾 Guardar Bitácora Completa (' + filasAEnviar.length + ' Registros)';
+            }
+        } catch(e) {
+            console.error(e);
+            showToast('Error de conexión al guardar la bitácora', 'error');
+            btn.disabled = false;
+            btn.innerText = '💾 Guardar Bitácora Completa (' + filasAEnviar.length + ' Registros)';
+        }
+    }
+
+    // Submit Consumo Individual
+    document.getElementById('dieselForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtnConsumo');
+        btn.innerHTML = 'Guardando...';
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/diesel/consumo', { method: 'POST', body: new FormData(this) });
+            const result = await res.json();
+            if(result.success) {
+                showToast(result.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showToast(result.message, 'error');
+            }
+        } catch(error) { showToast('Error de conexión.', 'error'); } 
+        finally { btn.innerHTML = 'Guardar Consumo'; btn.disabled = false; }
+    });
+
+    // ==================== GESTOR DE FOTOGRAFÍAS DE EVIDENCIA (SELECCIÓN, ARRASTRE Y PORTAPAPELES) ====================
+    let selectedFilesConsumo = new DataTransfer();
+
+    function updateFileInputAndPreview() {
+        const fileInput = document.getElementById('fileInputConsumo');
+        const previewArea = document.getElementById('previewConsumo');
+        const uploadText = document.getElementById('uploadTextConsumo');
+        
+        if (fileInput) {
+            fileInput.files = selectedFilesConsumo.files;
+        }
+
+        if (uploadText) {
+            const cant = selectedFilesConsumo.files.length;
+            if (cant === 0) {
+                uploadText.innerHTML = '📸 Toca para abrir la cámara, selecciona fotos, arrastra o pega desde el portapapeles (Ctrl + V)';
+            } else {
+                uploadText.innerHTML = `✅ <strong>${cant} fotografía(s) adjuntada(s)</strong> — Toca para agregar más o pega desde el portapapeles (Ctrl + V)`;
+            }
+        }
+        
+        if (previewArea) {
+            previewArea.innerHTML = '';
+            Array.from(selectedFilesConsumo.files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = document.createElement('div');
+                    container.style.cssText = 'position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.4); background: #0f172a;';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '✕';
+                    removeBtn.title = 'Eliminar imagen';
+                    removeBtn.style.cssText = 'position: absolute; top: 3px; right: 3px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5);';
+                    removeBtn.onclick = function(ev) {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        removeFileConsumo(index);
+                    };
+                    
+                    container.appendChild(img);
+                    container.appendChild(removeBtn);
+                    previewArea.appendChild(container);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function addFilesConsumo(files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith('image/')) {
+                selectedFilesConsumo.items.add(file);
+            }
+        }
+        updateFileInputAndPreview();
+    }
+
+    function removeFileConsumo(index) {
+        const dt = new DataTransfer();
+        Array.from(selectedFilesConsumo.files).forEach((file, i) => {
+            if (i !== index) dt.items.add(file);
+        });
+        selectedFilesConsumo = dt;
+        updateFileInputAndPreview();
+    }
+
+    // 1. Evento Change en el input file
+    const fileInputConsumo = document.getElementById('fileInputConsumo');
+    if (fileInputConsumo) {
+        fileInputConsumo.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                addFilesConsumo(this.files);
+            }
+        });
+    }
+
+    // 2. Drag & Drop en la zona de carga
+    const dropAreaConsumo = document.getElementById('dropAreaConsumo');
+    if (dropAreaConsumo) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropAreaConsumo.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropAreaConsumo.addEventListener(eventName, () => {
+                dropAreaConsumo.style.borderColor = 'var(--primary)';
+                dropAreaConsumo.style.background = 'rgba(59, 130, 246, 0.15)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropAreaConsumo.addEventListener(eventName, () => {
+                dropAreaConsumo.style.borderColor = '';
+                dropAreaConsumo.style.background = '';
+            }, false);
+        });
+
+        dropAreaConsumo.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                addFilesConsumo(dt.files);
+            }
+        });
+    }
+
+    // 3. Pegado directo desde el Portapapeles (Ctrl+V / Win+V)
+    document.addEventListener('paste', function(e) {
+        const container = document.getElementById('formConsumoContainer');
+        if (container && container.style.display === 'none') return;
+
+        const activeEl = document.activeElement;
+        const targetTag = activeEl ? activeEl.tagName.toLowerCase() : '';
+        if (targetTag === 'textarea') return;
+        
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        if (!items) return;
+
+        let pastedFiles = [];
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    const ext = blob.type.split('/')[1] || 'png';
+                    const file = new File([blob], `evidencia_pegada_${Date.now()}_${i}.${ext}`, { type: blob.type });
+                    pastedFiles.push(file);
+                }
+            }
+        }
+
+        if (pastedFiles.length > 0) {
+            addFilesConsumo(pastedFiles);
+            if (typeof showToast === 'function') {
+                showToast(`📸 ${pastedFiles.length} imagen(es) pegada(s) desde el portapapeles.`, 'success');
+            }
+        }
+    });
+
+    // ==================== FILTRADO DINÁMICO DE MAQUINARIA SEGÚN OBRA SELECCIONADA ====================
+    const obraEquiposMap = {{ obra_equipos_map | tojson | safe }};
+    const obraSelectEl = document.getElementById('obraSelect');
+    const equipoSelectEl = document.getElementById('equipoSelect');
+
+    let allEquipoOptions = [];
+    if (equipoSelectEl) {
+        allEquipoOptions = Array.from(equipoSelectEl.options).map(opt => ({
+            value: opt.value,
+            text: opt.textContent
+        }));
+    }
+
+    function filterEquiposByObra() {
+        if (!obraSelectEl || !equipoSelectEl) return;
+        
+        const selectedObra = obraSelectEl.value ? obraSelectEl.value.trim() : '';
+        const assignedEquipos = obraEquiposMap[selectedObra] || [];
+        
+        equipoSelectEl.innerHTML = '';
+        
+        if (selectedObra && assignedEquipos.length > 0) {
+            let matchedOptions = [];
+            allEquipoOptions.forEach(opt => {
+                if (!opt.value) return;
+                const isAssigned = assignedEquipos.some(eq => {
+                    const eqUpper = String(eq).trim().toUpperCase();
+                    const optValUpper = String(opt.value).trim().toUpperCase();
+                    const optTextUpper = String(opt.text).trim().toUpperCase();
+                    
+                    if (/^\d+$/.test(eqUpper)) {
+                        return optValUpper === eqUpper;
+                    }
+                    
+                    return optValUpper === eqUpper || 
+                           optValUpper.includes(eqUpper) || 
+                           eqUpper.includes(optValUpper) || 
+                           optTextUpper.includes(eqUpper) || 
+                           eqUpper.includes(optTextUpper);
+                });
+                
+                if (isAssigned) {
+                    matchedOptions.push(opt);
+                }
+            });
+            
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = `Selecciona unidad (${matchedOptions.length} equipos para ${selectedObra})...`;
+            equipoSelectEl.appendChild(defaultOpt);
+
+            matchedOptions.forEach(opt => {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.text;
+                equipoSelectEl.appendChild(newOpt);
+            });
+            
+            const showAllOpt = document.createElement('option');
+            showAllOpt.value = '__SHOW_ALL__';
+            showAllOpt.textContent = '── VER LISTA COMPLETA DE EQUIPOS ──';
+            equipoSelectEl.appendChild(showAllOpt);
+
+        } else {
+            allEquipoOptions.forEach(opt => {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.value === '' ? 'Selecciona unidad...' : opt.text;
+                equipoSelectEl.appendChild(newOpt);
+            });
+        }
+    }
+
+    if (equipoSelectEl) {
+        equipoSelectEl.addEventListener('change', function() {
+            if (this.value === '__SHOW_ALL__') {
+                equipoSelectEl.innerHTML = '';
+                allEquipoOptions.forEach(opt => {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = opt.value;
+                    newOpt.textContent = opt.value === '' ? 'Selecciona unidad (Lista Completa)...' : opt.text;
+                    equipoSelectEl.appendChild(newOpt);
+                });
+            }
+        });
+    }
+
+    if (obraSelectEl) {
+        obraSelectEl.addEventListener('change', filterEquiposByObra);
+    }
+
+    // Auto calcular semana al cambiar fecha
+    document.getElementById("fechaInputDiesel").addEventListener("change", function(e) {
+        if(!this.value) return;
+        const parts = this.value.split('-');
+        const d = new Date(parts[0], parts[1]-1, parts[2]);
+        const dayNum = d.getDay() || 7;
+        d.setDate(d.getDate() + 4 - dayNum);
+        const yearStart = new Date(d.getFullYear(),0,1);
+        const week = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        document.getElementById("semanaInputDiesel").value = week;
+    });
+</script>
+{% endblock %}

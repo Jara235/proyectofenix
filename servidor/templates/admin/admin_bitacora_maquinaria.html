@@ -1,0 +1,733 @@
+{% extends "layout_admin.html" %}
+
+{% block content %}
+<style>
+    .kpi-grid-bitacora {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    .kpi-card-bitacora {
+        background: var(--admin-panel);
+        border: 1px solid var(--admin-border);
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    .badge-turno-manana {
+        background: rgba(245, 158, 11, 0.2);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+    .badge-turno-tarde {
+        background: rgba(139, 92, 246, 0.2);
+        color: #c084fc;
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+    .badge-estatus-operacion {
+        background: rgba(16, 185, 129, 0.2);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+    .badge-estatus-traslado {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+    }
+    .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.75);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .modal-box {
+        background: #111827;
+        border: 1px solid var(--admin-primary);
+        border-radius: 14px;
+        width: 100%;
+        max-width: 750px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    .form-group-full {
+        grid-column: 1 / -1;
+    }
+    .form-group label {
+        display: block;
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+        width: 100%;
+        padding: 10px 12px;
+        background: #1e293b;
+        border: 1px solid var(--admin-border);
+        color: #fff;
+        border-radius: 8px;
+        outline: none;
+        font-size: 0.9rem;
+    }
+    .form-group input:focus, .form-group select:focus {
+        border-color: var(--admin-primary);
+    }
+</style>
+
+<div class="panel-header" style="border:none; margin-bottom: 20px;">
+    <div>
+        <h1 style="margin:0; font-size: 1.8rem; font-weight: 700; color: #38bdf8; display: flex; align-items: center; gap: 10px;">
+            🚜 Control y Bitácora Diaria de Maquinaria por Cuadrilla
+        </h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">
+            Seguimiento de ubicación de equipos por ingeniero responsable, cuadrilla, obra y turno (Mañana vs. Tarde/Noche).
+        </p>
+    </div>
+</div>
+
+<!-- Tarjetas KPI / Métricas Rápida -->
+<div class="kpi-grid-bitacora">
+    <div class="kpi-card-bitacora">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">👷 INGENIEROS / CUADRILLAS</div>
+        <div style="font-size: 1.8rem; font-weight: 700; color: #a855f7; margin-top: 5px;" id="kpi-cuadrillas">6</div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 3px;">Apolinar, Francisco J., Diego C., etc.</div>
+    </div>
+    <div class="kpi-card-bitacora">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">🚜 REGISTROS DE BITÁCORA</div>
+        <div style="font-size: 1.8rem; font-weight: 700; color: #38bdf8; margin-top: 5px;" id="kpi-registros">0</div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 3px;">Movimientos registrados</div>
+    </div>
+    <div class="kpi-card-bitacora">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">⏱️ HORAS DE OPERACIÓN</div>
+        <div style="font-size: 1.8rem; font-weight: 700; color: #f59e0b; margin-top: 5px;" id="kpi-horas">0.0 hrs</div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 3px;">Trabajo continuo de maquinaria</div>
+    </div>
+    <div class="kpi-card-bitacora">
+        <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">⛽ DIÉSEL ESTIMADO</div>
+        <div style="font-size: 1.8rem; font-weight: 700; color: #10b981; margin-top: 5px;" id="kpi-litros">0.0 L</div>
+        <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 3px;">Consumo conciliable por obra</div>
+    </div>
+</div>
+
+<!-- Panel de Filtros y Herramientas -->
+<div class="admin-panel" style="margin-bottom: 25px;">
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;">
+        
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; flex: 1;">
+            <!-- Filtro Semana -->
+            <div style="min-width: 140px;">
+                <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">📅 Semana:</label>
+                <select id="filtro-semana" onchange="cargarBitacora()" style="padding: 8px 12px; background: #0f172a; border: 1px solid var(--admin-border); color: #fff; border-radius: 8px; width: 100%;">
+                    <option value="">Todas las Semanas</option>
+                    <option value="32" selected>Semana 32</option>
+                    <option value="31">Semana 31</option>
+                    <option value="30">Semana 30</option>
+                </select>
+            </div>
+
+            <!-- Filtro Responsable -->
+            <div style="min-width: 180px;">
+                <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">👷 Responsable:</label>
+                <select id="filtro-responsable" onchange="cargarBitacora()" style="padding: 8px 12px; background: #0f172a; border: 1px solid var(--admin-border); color: #fff; border-radius: 8px; width: 100%;">
+                    <option value="">Todos los Ingenieros</option>
+                    <option value="Apolinar">Apolinar</option>
+                    <option value="Francisco Javier">Francisco Javier</option>
+                    <option value="Ing. Diego Carreola">Ing. Diego Carreola</option>
+                    <option value="Jack">Jack</option>
+                    <option value="Luis">Luis</option>
+                    <option value="Samuel">Samuel</option>
+                </select>
+            </div>
+
+            <!-- Filtro Obra -->
+            <div style="min-width: 180px;">
+                <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">🏗️ Obra / Frente:</label>
+                <select id="filtro-obra" onchange="cargarBitacora()" style="padding: 8px 12px; background: #0f172a; border: 1px solid var(--admin-border); color: #fff; border-radius: 8px; width: 100%;">
+                    <option value="">Todas las Obras</option>
+                </select>
+            </div>
+
+            <!-- Filtro Turno -->
+            <div style="min-width: 140px;">
+                <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">🕒 Turno:</label>
+                <select id="filtro-turno" onchange="cargarBitacora()" style="padding: 8px 12px; background: #0f172a; border: 1px solid var(--admin-border); color: #fff; border-radius: 8px; width: 100%;">
+                    <option value="">Todos los Turnos</option>
+                    <option value="MAÑANA">☀️ Mañana</option>
+                    <option value="TARDE/NOCHE">🌙 Tarde / Noche</option>
+                </select>
+            </div>
+
+            <!-- Buscador general -->
+            <div style="min-width: 200px; flex: 1;">
+                <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:4px; font-weight:bold;">🔍 Buscar:</label>
+                <input type="text" id="buscador-bitacora" placeholder="Buscar equipo, operador o nota..." oninput="filtrarTablaLocal()" style="padding: 8px 12px; background: #0f172a; border: 1px solid var(--admin-border); color: #fff; border-radius: 8px; width: 100%; outline: none;">
+            </div>
+        </div>
+
+        <!-- Botones de Acción Principal -->
+        <div style="display: flex; gap: 10px;">
+            <button onclick="abrirModalNuevo()" style="background: linear-gradient(135deg, #a855f7, #7c3aed); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);">
+                ➕ Nuevo Registro
+            </button>
+            <button onclick="imprimirBitacora()" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                🖨️ Imprimir Bitácora
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Tabla Principal de Registros -->
+<div class="admin-panel" style="padding: 0; overflow: hidden;">
+    <div style="overflow-x: auto; max-height: calc(100vh - 320px); overflow-y: auto;">
+        <table class="admin-table" id="tabla-bitacora">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">Fecha</th>
+                    <th>Responsable</th>
+                    <th>Cuadrilla</th>
+                    <th style="text-align: center;">Turno</th>
+                    <th>Obra / Frente</th>
+                    <th>Maquinaria / Equipo</th>
+                    <th style="text-align: right;">Horas</th>
+                    <th style="text-align: right;">Diésel Est.</th>
+                    <th style="text-align: center;">Estatus</th>
+                    <th>Observaciones / Operador</th>
+                    <th style="text-align: center; width: 100px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-bitacora">
+                <tr><td colspan="11" style="text-align:center; padding: 25px; color: var(--text-muted);">Cargando registros de la bitácora...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL: CREAR / EDITAR REGISTRO -->
+<div class="modal-overlay" id="modalFormBitacora">
+    <div class="modal-box">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--admin-border); padding-bottom: 12px;">
+            <h3 style="margin:0; color: #38bdf8;" id="modal-titulo">➕ Registrar Movimiento de Maquinaria</h3>
+            <button onclick="cerrarModal()" style="background:none; border:none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer;">✕</button>
+        </div>
+
+        <form id="formBitacora" onsubmit="guardarRegistroBitacora(event)">
+            <input type="hidden" id="entry-id" value="">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>📅 Fecha:</label>
+                    <input type="date" id="form-fecha" required onchange="actualizarSemanaForm()">
+                </div>
+                <div class="form-group">
+                    <label>📆 Semana:</label>
+                    <input type="text" id="form-semana" placeholder="32" required readonly style="background: #0f172a; color: #94a3b8;">
+                </div>
+
+                <div class="form-group">
+                    <label>👷 Responsable / Ingeniero:</label>
+                    <select id="form-responsable" required onchange="autoSeleccionarCuadrilla()">
+                        <option value="">Selecciona Responsable...</option>
+                        <option value="Apolinar">Apolinar</option>
+                        <option value="Francisco Javier">Francisco Javier</option>
+                        <option value="Ing. Diego Carreola">Ing. Diego Carreola</option>
+                        <option value="Jack">Jack</option>
+                        <option value="Luis">Luis</option>
+                        <option value="Samuel">Samuel</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>👥 Cuadrilla Asignada:</label>
+                    <select id="form-cuadrilla" required>
+                        <option value="CUAD-GEN">Cuadrilla General</option>
+                        <option value="CUAD-APO">Cuadrilla Apolinar</option>
+                        <option value="CUAD-FJ">Cuadrilla Francisco Javier</option>
+                        <option value="CUAD-DC">Cuadrilla Diego Carreola</option>
+                        <option value="CUAD-JK">Cuadrilla Jack</option>
+                        <option value="CUAD-LU">Cuadrilla Luis</option>
+                        <option value="CUAD-SAM">Cuadrilla Samuel</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>🕒 Turno / Horario:</label>
+                    <select id="form-turno" required>
+                        <option value="MAÑANA">☀️ MAÑANA</option>
+                        <option value="TARDE/NOCHE">🌙 TARDE / NOCHE</option>
+                        <option value="COMPLETO">🔄 COMPLETO (DÍA ENTERO)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>🏗️ Obra / Frente de Trabajo:</label>
+                    <select id="form-obra" required>
+                        <!-- Populated dynamically via JS -->
+                    </select>
+                </div>
+
+                <div class="form-group-full form-group">
+                    <label>🚜 Maquinaria / Equipo Asignado:</label>
+                    <input type="text" id="form-equipo" list="dl-equipos" placeholder="Ej. PAVIMENTADORA VOGELE 1800-3 i, EXCAVADORA CAT 324 DL..." required>
+                    <datalist id="dl-equipos"></datalist>
+                </div>
+
+                <div class="form-group">
+                    <label>⏱️ Horómetro Inicial:</label>
+                    <input type="number" step="0.1" id="form-h-inicial" value="0.0" oninput="calcularHorasTrabajadas()">
+                </div>
+
+                <div class="form-group">
+                    <label>⏱️ Horómetro Final:</label>
+                    <input type="number" step="0.1" id="form-h-final" value="0.0" oninput="calcularHorasTrabajadas()">
+                </div>
+
+                <div class="form-group">
+                    <label>⌛ Horas Trabajadas:</label>
+                    <input type="number" step="0.1" id="form-horas" value="0.0" required style="font-weight: bold; color: #f59e0b;">
+                </div>
+
+                <div class="form-group">
+                    <label>⛽ Litros Diésel Estimados:</label>
+                    <input type="number" step="0.1" id="form-litros" value="0.0" required style="font-weight: bold; color: #10b981;">
+                </div>
+
+                <div class="form-group">
+                    <label>👤 Operador:</label>
+                    <input type="text" id="form-operador" placeholder="Nombre del operador...">
+                </div>
+
+                <div class="form-group">
+                    <label>📌 Estatus del Equipo:</label>
+                    <select id="form-estatus">
+                        <option value="EN OPERACION">🟢 EN OPERACIÓN</option>
+                        <option value="EN TRASLADO">🚚 EN TRASLADO</option>
+                        <option value="MANTENIMIENTO">🔧 MANTENIMIENTO</option>
+                        <option value="STANDBY">⏸️ STANDBY / ESPERA</option>
+                    </select>
+                </div>
+
+                <div class="form-group-full form-group">
+                    <label>📝 Observaciones / Notas de Trabajo:</label>
+                    <textarea id="form-observaciones" rows="2" placeholder="Describir actividades realizadas o motivos de traslado..."></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--admin-border); padding-top: 15px;">
+                <button type="button" onclick="cerrarModal()" style="padding: 10px 18px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 8px; cursor: pointer;">
+                    Cancelar
+                </button>
+                <button type="submit" style="padding: 10px 22px; background: #38bdf8; border: none; color: #000; font-weight: bold; border-radius: 8px; cursor: pointer;">
+                    💾 Guardar Registro
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    let cacheBitacora = [];
+    let catalogosObras = [];
+    let catalogosEquipos = [];
+
+    window.onload = function() {
+        document.getElementById('form-fecha').value = new Date().toISOString().split('T')[0];
+        actualizarSemanaForm();
+        cargarCatalogosAuxiliares();
+        cargarBitacora();
+    };
+
+    function actualizarSemanaForm() {
+        const fechaVal = document.getElementById('form-fecha').value;
+        if(fechaVal) {
+            const date = new Date(fechaVal);
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            document.getElementById('form-semana').value = weekNo;
+        }
+    }
+
+    async function cargarCatalogosAuxiliares() {
+        try {
+            const resObras = await fetch('/api/admin/catalogos/obras');
+            if(resObras.ok) {
+                catalogosObras = await resObras.json();
+                const selFiltro = document.getElementById('filtro-obra');
+                const selForm = document.getElementById('form-obra');
+                
+                selFiltro.innerHTML = '<option value="">Todas las Obras</option>';
+                selForm.innerHTML = '<option value="">Selecciona Obra...</option>';
+                
+                catalogosObras.forEach(o => {
+                    selFiltro.innerHTML += `<option value="${o.nombre}">${o.nombre}</option>`;
+                    selForm.innerHTML += `<option value="${o.nombre}">${o.nombre}</option>`;
+                });
+            }
+
+            const resEquipos = await fetch('/api/admin/catalogos/equipos');
+            if(resEquipos.ok) {
+                catalogosEquipos = await resEquipos.json();
+                const dl = document.getElementById('dl-equipos');
+                dl.innerHTML = '';
+                catalogosEquipos.forEach(e => {
+                    const label = e.num_eco ? `${e.num_eco} - ${e.descripcion || ''}` : e.descripcion;
+                    if(label) dl.innerHTML += `<option value="${label}">`;
+                });
+            }
+        } catch(e) {
+            console.error("Error cargando catálogos auxiliares:", e);
+        }
+    }
+
+    async function cargarBitacora() {
+        const sem = document.getElementById('filtro-semana').value;
+        const resp = document.getElementById('filtro-responsable').value;
+        const obr = document.getElementById('filtro-obra').value;
+        const tur = document.getElementById('filtro-turno').value;
+
+        const params = new URLSearchParams();
+        if(sem) params.append('semana', sem);
+        if(resp) params.append('responsable', resp);
+        if(obr) params.append('obra', obr);
+        if(tur) params.append('turno', tur);
+
+        const tbody = document.getElementById('tbody-bitacora');
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 25px;">Cargando bitácora...</td></tr>';
+
+        try {
+            const res = await fetch(`/api/admin/maquinaria/bitacora?${params.toString()}`);
+            cacheBitacora = await res.json();
+            renderTablaBitacora(cacheBitacora);
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:#ef4444;">Error de conexión con el servidor.</td></tr>';
+        }
+    }
+
+    function renderTablaBitacora(data) {
+        const tbody = document.getElementById('tbody-bitacora');
+        if(!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; padding: 25px; color:#10b981;">No se encontraron registros de bitácora.</td></tr>';
+            actualizarKPIs(0, 0, 0);
+            return;
+        }
+
+        let totHrs = 0;
+        let totLts = 0;
+        let html = '';
+
+        data.forEach(r => {
+            const hrs = parseFloat(r.horas_trabajadas || 0);
+            const lts = parseFloat(r.litros_diesel_est || 0);
+            totHrs += hrs;
+            totLts += lts;
+
+            const badgeTurno = r.turno === 'MAÑANA' 
+                ? `<span class="badge-turno-manana">☀️ MAÑANA</span>` 
+                : `<span class="badge-turno-tarde">🌙 TARDE/NOCHE</span>`;
+
+            const badgeEstatus = r.estatus === 'EN TRASLADO'
+                ? `<span class="badge-estatus-traslado">🚚 TRASLADO</span>`
+                : `<span class="badge-estatus-operacion">🟢 OPERANDO</span>`;
+
+            html += `
+                <tr id="row-bit-${r.id}">
+                    <td style="font-weight:bold; font-family:monospace; color:#38bdf8;">${r.fecha}</td>
+                    <td style="font-weight:bold; color:#fff;">${r.responsable}</td>
+                    <td style="font-size:0.85rem; color:#94a3b8;">${r.codigo_cuadrilla || 'N/A'}</td>
+                    <td style="text-align:center;">${badgeTurno}</td>
+                    <td style="font-weight:bold; color:#a855f7;">${r.obra_destino}</td>
+                    <td style="font-size:0.88rem;"><strong>${r.equipo_maquinaria}</strong></td>
+                    <td style="text-align:right; font-weight:bold; color:#f59e0b;">${hrs.toFixed(1)} hrs</td>
+                    <td style="text-align:right; font-weight:bold; color:#10b981;">${lts.toFixed(1)} L</td>
+                    <td style="text-align:center;">${badgeEstatus}</td>
+                    <td style="font-size:0.82rem; color:#cbd5e1;">
+                        ${r.observaciones || ''} 
+                        ${r.operador ? `<br><small style="color:#94a3b8;">👤 Op: ${r.operador}</small>` : ''}
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;">
+                        <button onclick="editarRegistro(${r.id})" style="background:rgba(56, 189, 248, 0.2); color:#38bdf8; border:1px solid rgba(56, 189, 248, 0.4); border-radius:5px; padding:3px 7px; cursor:pointer; font-size:0.8rem;" title="Editar">✏️</button>
+                        <button onclick="eliminarRegistro(${r.id})" style="background:rgba(239, 68, 68, 0.2); color:#f87171; border:1px solid rgba(239, 68, 68, 0.4); border-radius:5px; padding:3px 7px; cursor:pointer; font-size:0.8rem; margin-left:4px;" title="Eliminar">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = html;
+        actualizarKPIs(data.length, totHrs, totLts);
+    }
+
+    function actualizarKPIs(cnt, hrs, lts) {
+        document.getElementById('kpi-registros').textContent = cnt;
+        document.getElementById('kpi-horas').textContent = `${hrs.toFixed(1)} hrs`;
+        document.getElementById('kpi-litros').textContent = `${lts.toFixed(1)} L`;
+    }
+
+    function filtrarTablaLocal() {
+        const q = document.getElementById('buscador-bitacora').value.toLowerCase().trim();
+        if(!q) {
+            renderTablaBitacora(cacheBitacora);
+            return;
+        }
+        const filtrado = cacheBitacora.filter(r => 
+            (r.equipo_maquinaria && r.equipo_maquinaria.toLowerCase().includes(q)) ||
+            (r.obra_destino && r.obra_destino.toLowerCase().includes(q)) ||
+            (r.observaciones && r.observaciones.toLowerCase().includes(q)) ||
+            (r.operador && r.operador.toLowerCase().includes(q))
+        );
+        renderTablaBitacora(filtrado);
+    }
+
+    function calcularHorasTrabajadas() {
+        const hi = parseFloat(document.getElementById('form-h-inicial').value || 0);
+        const hf = parseFloat(document.getElementById('form-h-final').value || 0);
+        if(hf >= hi && hi > 0) {
+            document.getElementById('form-horas').value = (hf - hi).toFixed(1);
+        }
+    }
+
+    function autoSeleccionarCuadrilla() {
+        const resp = document.getElementById('form-responsable').value;
+        const mapCuad = {
+            'Apolinar': 'CUAD-APO',
+            'Francisco Javier': 'CUAD-FJ',
+            'Ing. Diego Carreola': 'CUAD-DC',
+            'Jack': 'CUAD-JK',
+            'Luis': 'CUAD-LU',
+            'Samuel': 'CUAD-SAM'
+        };
+        if(mapCuad[resp]) {
+            document.getElementById('form-cuadrilla').value = mapCuad[resp];
+        }
+    }
+
+    function abrirModalNuevo() {
+        document.getElementById('entry-id').value = '';
+        document.getElementById('modal-titulo').textContent = '➕ Registrar Movimiento de Maquinaria';
+        document.getElementById('formBitacora').reset();
+        document.getElementById('form-fecha').value = new Date().toISOString().split('T')[0];
+        actualizarSemanaForm();
+        document.getElementById('modalFormBitacora').style.display = 'flex';
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalFormBitacora').style.display = 'none';
+    }
+
+    function editarRegistro(id) {
+        const r = cacheBitacora.find(x => x.id === id);
+        if(!r) return;
+
+        document.getElementById('entry-id').value = r.id;
+        document.getElementById('modal-titulo').textContent = '✏️ Editar Registro de Bitácora';
+        document.getElementById('form-fecha').value = r.fecha;
+        document.getElementById('form-semana').value = r.semana || '32';
+        document.getElementById('form-responsable').value = r.responsable;
+        document.getElementById('form-cuadrilla').value = r.codigo_cuadrilla || 'CUAD-GEN';
+        document.getElementById('form-turno').value = r.turno;
+        document.getElementById('form-obra').value = r.obra_destino;
+        document.getElementById('form-equipo').value = r.equipo_maquinaria;
+        document.getElementById('form-h-inicial').value = r.horometro_inicial || 0;
+        document.getElementById('form-h-final').value = r.horometro_final || 0;
+        document.getElementById('form-horas').value = r.horas_trabajadas || 0;
+        document.getElementById('form-litros').value = r.litros_diesel_est || 0;
+        document.getElementById('form-operador').value = r.operador || '';
+        document.getElementById('form-estatus').value = r.estatus || 'EN OPERACION';
+        document.getElementById('form-observaciones').value = r.observaciones || '';
+
+        document.getElementById('modalFormBitacora').style.display = 'flex';
+    }
+
+    async function guardarRegistroBitacora(e) {
+        e.preventDefault();
+        const id = document.getElementById('entry-id').value;
+        const data = {
+            fecha: document.getElementById('form-fecha').value,
+            semana: document.getElementById('form-semana').value,
+            responsable: document.getElementById('form-responsable').value,
+            codigo_cuadrilla: document.getElementById('form-cuadrilla').value,
+            turno: document.getElementById('form-turno').value,
+            obra_destino: document.getElementById('form-obra').value,
+            equipo_maquinaria: document.getElementById('form-equipo').value,
+            horometro_inicial: parseFloat(document.getElementById('form-h-inicial').value || 0),
+            horometro_final: parseFloat(document.getElementById('form-h-final').value || 0),
+            horas_trabajadas: parseFloat(document.getElementById('form-horas').value || 0),
+            litros_diesel_est: parseFloat(document.getElementById('form-litros').value || 0),
+            operador: document.getElementById('form-operador').value,
+            estatus: document.getElementById('form-estatus').value,
+            observaciones: document.getElementById('form-observaciones').value
+        };
+
+        try {
+            let res;
+            if(id) {
+                res = await fetch(`/api/admin/maquinaria/bitacora/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+            } else {
+                res = await fetch('/api/admin/maquinaria/bitacora', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+            }
+
+            if(res.ok) {
+                cerrarModal();
+                cargarBitacora();
+            } else {
+                alert('Error al guardar registro en la bitácora.');
+            }
+        } catch(err) {
+            alert('Error de conexión al guardar.');
+        }
+    }
+
+    async function eliminarRegistro(id) {
+        if(!confirm('¿Estás seguro de eliminar este registro de bitácora?')) return;
+        try {
+            const res = await fetch(`/api/admin/maquinaria/bitacora/${id}`, { method: 'DELETE' });
+            if(res.ok) {
+                cargarBitacora();
+            } else {
+                alert('No se pudo eliminar el registro.');
+            }
+        } catch(e) {
+            alert('Error de conexión.');
+        }
+    }
+
+    function imprimirBitacora() {
+        if(cacheBitacora.length === 0) {
+            alert("No hay registros para imprimir.");
+            return;
+        }
+        const win = window.open('', '_blank', 'width=1000,height=800');
+        const now = new Date().toLocaleString('es-MX');
+
+        let rowsHtml = '';
+        let totHrs = 0;
+        let totLts = 0;
+
+        cacheBitacora.forEach((r, i) => {
+            const hrs = parseFloat(r.horas_trabajadas || 0);
+            const lts = parseFloat(r.litros_diesel_est || 0);
+            totHrs += hrs;
+            totLts += lts;
+
+            rowsHtml += `
+                <tr style="background:${i % 2 === 0 ? '#fff' : '#f8fafc'};">
+                    <td style="padding:8px; border:1px solid #cbd5e1; text-align:center;">${r.fecha}</td>
+                    <td style="padding:8px; border:1px solid #cbd5e1; font-weight:bold;">${r.responsable}</td>
+                    <td style="padding:8px; border:1px solid #cbd5e1; text-align:center;">${r.turno}</td>
+                    <td style="padding:8px; border:1px solid #cbd5e1;">${r.obra_destino}</td>
+                    <td style="padding:8px; border:1px solid #cbd5e1;">${r.equipo_maquinaria}</td>
+                    <td style="padding:8px; border:1px solid #cbd5e1; text-align:right;">${hrs.toFixed(1)} hrs</td>
+                    <td style="padding:8px; border:1px solid #cbd5e1; text-align:right; font-weight:bold;">${lts.toFixed(1)} L</td>
+                    <td style="padding:8px; border:1px solid #cbd5e1; font-size:0.8rem;">${r.observaciones || ''}</td>
+                </tr>
+            `;
+        });
+
+        const doc = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Bitácora Oficial de Maquinaria y Cuadrillas</title>
+                <style>
+                    body { font-family: sans-serif; padding: 20px; color: #0f172a; }
+                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #38bdf8; padding-bottom: 10px; margin-bottom: 15px; }
+                    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+                    th { background: #f1f5f9; padding: 8px; border: 1px solid #94a3b8; text-align: left; }
+                    .firmas { display: flex; justify-content: space-between; margin-top: 50px; }
+                    .firma { width: 30%; text-align: center; border-top: 1px solid #000; padding-top: 5px; font-weight: bold; font-size: 0.8rem; }
+                    @media print { @page { size: landscape; margin: 1.2cm; } }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <h2>🛡️ GRUPO TRUJANO — FÉNIX 2.0</h2>
+                        <h3>BITÁCORA Y CONTROL DIARIO DE MAQUINARIA Y CUADRILLAS</h3>
+                    </div>
+                    <div style="text-align:right; font-size: 0.8rem;">
+                        <div>Fecha Impr.: ${now}</div>
+                        <div>Total Movimientos: ${cacheBitacora.length}</div>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Ingeniero Responsable</th>
+                            <th>Turno</th>
+                            <th>Obra / Frente</th>
+                            <th>Maquinaria / Equipo</th>
+                            <th style="text-align:right;">Horas</th>
+                            <th style="text-align:right;">Diésel Est.</th>
+                            <th>Observaciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                        <tr style="background:#e2e8f0; font-weight:bold;">
+                            <td colspan="5" style="padding:10px; text-align:right; border:1px solid #94a3b8;">TOTALES CONSOLIDADOS:</td>
+                            <td style="padding:10px; text-align:right; border:1px solid #94a3b8;">${totHrs.toFixed(1)} hrs</td>
+                            <td style="padding:10px; text-align:right; border:1px solid #94a3b8; color:#047857;">${totLts.toFixed(1)} L</td>
+                            <td style="border:1px solid #94a3b8;"></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="firmas">
+                    <div class="firma">Mesa de Control y Maquinaria</div>
+                    <div class="firma">Residente de Obra</div>
+                    <div class="firma">Dirección General</div>
+                </div>
+
+                <script>
+                    window.onload = function() { setTimeout(() => window.print(), 500); };
+                <\/script>
+            </body>
+            </html>
+        `;
+
+        win.document.open();
+        win.document.write(doc);
+        win.document.close();
+    }
+</script>
+{% endblock %}

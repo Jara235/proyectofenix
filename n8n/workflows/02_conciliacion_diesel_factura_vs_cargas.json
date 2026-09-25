@@ -1,0 +1,138 @@
+{
+  "name": "02_Conciliacion_Diesel_Factura_vs_Cargas",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fenix-conciliacion-diesel",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c11a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4001",
+      "name": "Webhook: Conciliacion Diesel",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "fenix-conciliacion-diesel"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  COALESCE(SUM(litros_facturados), 0) as total_litros_factura,\n  COALESCE(SUM(importe_total), 0) as total_importe_factura,\n  COUNT(*) as total_facturas_count,\n  COALESCE(json_agg(json_build_object(\n    'id', id,\n    'folio', folio_factura,\n    'proveedor', proveedor,\n    'litros', litros_facturados,\n    'importe', importe_total,\n    'fecha', fecha_factura,\n    'obra', obra_destino\n  )) FILTER (WHERE id IS NOT NULL), '[]'::json) as facturas_detalle\nFROM diesel.facturas\nWHERE (TRIM(semana) = '{{ $json.body.semana }}' OR TRIM(semana) = 'Semana {{ $json.body.semana }}')\n  AND (obra_destino = '{{ $json.body.obra_destino }}' OR '{{ $json.body.obra_destino }}' = '' OR '{{ $json.body.obra_destino }}' = 'TODAS');"
+      },
+      "id": "c11a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4002",
+      "name": "Postgres: Sumar Facturas Diesel",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        480,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Fen1xPostgres01q",
+          "name": "Postgres Fenix Local (fenix_db)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  COALESCE(SUM(litros), 0) as total_litros_cargas,\n  COALESCE(SUM(importe_total), 0) as total_importe_cargas,\n  COUNT(*) as total_cargas_count,\n  COUNT(CASE WHEN foto_evidencia IS NOT NULL THEN 1 END) as cargas_con_foto,\n  COUNT(CASE WHEN horometro_inicial IS NOT NULL AND horometro_inicial > 0 THEN 1 END) as cargas_con_horometro,\n  COALESCE(json_agg(json_build_object(\n    'id', id,\n    'folio', folio_conciliacion,\n    'fecha', fecha,\n    'equipo', equipo_economico,\n    'litros', litros,\n    'importe', importe_total,\n    'operador', operador,\n    'responsable', responsable,\n    'horometro', horometro_inicial,\n    'tiene_foto', (foto_evidencia IS NOT NULL)\n  )) FILTER (WHERE id IS NOT NULL), '[]'::json) as cargas_detalle\nFROM diesel.consumos\nWHERE (TRIM(semana) = '{{ $('Webhook: Conciliacion Diesel').item.json.body.semana }}' OR TRIM(semana) = 'Semana {{ $('Webhook: Conciliacion Diesel').item.json.body.semana }}')\n  AND (obra_destino = '{{ $('Webhook: Conciliacion Diesel').item.json.body.obra_destino }}' OR '{{ $('Webhook: Conciliacion Diesel').item.json.body.obra_destino }}' = '' OR '{{ $('Webhook: Conciliacion Diesel').item.json.body.obra_destino }}' = 'TODAS');"
+      },
+      "id": "c11a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4003",
+      "name": "Postgres: Sumar Cargas en Obra",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        700,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Fen1xPostgres01q",
+          "name": "Postgres Fenix Local (fenix_db)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Motor de Conciliacion Forense Inteligente y Cadena de 3 Filtros Operativos\nconst webhookData = $('Webhook: Conciliacion Diesel').first().json.body || {};\nconst facturasRow = $('Postgres: Sumar Facturas Diesel').first().json || {};\nconst cargasRow = $('Postgres: Sumar Cargas en Obra').first().json || {};\n\nconst semana = webhookData.semana || 0;\nconst obraDestino = webhookData.obra_destino || 'TODAS';\n\nconst totalLitrosFactura = parseFloat(facturasRow.total_litros_factura) || 0;\nconst totalImporteFactura = parseFloat(facturasRow.total_importe_factura) || 0;\nconst totalFacturasCount = parseInt(facturasRow.total_facturas_count) || 0;\nconst facturasDetalle = facturasRow.facturas_detalle || [];\n\nconst totalLitrosCargas = parseFloat(cargasRow.total_litros_cargas) || 0;\nconst totalImporteCargas = parseFloat(cargasRow.total_importe_cargas) || 0;\nconst totalCargasCount = parseInt(cargasRow.total_cargas_count) || 0;\nconst cargasConFoto = parseInt(cargasRow.cargas_con_foto) || 0;\nconst cargasConHorometro = parseInt(cargasRow.cargas_con_horometro) || 0;\nconst cargasDetalle = cargasRow.cargas_detalle || [];\n\n// Calculo de Balance de Combustible\nconst diffLitros = Math.round((totalLitrosFactura - totalLitrosCargas) * 100) / 100;\nconst diffImporte = Math.round((totalImporteFactura - totalImporteCargas) * 100) / 100;\n\nlet pctConsumido = 0;\nif (totalLitrosFactura > 0) {\n  pctConsumido = Math.round((totalLitrosCargas / totalLitrosFactura) * 1000) / 10;\n}\n\nlet pctFotos = 0;\nif (totalCargasCount > 0) {\n  pctFotos = Math.round((cargasConFoto / totalCargasCount) * 1000) / 10;\n}\n\nlet pctHorometros = 0;\nif (totalCargasCount > 0) {\n  pctHorometros = Math.round((cargasConHorometro / totalCargasCount) * 1000) / 10;\n}\n\n// Filtro 1: Evidencias y Auditoria Forense de Campo (Marimba / Camion 3.5 ton)\nconst alertasFiltro1 = [];\nif (pctFotos < 90) {\n  alertasFiltro1.push(`Cumplimiento de fotos cuentalitros bajo: ${pctFotos}%`);\n}\nif (pctHorometros < 80) {\n  alertasFiltro1.push(`Cargas sin registro de horometro inicial: ${100 - pctHorometros}%`);\n}\n\n// Filtro 2: Frente de Obra (Residente)\nlet dictamenFrente = '';\nlet semaforoFrente = 'VERDE';\nif (totalLitrosFactura === 0 && totalLitrosCargas > 0) {\n  semaforoFrente = 'AMARILLO';\n  dictamenFrente = `Consumo suministrado sin factura asignada en la semana (${totalLitrosCargas} L). Posible consumo de inventario remanente de semana previa.`;\n} else if (diffLitros > 15.0) {\n  semaforoFrente = 'VERDE';\n  dictamenFrente = `Suministro normal. Saldo remanente de ${diffLitros} L disponible en tambos / camion 3.5 ton para continuar surtiendo maquinaria.`;\n} else if (diffLitros < -15.0) {\n  semaforoFrente = 'ROJO';\n  dictamenFrente = `Sobregiro detectado: El consumo de maquinaria excede la factura por ${Math.abs(diffLitros)} L. Requiere revision urgente con residente.`;\n} else {\n  semaforoFrente = 'VERDE';\n  dictamenFrente = `Conciliacion exacta. Facturado: ${totalLitrosFactura} L vs Suministrado: ${totalLitrosCargas} L. Diferencia minima de ${diffLitros} L.`;\n}\n\n// Filtro 3: Dictamen de Gobierno Corporativo\nlet semaforoCorp = 'VERDE';\nlet dictamenCorp = '';\nlet estadoCierre = 'PENDIENTE_FIRMAS';\nif (semaforoFrente === 'ROJO' || pctFotos < 70) {\n  semaforoCorp = 'ROJO';\n  dictamenCorp = 'Auditoria con Banderas Rojas. Se retiene aprobacion de pago hasta solventar sobregiro o evidencias faltantes.';\n} else if (semaforoFrente === 'AMARILLO' || pctFotos < 95) {\n  semaforoCorp = 'AMARILLO';\n  dictamenCorp = 'Auditoria con Observaciones menores. Requiere visto bueno de Residente de Obra antes del sellado corporativo.';\n} else {\n  semaforoCorp = 'VERDE';\n  dictamenCorp = 'Auditoria Satisfactoria. Cumplimiento de politicas y saldo debidamente justificado. Listo para sellado corporativo y liberacion de pago.';\n}\n\nreturn {\n  json: {\n    semana,\n    obra_destino: obraDestino,\n    semaforo: semaforoCorp,\n    color_semaforo: semaforoCorp === 'VERDE' ? '#10b981' : (semaforoCorp === 'AMARILLO' ? '#f59e0b' : '#ef4444'),\n    mensaje: dictamenCorp,\n    dictamen_tecnico: dictamenFrente,\n    balance: {\n      litros_facturados: totalLitrosFactura,\n      litros_consumidos_obra: totalLitrosCargas,\n      diferencia_litros: diffLitros,\n      porcentaje_consumido: pctConsumido,\n      importe_facturado: totalImporteFactura,\n      importe_consumido: totalImporteCargas,\n      diferencia_importe: diffImporte\n    },\n    cadena_filtros: {\n      filtro1_campo: {\n        total_cargas: totalCargasCount,\n        cargas_con_foto: cargasConFoto,\n        cumplimiento_fotos_pct: pctFotos,\n        cumplimiento_horometros_pct: pctHorometros,\n        alertas: alertasFiltro1\n      },\n      filtro2_residente: {\n        estado: 'PENDIENTE_FIRMA',\n        saldo_en_obra_lts: diffLitros,\n        dictamen: dictamenFrente\n      },\n      filtro3_gobierno_corp: {\n        estado: estadoCierre,\n        semaforo: semaforoCorp,\n        dictamen: dictamenCorp\n      }\n    },\n    facturas: facturasDetalle,\n    cargas: cargasDetalle,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "c11a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4004",
+      "name": "Motor de Conciliacion JS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c11a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4005",
+      "name": "Respuesta Webhook en Vivo",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1140,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Conciliacion Diesel": {
+      "main": [
+        [
+          {
+            "node": "Postgres: Sumar Facturas Diesel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: Sumar Facturas Diesel": {
+      "main": [
+        [
+          {
+            "node": "Postgres: Sumar Cargas en Obra",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: Sumar Cargas en Obra": {
+      "main": [
+        [
+          {
+            "node": "Motor de Conciliacion JS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Motor de Conciliacion JS": {
+      "main": [
+        [
+          {
+            "node": "Respuesta Webhook en Vivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

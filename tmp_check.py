@@ -1,0 +1,10 @@
+﻿import sqlite3
+db = sqlite3.connect('fenix_v2.db')
+print('=== diesel_facturas schema ===')
+cols = db.execute('PRAGMA table_info(diesel_facturas)').fetchall()
+for c in cols: print(f"  {c[1]} ({c[2]})")
+print()
+print('=== diesel_facturas records ===')
+rows = db.execute('SELECT * FROM diesel_facturas LIMIT 5').fetchall()
+for r in rows: print(dict(r))
+db.close()

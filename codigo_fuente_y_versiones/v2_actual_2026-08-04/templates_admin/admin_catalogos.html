@@ -1,0 +1,308 @@
+{% extends "layout_admin.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+    <div>
+        <h1 style="margin: 0; font-size: 2rem; color: #fff;">Gestión de Catálogos</h1>
+        <p style="color: var(--text-muted); margin-top: 0.5rem; margin-bottom: 0;">Administra las obras y los equipos/vehículos disponibles en el sistema.</p>
+    </div>
+</div>
+
+<div class="split-view" style="grid-template-columns: 1fr 1fr;">
+    <!-- ==================== OBRAS ==================== -->
+    <div class="admin-panel">
+        <div class="panel-header">
+            Obras Registradas
+            <button class="btn-aprobar" onclick="mostrarModalObra()">+ Nueva Obra</button>
+        </div>
+        
+        <div style="max-height: 500px; overflow-y: auto;">
+            <table class="admin-table" id="tablaObras">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th style="text-align: right;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3" style="text-align: center;">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== EQUIPOS ==================== -->
+    <div class="admin-panel">
+        <div class="panel-header">
+            Maquinaria y Vehículos
+            <button class="btn-aprobar" onclick="mostrarModalEquipo()">+ Nuevo Equipo</button>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+            <input type="text" id="filtroEquipo" placeholder="Buscar equipo o placa..." style="width: 100%; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--admin-border); background: rgba(0,0,0,0.2); color: white;" onkeyup="filtrarEquipos()">
+        </div>
+
+        <div style="max-height: 440px; overflow-y: auto;">
+            <table class="admin-table" id="tablaEquipos">
+                <thead>
+                    <tr>
+                        <th>Núm. Económico / Placa</th>
+                        <th>Descripción</th>
+                        <th>Tipo</th>
+                        <th style="text-align: right;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="4" style="text-align: center;">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos extra para modales y badges -->
+<style>
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+        display: none; align-items: center; justify-content: center; z-index: 1000;
+    }
+    .modal-box {
+        background: var(--admin-panel); border: 1px solid var(--admin-border);
+        border-radius: 12px; padding: 24px; width: 400px; max-width: 90%;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .modal-box h3 { margin-top: 0; margin-bottom: 20px; color: white; }
+    .form-group-modal { margin-bottom: 15px; }
+    .form-group-modal label { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.85rem; }
+    .form-group-modal input, .form-group-modal select {
+        width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--admin-border);
+        background: rgba(0,0,0,0.3); color: white; box-sizing: border-box;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    
+    .badge-diesel { background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(245, 158, 11, 0.5); }
+    .badge-gasolina { background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(16, 185, 129, 0.5); }
+</style>
+
+<!-- MODAL OBRA -->
+<div class="modal-overlay" id="modalObra">
+    <div class="modal-box">
+        <h3>Agregar Nueva Obra</h3>
+        <div class="form-group-modal">
+            <label>Código Interno</label>
+            <input type="text" id="obraCodigo" placeholder="Ej. OB-01" required>
+        </div>
+        <div class="form-group-modal">
+            <label>Nombre de la Obra</label>
+            <input type="text" id="obraNombre" placeholder="Ej. Pavimentación Toluca" required>
+        </div>
+        <div class="form-group-modal">
+            <label>Tope Semanal Diésel (Lts.)</label>
+            <input type="number" step="0.1" id="obraTopeDiesel" placeholder="Ej. 5000">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-rechazar" onclick="document.getElementById('modalObra').style.display='none'">Cancelar</button>
+            <button class="btn-aprobar" onclick="guardarObra()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EQUIPO -->
+<div class="modal-overlay" id="modalEquipo">
+    <div class="modal-box">
+        <h3>Agregar Equipo / Vehículo</h3>
+        <div class="form-group-modal">
+            <label>Tipo de Combustible</label>
+            <select id="equipoTipo" required>
+                <option value="DIESEL">Diésel (Maquinaria Pesada)</option>
+                <option value="GASOLINA">Gasolina (Autos, Camionetas ligeras)</option>
+            </select>
+        </div>
+        <div class="form-group-modal">
+            <label>Tope Semanal Gasolina (Lts.)</label>
+            <input type="number" step="0.1" id="equipoTopeGasolina" placeholder="Aplica si es Gasolina">
+        </div>
+        <div class="form-group-modal">
+            <label>Número Económico o Placa</label>
+            <input type="text" id="equipoEco" placeholder="Ej. EX-01 o PAT-82-G8" required>
+        </div>
+        <div class="form-group-modal">
+            <label>Descripción completa</label>
+            <input type="text" id="equipoDesc" placeholder="Ej. Excavadora CAT 320" required>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-rechazar" onclick="document.getElementById('modalEquipo').style.display='none'">Cancelar</button>
+            <button class="btn-aprobar" onclick="guardarEquipo()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let equiposData = [];
+
+    async function cargarObras() {
+        try {
+            const res = await fetch('/api/admin/catalogos/obras');
+            const data = await res.json();
+            const tbody = document.querySelector('#tablaObras tbody');
+            tbody.innerHTML = '';
+            
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No hay obras registradas</td></tr>';
+                return;
+            }
+
+            data.forEach(o => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${o.codigo || '-'}</strong></td>
+                    <td>${o.nombre}</td>
+                    <td style="text-align: right;">
+                        <button class="btn-rechazar" style="padding: 4px 8px; font-size: 0.75rem;" onclick="eliminarObra('${o.codigo}')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    async function cargarEquipos() {
+        try {
+            const res = await fetch('/api/admin/catalogos/equipos');
+            equiposData = await res.json();
+            renderEquipos(equiposData);
+        } catch(e) { console.error(e); }
+    }
+
+    function renderEquipos(data) {
+        const tbody = document.querySelector('#tablaEquipos tbody');
+        tbody.innerHTML = '';
+        
+        if(data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">No hay equipos registrados</td></tr>';
+            return;
+        }
+
+        data.forEach(e => {
+            const tipoClass = e.tipo_equipo === 'GASOLINA' ? 'badge-gasolina' : 'badge-diesel';
+            const tipoText = e.tipo_equipo || 'DIESEL';
+            
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${e.numero_economico}</strong></td>
+                <td>${e.descripcion}</td>
+                <td><span class="${tipoClass}">${tipoText}</span></td>
+                <td style="text-align: right;">
+                    <button class="btn-rechazar" style="padding: 4px 8px; font-size: 0.75rem;" onclick="eliminarEquipo(encodeURIComponent('${e.numero_economico}'))">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function filtrarEquipos() {
+        const q = document.getElementById('filtroEquipo').value.toLowerCase();
+        const filtrados = equiposData.filter(e => 
+            (e.numero_economico && e.numero_economico.toLowerCase().includes(q)) || 
+            (e.descripcion && e.descripcion.toLowerCase().includes(q))
+        );
+        renderEquipos(filtrados);
+    }
+
+    // Modal helpers
+    function mostrarModalObra() {
+        document.getElementById('obraCodigo').value = '';
+        document.getElementById('obraNombre').value = '';
+        document.getElementById('modalObra').style.display = 'flex';
+    }
+    
+    function mostrarModalEquipo() {
+        document.getElementById('equipoEco').value = '';
+        document.getElementById('equipoDesc').value = '';
+        document.getElementById('modalEquipo').style.display = 'flex';
+    }
+
+    // Guardar
+    async function guardarObra() {
+        const codigo = document.getElementById('obraCodigo').value;
+        const nombre = document.getElementById('obraNombre').value;
+        const tope_diesel = document.getElementById('obraTopeDiesel').value;
+        
+        if(!codigo || !nombre) { alert("Completa los campos."); return; }
+        
+        try {
+            const res = await fetch('/api/admin/catalogos/obras', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({codigo, nombre, tope_diesel})
+            });
+            const data = await res.json();
+            if(data.success) {
+                document.getElementById('modalObra').style.display = 'none';
+                cargarObras();
+                document.getElementById('obraCodigo').value = '';
+                document.getElementById('obraNombre').value = '';
+                document.getElementById('obraTopeDiesel').value = '';
+            } else {
+                alert("Error al guardar: " + data.error);
+            }
+        } catch(e) {
+            alert("Error de conexión");
+        }
+    }
+
+    async function guardarEquipo() {
+        const numero_economico = document.getElementById('equipoEco').value.trim();
+        const descripcion = document.getElementById('equipoDesc').value.trim();
+        const tipo_equipo = document.getElementById('equipoTipo').value;
+        const tope_gasolina = document.getElementById('equipoTopeGasolina').value;
+        if(!numero_economico || !descripcion) { alert("Completa todos los campos"); return; }
+
+        const res = await fetch('/api/admin/catalogos/equipos', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({numero_economico, descripcion, tipo_equipo, tope_gasolina})
+        });
+        const data = await res.json();
+        if(data.success) {
+            document.getElementById('modalEquipo').style.display = 'none';
+            cargarEquipos();
+            document.getElementById('equipoEco').value = '';
+            document.getElementById('equipoDesc').value = '';
+            document.getElementById('equipoTopeGasolina').value = '';
+        } else {
+            alert("Error al guardar el equipo: " + data.error);
+        }
+    }
+
+    // Eliminar
+    async function eliminarObra(codigo) {
+        if(!confirm(`¿Estás seguro de eliminar la obra ${codigo}?`)) return;
+        const res = await fetch(`/api/admin/catalogos/obras/${codigo}`, { method: 'DELETE' });
+        const data = await res.json();
+        if(data.success) cargarObras();
+        else alert("Error al eliminar (¿Quizás tiene registros asociados?): " + data.error);
+    }
+
+    async function eliminarEquipo(num_eco) {
+        const num_eco_decodificado = decodeURIComponent(num_eco);
+        if(!confirm(`¿Estás seguro de eliminar el equipo ${num_eco_decodificado}?`)) return;
+        const res = await fetch(`/api/admin/catalogos/equipos/${num_eco}`, { method: 'DELETE' });
+        const data = await res.json();
+        if(data.success) cargarEquipos();
+        else alert("Error al eliminar (¿Quizás tiene consumos asociados?): " + data.error);
+    }
+
+    // Inicializar
+    document.addEventListener("DOMContentLoaded", () => {
+        cargarObras();
+        cargarEquipos();
+    });
+</script>
+{% endblock %}

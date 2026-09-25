@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Fénix — Captura de Datos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a; --panel: #1e293b; --card: #263148;
+      --border: #334155; --text: #e2e8f0; --muted: #64748b;
+      --blue: #3b82f6; --green: #10b981; --amber: #f59e0b;
+      --red: #ef4444; --indigo: #6366f1; --teal: #0d9488;
+      --blue-glow: rgba(59,130,246,0.15); --green-glow: rgba(16,185,129,0.15);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; }
+    nav { background:var(--panel); border-bottom:1px solid var(--border); padding:0 24px;
+          display:flex; align-items:center; gap:16px; height:60px; position:sticky; top:0; z-index:100; }
+    .nav-logo { font-weight:700; font-size:18px; color:var(--blue); letter-spacing:1px; margin-right:24px; }
+    .nav-back { color:var(--muted); text-decoration:none; font-size:13px; display:flex; align-items:center; gap:6px; }
+    .nav-back:hover { color:var(--text); }
+    .nav-title { font-size:14px; font-weight:600; color:var(--text); }
+    .tab-bar { background:var(--panel); border-bottom:1px solid var(--border); display:flex; padding:0 24px; overflow-x:auto; gap:4px; }
+    .tab { padding:14px 18px; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer;
+           border-bottom:2px solid transparent; white-space:nowrap; transition:all .2s; }
+    .tab:hover { color:var(--text); }
+    .tab.active { color:var(--blue); border-bottom-color:var(--blue); }
+    .content { max-width:980px; margin:0 auto; padding:28px 20px; }
+    .panel { display:none; }
+    .panel.active { display:block; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:24px; }
+    .card-title { font-size:15px; font-weight:600; margin-bottom:20px; display:flex; align-items:center; gap:10px; }
+    .card-title span { font-size:20px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-grid.cols3 { grid-template-columns:1fr 1fr 1fr; }
+    .form-grid.cols4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+    .form-grid.cols1 { grid-template-columns:1fr; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-group label { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      background:var(--panel); border:1px solid var(--border); border-radius:8px;
+      color:var(--text); padding:10px 14px; font-family:'Inter',sans-serif; font-size:13px;
+      outline:none; transition:border-color .2s, box-shadow .2s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-glow); }
+    .form-group select option { background:var(--panel); }
+    .form-group textarea { resize:vertical; min-height:70px; }
+    .form-group .folio-badge { background:rgba(99,102,241,.15); border:1px solid var(--indigo);
+      color:var(--indigo); border-radius:8px; padding:10px 14px; font-size:12px; font-family:monospace; 
+      display:flex; align-items:center; gap:8px; }
+    .btn-row { display:flex; gap:12px; justify-content:flex-end; margin-top:20px; flex-wrap:wrap; }
+    .btn { padding:10px 22px; border-radius:8px; font-size:13px; font-weight:600;
+           cursor:pointer; border:none; transition:all .2s; font-family:'Inter',sans-serif; }
+    .btn-primary { background:var(--blue); color:white; }
+    .btn-primary:hover { background:#2563eb; transform:translateY(-1px); box-shadow:0 4px 12px rgba(59,130,246,.4); }
+    .btn-secondary { background:var(--panel); color:var(--text); border:1px solid var(--border); }
+    .btn-secondary:hover { background:var(--border); }
+    .btn-success { background:var(--green); color:white; }
+    .btn-success:hover { background:#059669; transform:translateY(-1px); }
+    .btn-amber { background:var(--amber); color:#78350f; }
+    .btn-amber:hover { background:#d97706; }
+    .btn-teal { background:var(--teal); color:white; }
+    .btn-teal:hover { background:#0f766e; transform:translateY(-1px); }
+
+    /* Upload */
+    .upload-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+    .upload-tab { padding:8px 16px; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer;
+                  background:var(--panel); color:var(--muted); border:1px solid var(--border); transition:all .2s; }
+    .upload-tab.active { background:var(--blue); color:white; border-color:var(--blue); }
+    .upload-zone { border:2px dashed var(--border); border-radius:12px; padding:36px; text-align:center;
+                   cursor:pointer; transition:all .2s; background:var(--panel); }
+    .upload-zone:hover, .upload-zone.dragover { border-color:var(--blue); background:var(--blue-glow); }
+    .upload-icon { font-size:36px; margin-bottom:10px; }
+    .upload-title { font-size:14px; font-weight:600; margin-bottom:6px; }
+    .upload-sub { font-size:12px; color:var(--muted); line-height:1.6; }
+    .upload-results { margin-top:16px; text-align:left; max-height:260px; overflow-y:auto; }
+    .progress-bar { background:var(--border); border-radius:99px; height:6px; overflow:hidden; margin-top:8px; }
+    .progress-fill { height:100%; background:var(--blue); border-radius:99px; transition:width .4s; }
+    .info-box { background:rgba(99,102,241,.08); border:1px solid rgba(99,102,241,.3);
+                border-radius:8px; padding:14px 16px; font-size:12px; color:#a5b4fc; margin-bottom:16px; line-height:1.7; }
+    .info-box strong { color:var(--indigo); }
+
+    /* Alert */
+    .alert { border-radius:8px; padding:12px 16px; font-size:13px; margin-top:14px; display:flex; gap:10px; align-items:flex-start; }
+    .alert-success { background:var(--green-glow); border:1px solid var(--green); color:var(--green); }
+    .alert-error { background:rgba(239,68,68,.1); border:1px solid var(--red); color:var(--red); }
+    .alert-info { background:var(--blue-glow); border:1px solid var(--blue); color:var(--blue); }
+    .alert-hidden { display:none; }
+
+    /* Recent list */
+    .recent-list { list-style:none; }
+    .recent-item { display:flex; justify-content:space-between; align-items:center;
+                   padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+    .recent-item:last-child { border-bottom:none; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:600; margin-left:4px; }
+    .badge-green { background:rgba(16,185,129,.15); color:var(--green); }
+    .badge-amber { background:rgba(245,158,11,.15); color:var(--amber); }
+    .badge-blue { background:rgba(59,130,246,.15); color:var(--blue); }
+    .badge-teal { background:rgba(13,148,136,.15); color:var(--teal); }
+
+    .section-label { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase;
+                     letter-spacing:.8px; padding-bottom:10px; border-bottom:1px solid var(--border); margin-bottom:14px; }
+
+    @media (max-width:640px) {
+      .form-grid { grid-template-columns:1fr; }
+      .form-grid.cols3, .form-grid.cols4 { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">🔥 FÉNIX</div>
+  <a href="/" class="nav-back">← Dashboard</a>
+  <div class="nav-title">Módulo de Captura de Datos</div>
+</nav>
+
+<div class="tab-bar">
+  <div class="tab active" data-panel="diesel" onclick="switchTab(this,'diesel')">⛽ Diesel</div>
+  <div class="tab" data-panel="gasolina" onclick="switchTab(this,'gasolina')">🚗 Gasolina</div>
+  <div class="tab" data-panel="acarreos" onclick="switchTab(this,'acarreos')">🚛 Acarreos</div>
+  <div class="tab" data-panel="reportes" onclick="switchTab(this,'reportes')">📂 Cargar Reportes</div>
+  <div class="tab" data-panel="facturas" onclick="switchTab(this,'facturas')">🧾 Facturas CFDI</div>
+  <div class="tab" data-panel="equipos" onclick="switchTab(this,'equipos')">⚙️ Equipos</div>
+</div>
+
+<div class="content">
+
+  <!-- ===== DIESEL ===== -->
+  <div id="panel-diesel" class="panel active">
+    <div class="card">
+      <div class="card-title"><span>⛽</span> Registro de Consumo de Diesel</div>
+      <form id="form-diesel" onsubmit="submitForm(event,'diesel')">
+        <div class="form-grid cols3">
+          <div class="form-group">
+            <label>Semana</label>
+            <input type="number" name="semana" id="d-semana" min="1" max="53" required>
+          </div>
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" name="fecha" id="d-fecha" required>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Movimiento</label>
+            <select name="tipo_movimiento">
+              <option value="CONSUMO">Consumo de Maquinaria</option>
+              <option value="CARGA">Carga a Tanque</option>
+              <option value="TRANSFERENCIA">Transferencia</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Maquinaria / Equipo</label>
+            <select name="equipo_id" id="d-equipo" required>
+              <option value="">Cargando equipos...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Centro de Trabajo</label>
+            <select name="obra_id" id="d-obra" required>
+              <option value="">Seleccionar...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid cols3" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Litros</label>
+            <input type="number" name="litros" id="d-litros" step="0.001" min="0" placeholder="0.000" required>
+          </div>
+          <div class="form-group">
+            <label>Folio (Auto-generado)</label>
+            <div class="folio-badge" id="d-folio-badge">🔖 Se genera al guardar</div>
+            <input type="hidden" name="folio_auto" id="d-folio-hidden">
+          </div>
+          <div class="form-group">
+            <label>Observaciones</label>
+            <input type="text" name="observaciones" placeholder="Notas opcionales...">
+          </div>
+        </div>
+
+        <div id="alert-diesel" class="alert alert-hidden"></div>
+        <div class="btn-row">
+          <button type="reset" class="btn btn-secondary" onclick="resetDiesel()">Limpiar</button>
+          <button type="submit" class="btn btn-primary">⛽ Guardar Registro</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📋</span> Últimos Registros de Diesel</div>
+      <ul class="recent-list" id="list-diesel">
+        <li class="recent-item" style="color:var(--muted)">Cargando...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== GASOLINA ===== -->
+  <div id="panel-gasolina" class="panel">
+    <div class="card">
+      <div class="card-title"><span>🚗</span> Registro de Consumo de Gasolina</div>
+      <form id="form-gasolina" onsubmit="submitForm(event,'gasolina')">
+        <div class="form-grid cols3">
+          <div class="form-group">
+            <label>Semana</label>
+            <input type="number" name="semana" min="1" max="53" required>
+          </div>
+          <div class="form-group">
+            <label>Fecha de Carga</label>
+            <input type="date" name="fecha" required>
+          </div>
+          <div class="form-group">
+            <label>Gasolinera</label>
+            <select name="gasolinera">
+              <option value="LEVET">Levet</option>
+              <option value="MOBILE">Huixquilucan (Mobile)</option>
+              <option value="SIVALE">Si Vale</option>
+              <option value="OTRA">Otra</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Responsable / Conductor</label>
+            <input type="text" name="responsable" placeholder="Nombre completo" required>
+          </div>
+          <div class="form-group">
+            <label>Placa</label>
+            <input type="text" name="placa" placeholder="Ej. PAT8298" style="text-transform:uppercase;">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Unidad / Vehículo</label>
+            <input type="text" name="unidad" placeholder="Ej. RAM 1200, CHEVROLET S10">
+          </div>
+          <div class="form-group">
+            <label>Centro de Trabajo / Obra</label>
+            <select name="obra_id" id="gas-obra">
+              <option value="">Seleccionar...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid cols3" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Litros</label>
+            <input type="number" name="litros" id="gas-lts" step="0.001" min="0" placeholder="0.000" required>
+          </div>
+          <div class="form-group">
+            <label>Precio / Litro ($)</label>
+            <input type="number" name="precio_litro" id="gas-precio" step="0.01" min="0" placeholder="22.89">
+          </div>
+          <div class="form-group">
+            <label>Importe Total ($)</label>
+            <input type="number" name="importe" id="gas-importe" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:14px;">
+          <label>No. Ticket</label>
+          <input type="text" name="ticket" placeholder="Número de ticket de gasolinera" style="max-width:260px;">
+        </div>
+        <div id="alert-gasolina" class="alert alert-hidden"></div>
+        <div class="btn-row">
+          <button type="reset" class="btn btn-secondary">Limpiar</button>
+          <button type="submit" class="btn btn-success">🚗 Guardar Ticket</button>
+        </div>
+      </form>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>📋</span> Últimos Tickets de Gasolina</div>
+      <ul class="recent-list" id="list-gasolina">
+        <li class="recent-item" style="color:var(--muted)">Cargando...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== ACARREOS ===== -->
+  <div id="panel-acarreos" class="panel">
+    <div class="card">
+      <div class="card-title"><span>🚛</span> Registro de Viaje / Acarreo</div>
+      <form id="form-acarreos" onsubmit="submitForm(event,'acarreos')">
+        <div class="form-grid cols3">
+          <div class="form-group">
+            <label>Semana</label>
+            <input type="number" name="semana" min="1" max="53" required>
+          </div>
+          <div class="form-group">
+            <label>Fecha</label>
+            <input type="date" name="fecha" required>
+          </div>
+          <div class="form-group">
+            <label>Sindicato</label>
+            <select name="sindicato_id" id="ac-sindicato">
+              <option value="">Cargando...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Placa</label>
+            <input type="text" name="placa" style="text-transform:uppercase;" required>
+          </div>
+          <div class="form-group">
+            <label>Centro de Trabajo</label>
+            <select name="obra_id" id="ac-obra">
+              <option value="">Seleccionar...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid cols3" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Categoría</label>
+            <select name="categoria">
+              <option value="Volteo">Volteo</option>
+              <option value="Fresado">Fresado</option>
+              <option value="Trompito">Trompito</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Total Viajes</label>
+            <input type="number" name="total_viajes" min="0" placeholder="0" required>
+          </div>
+          <div class="form-group">
+            <label>Tarifa por Viaje ($)</label>
+            <input type="number" name="tarifa" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        <div id="alert-acarreos" class="alert alert-hidden"></div>
+        <div class="btn-row">
+          <button type="reset" class="btn btn-secondary">Limpiar</button>
+          <button type="submit" class="btn btn-amber">🚛 Guardar Viaje</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== CARGAR REPORTES ===== -->
+  <div id="panel-reportes" class="panel">
+
+    <div class="info-box">
+      <strong>¿Qué puedes cargar aquí?</strong><br>
+      Esta sección es para subir los <strong>reportes de campo de los ingenieros y del Marimba</strong> que se usan como base de cotejo y conciliación, así como los reportes de consumo de gasolineras (Excel o PDF).<br>
+      El sistema lo guardará clasificado y podrás compararlo contra los registros de la base de datos para cerrar el ciclo de control.
+    </div>
+
+    <!-- Tabs de tipo de reporte -->
+    <div class="upload-tabs">
+      <div class="upload-tab active" onclick="setReportType(this,'diesel-ingeniero')">⛽ Reporte Ingeniero (Diesel)</div>
+      <div class="upload-tab" onclick="setReportType(this,'marimba')">📊 Reporte Marimba</div>
+      <div class="upload-tab" onclick="setReportType(this,'gasolina-gasolinera')">🚗 Reporte Gasolinera</div>
+      <div class="upload-tab" onclick="setReportType(this,'acarreos-campo')">🚛 Reporte Acarreos Campo</div>
+    </div>
+
+    <div id="report-type-info" class="card" style="background:rgba(99,102,241,.06); border-color:rgba(99,102,241,.2);">
+      <div style="font-size:13px; color:#a5b4fc; line-height:1.8;">
+        <strong style="color:var(--indigo);">⛽ Reporte de Diesel — Ingeniero Residente</strong><br>
+        Sube el archivo Excel o PDF de control de diesel firmado por el ingeniero (GC-COMB-003, GC-COMB-004, etc.).<br>
+        El sistema lo guardará y comparará contra los movimientos de consumo registrados en la base de datos.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📂</span> <span id="upload-card-title">Subir Reporte de Diesel (Ingeniero)</span></div>
+      
+      <div class="form-grid" style="margin-bottom:16px;">
+        <div class="form-group">
+          <label>Semana de Referencia</label>
+          <input type="number" id="rpt-semana" min="1" max="53" placeholder="26">
+        </div>
+        <div class="form-group">
+          <label>Obra / Centro de Trabajo</label>
+          <select id="rpt-obra">
+            <option value="">Todas las obras</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="upload-zone" id="upload-zone-reportes"
+           onclick="document.getElementById('upload-input-reportes').click()"
+           ondragover="handleDragOver2(event)" ondragleave="handleDragLeave2(event)"
+           ondrop="handleDrop2(event)">
+        <div class="upload-icon">📋</div>
+        <div class="upload-title">Arrastra aquí el reporte o haz clic para seleccionar</div>
+        <div class="upload-sub">
+          Formatos soportados: Excel (.xlsx, .xls), PDF (.pdf)<br>
+          <span style="color:var(--amber);">⚠️ El sistema procesará el archivo y lo cotejará automáticamente</span>
+        </div>
+        <input type="file" id="upload-input-reportes" multiple accept=".xlsx,.xls,.pdf,.csv"
+               onchange="handleFileReportes(event)">
+      </div>
+
+      <div class="progress-bar" id="progress-bar-rpt" style="display:none; margin-top:12px;">
+        <div class="progress-fill" id="progress-fill-rpt" style="width:0%"></div>
+      </div>
+      <div id="upload-results-reportes" class="upload-results"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📋</span> Reportes Cargados Recientemente</div>
+      <ul class="recent-list" id="list-reportes">
+        <li class="recent-item" style="color:var(--muted)">Sin reportes cargados aún</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== FACTURAS CFDI ===== -->
+  <div id="panel-facturas" class="panel">
+    <div class="info-box">
+      <strong>Facturas CFDI de Diesel y Gasolina</strong><br>
+      Sube los PDFs y XMLs de las facturas electrónicas. El sistema los clasificará automáticamente como Diesel o Gasolina,
+      extraerá los datos (folio, litros, importe) y cerrará el ciclo de conciliación contra los registros de consumo.
+    </div>
+    <div class="card">
+      <div class="card-title"><span>🧾</span> Carga de Facturas / PDFs</div>
+      <div class="upload-zone" id="upload-zone-facturas"
+           onclick="document.getElementById('upload-input-facturas').click()"
+           ondragover="handleDragOver3(event)" ondragleave="handleDragLeave3(event)"
+           ondrop="handleDrop3(event)">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">Arrastra facturas PDF/XML aquí o haz clic</div>
+        <div class="upload-sub">Soporta CFDIs en PDF y XML · Diesel y Gasolina</div>
+        <input type="file" id="upload-input-facturas" multiple accept=".pdf,.xml"
+               onchange="handleFileFacturas(event)">
+      </div>
+      <div class="progress-bar" id="progress-bar-fac" style="display:none; margin-top:12px;">
+        <div class="progress-fill" id="progress-fill-fac" style="width:0%"></div>
+      </div>
+      <div id="upload-results-facturas" class="upload-results"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span>📋</span> Facturas Registradas</div>
+      <ul class="recent-list" id="list-facturas">
+        <li class="recent-item" style="color:var(--muted)">Cargando...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== EQUIPOS ===== -->
+  <div id="panel-equipos" class="panel">
+    <div class="card">
+      <div class="card-title"><span>⚙️</span> Alta / Edición de Equipo</div>
+      <form id="form-equipos" onsubmit="submitForm(event,'equipos')">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Número Económico</label>
+            <input type="text" name="numero_economico" placeholder="Ej. EX-01, BR-03" required>
+          </div>
+          <div class="form-group">
+            <label>Descripción</label>
+            <input type="text" name="descripcion" placeholder="Ej. EXCAVADORA 320D" required>
+          </div>
+        </div>
+        <div class="form-grid cols3" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Tipo de Equipo</label>
+            <select name="tipo">
+              <option value="Maquinaria">Maquinaria</option>
+              <option value="Automotriz">Automotriz</option>
+              <option value="Planta">Planta de Asfalto</option>
+              <option value="Herramienta">Herramienta Mayor</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Combustible</label>
+            <select name="tipo_combustible">
+              <option value="Diesel">Diesel</option>
+              <option value="Gasolina">Gasolina</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Rendimiento Base (L/h)</label>
+            <input type="number" name="rendimiento_base_lh" step="0.01" min="0" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-grid" style="margin-top:14px;">
+          <div class="form-group">
+            <label>Obra Asignada</label>
+            <select name="obra_id" id="eq-obra"><option value="">Sin asignar</option></select>
+          </div>
+          <div class="form-group">
+            <label>Placa (si aplica)</label>
+            <input type="text" name="placa" placeholder="Ej. PAT8298" style="text-transform:uppercase;">
+          </div>
+        </div>
+        <div id="alert-equipos" class="alert alert-hidden"></div>
+        <div class="btn-row">
+          <button type="reset" class="btn btn-secondary">Limpiar</button>
+          <button type="submit" class="btn btn-primary">⚙️ Guardar Equipo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div><!-- end content -->
+
+<script>
+// ─── ESTADO ────────────────────────────────────────────────────────────────
+let currentReportType = 'diesel-ingeniero';
+let uploadedReports = [];
+
+// ─── TABS ──────────────────────────────────────────────────────────────────
+function switchTab(el, name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`panel-${name}`).classList.add('active');
+  loadRecent(name);
+}
+
+// ─── REPORT TYPE ────────────────────────────────────────────────────────────
+const reportTypeInfo = {
+  'diesel-ingeniero': {
+    title: 'Subir Reporte de Diesel (Ingeniero)',
+    desc: '<strong style="color:var(--indigo);">⛽ Reporte de Diesel — Ingeniero Residente</strong><br>Sube el archivo Excel o PDF de control de diesel firmado por el ingeniero (GC-COMB-003, GC-COMB-004, etc.).<br>El sistema lo cotejará contra los movimientos de consumo registrados.'
+  },
+  'marimba': {
+    title: 'Subir Reporte de Marimba',
+    desc: '<strong style="color:var(--indigo);">📊 Reporte Marimba</strong><br>Sube el archivo Excel del formato Marimba de control de personal y maquinaria.<br>El sistema cruzará horas reportadas y equipos contra la base de datos.'
+  },
+  'gasolina-gasolinera': {
+    title: 'Subir Reporte de Gasolinera',
+    desc: '<strong style="color:var(--indigo);">🚗 Reporte de Gasolinera</strong><br>Sube el Excel o PDF de CONTROL JDJ (Levet) o de Huixquilucan (Mobile).<br>El sistema lo importará y conciliará contra los tickets ya registrados.'
+  },
+  'acarreos-campo': {
+    title: 'Subir Reporte de Acarreos (Campo)',
+    desc: '<strong style="color:var(--indigo);">🚛 Reporte de Acarreos / Campo</strong><br>Sube el archivo de control de viajes del área de campo.<br>El sistema comparará viajes reportados contra los registros de la base de datos.'
+  }
+};
+
+function setReportType(el, type) {
+  currentReportType = type;
+  document.querySelectorAll('.upload-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const info = reportTypeInfo[type];
+  document.getElementById('upload-card-title').textContent = info.title;
+  document.getElementById('report-type-info').querySelector('div').innerHTML = info.desc;
+}
+
+// ─── UTILS ─────────────────────────────────────────────────────────────────
+function fmt(n)  { return (n||0).toLocaleString('es-MX', {minimumFractionDigits:1}); }
+function fmtP(n) { return (n||0).toLocaleString('es-MX', {style:'currency', currency:'MXN'}); }
+function today() { return new Date().toISOString().split('T')[0]; }
+function currentWeek() {
+  const d = new Date(); const jan1 = new Date(d.getFullYear(),0,1);
+  return Math.ceil((((d - jan1) / 86400000) + jan1.getDay() + 1) / 7);
+}
+function genFolio(tipo, semana, equipoId) {
+  const ts = Date.now().toString(36).toUpperCase();
+  return `${tipo}-S${semana}-${equipoId||'X'}-${ts}`;
+}
+function showAlert(id, type, msg) {
+  const el = document.getElementById(`alert-${id}`);
+  el.className = `alert alert-${type}`;
+  el.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  setTimeout(() => { el.className = 'alert alert-hidden'; }, 6000);
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async () => {
+  // Defaults
+  document.querySelectorAll('input[name="semana"]').forEach(i => i.value = currentWeek());
+  document.getElementById('d-semana').value = currentWeek();
+  document.querySelectorAll('input[name="fecha"]').forEach(i => i.value = today());
+  document.getElementById('d-fecha').value = today();
+
+  // Obras (solo activas)
+  try {
+    const obras = await fetch('/api/obras').then(r => r.json());
+    const obraOpts = obras.map(o => `<option value="${o.id}">${o.nombre}</option>`).join('');
+    ['d-obra','ac-obra','gas-obra','eq-obra','rpt-obra'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = '<option value="">Sin asignar</option>' + obraOpts;
+    });
+  } catch(e) { console.log('No se cargaron obras'); }
+
+  // Equipos Diesel para dropdown
+  try {
+    const equipos = await fetch('/api/equipos/diesel').then(r => r.json());
+    const dEquipo = document.getElementById('d-equipo');
+    if (dEquipo) {
+      dEquipo.innerHTML = '<option value="">Selecciona una maquinaria...</option>' +
+        equipos.map(e => `<option value="${e.id}" data-obra="${e.obra_id||''}">${e.numero_economico} — ${e.descripcion}</option>`).join('');
+      // Auto-seleccionar obra cuando se elige equipo
+      dEquipo.addEventListener('change', function() {
+        const opt = this.options[this.selectedIndex];
+        const obraId = opt.dataset.obra;
+        if (obraId) {
+          const obraEl = document.getElementById('d-obra');
+          if (obraEl) obraEl.value = obraId;
+        }
+        updateFolio();
+      });
+    }
+  } catch(e) { console.log('No se cargaron equipos'); }
+
+  // Sindicatos
+  try {
+    const sinds = await fetch('/api/sindicatos').then(r => r.json());
+    const sindEl = document.getElementById('ac-sindicato');
+    if (sindEl) sindEl.innerHTML = '<option value="">Seleccionar sindicato...</option>' +
+      sinds.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+  } catch(e) {}
+
+  // Folio preview diesel
+  document.getElementById('d-semana').addEventListener('input', updateFolio);
+  document.getElementById('d-equipo').addEventListener('change', updateFolio);
+  updateFolio();
+
+  loadRecent('diesel');
+});
+
+function updateFolio() {
+  const sem = document.getElementById('d-semana').value || currentWeek();
+  const equipo = document.getElementById('d-equipo');
+  const eqNum = equipo ? equipo.options[equipo.selectedIndex]?.text?.split('—')[0]?.trim() || 'X' : 'X';
+  const folio = genFolio('DSL', sem, eqNum.replace(/[^A-Z0-9]/gi,''));
+  document.getElementById('d-folio-badge').textContent = '🔖 ' + folio;
+  document.getElementById('d-folio-hidden').value = folio;
+}
+
+function resetDiesel() {
+  setTimeout(() => {
+    document.getElementById('d-semana').value = currentWeek();
+    document.getElementById('d-fecha').value = today();
+    updateFolio();
+  }, 50);
+}
+
+// Auto-calcular importe gasolina
+['gas-lts','gas-precio'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => {
+    const lts = parseFloat(document.getElementById('gas-lts').value) || 0;
+    const precio = parseFloat(document.getElementById('gas-precio').value) || 0;
+    if (lts > 0 && precio > 0)
+      document.getElementById('gas-importe').value = (lts * precio).toFixed(2);
+  });
+});
+
+// ─── FORM SUBMIT ──────────────────────────────────────────────────────────
+async function submitForm(event, tipo) {
+  event.preventDefault();
+  const form = event.target;
+  const data = Object.fromEntries(new FormData(form));
+
+  const endpoints = {
+    diesel: '/api/captura/diesel',
+    gasolina: '/api/captura/gasolina',
+    acarreos: '/api/captura/acarreos',
+    equipos: '/api/captura/equipo'
+  };
+
+  try {
+    const resp = await fetch(endpoints[tipo], {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(data)
+    });
+    const result = await resp.json();
+    if (resp.ok) {
+      showAlert(tipo, 'success', result.mensaje || 'Guardado exitosamente');
+      form.reset();
+      if (tipo === 'diesel') resetDiesel();
+      else {
+        document.querySelectorAll(`#panel-${tipo} input[name="semana"]`).forEach(i => i.value = currentWeek());
+        document.querySelectorAll(`#panel-${tipo} input[name="fecha"]`).forEach(i => i.value = today());
+      }
+      loadRecent(tipo);
+    } else {
+      showAlert(tipo, 'error', result.error || 'Error al guardar');
+    }
+  } catch(e) {
+    showAlert(tipo, 'error', 'Error de conexión. Verifica que el servidor está activo.');
+  }
+}
+
+// ─── RECENT LISTS ─────────────────────────────────────────────────────────
+async function loadRecent(tipo) {
+  if (tipo === 'diesel') {
+    try {
+      const data = await fetch('/api/captura/recientes/diesel').then(r => r.json());
+      document.getElementById('list-diesel').innerHTML = data.length
+        ? data.map(r => `<li class="recent-item">
+            <span>${r.numero_economico||'—'} · Sem${r.semana} · ${r.fecha||''}</span>
+            <span>${fmt(r.litros)} L <span class="badge badge-blue">${r.tipo_movimiento}</span></span>
+          </li>`).join('')
+        : '<li class="recent-item" style="color:var(--muted)">Sin registros</li>';
+    } catch(e) {}
+  } else if (tipo === 'gasolina') {
+    try {
+      const data = await fetch('/api/captura/recientes/gasolina').then(r => r.json());
+      document.getElementById('list-gasolina').innerHTML = data.length
+        ? data.map(r => `<li class="recent-item">
+            <span>${r.placa||'—'} · ${r.responsable||'—'} · ${r.fecha||''}</span>
+            <span>${fmt(r.litros)} L · ${fmtP(r.importe)} <span class="badge badge-green">${r.gasolinera}</span></span>
+          </li>`).join('')
+        : '<li class="recent-item" style="color:var(--muted)">Sin tickets</li>';
+    } catch(e) {}
+  } else if (tipo === 'facturas') {
+    try {
+      const data = await fetch('/api/facturas_documentos').then(r => r.json());
+      document.getElementById('list-facturas').innerHTML = data.length
+        ? data.slice(0,10).map(r => `<li class="recent-item">
+            <span>${r.folio||'—'} · ${r.fecha_emision||''}</span>
+            <span>${fmt(r.litros_totales)} L
+              <span class="badge ${r.tipo_combustible==='Diesel'?'badge-blue':'badge-green'}">${r.tipo_combustible}</span>
+              <span class="badge ${r.estatus_validacion==='VALIDADA'?'badge-green':'badge-amber'}">${r.estatus_validacion}</span>
+            </span>
+          </li>`).join('')
+        : '<li class="recent-item" style="color:var(--muted)">Sin facturas</li>';
+    } catch(e) {}
+  }
+}
+
+// ─── UPLOAD: REPORTES ─────────────────────────────────────────────────────
+function handleDragOver2(e) { e.preventDefault(); document.getElementById('upload-zone-reportes').classList.add('dragover'); }
+function handleDragLeave2(e) { document.getElementById('upload-zone-reportes').classList.remove('dragover'); }
+function handleDrop2(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone-reportes').classList.remove('dragover');
+  processReportes(Array.from(e.dataTransfer.files));
+}
+function handleFileReportes(e) { processReportes(Array.from(e.target.files)); }
+
+async function processReportes(files) {
+  if (!files.length) return;
+  const pb = document.getElementById('progress-bar-rpt');
+  const pf = document.getElementById('progress-fill-rpt');
+  const results = document.getElementById('upload-results-reportes');
+  pb.style.display = 'block'; pf.style.width = '0%'; results.innerHTML = '';
+
+  const semana = document.getElementById('rpt-semana').value || currentWeek();
+  const obraId = document.getElementById('rpt-obra').value || '';
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    pf.style.width = `${Math.round((i / files.length) * 100)}%`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('tipo_reporte', currentReportType);
+    formData.append('semana', semana);
+    formData.append('obra_id', obraId);
+    try {
+      const resp = await fetch('/api/captura/upload_reporte', { method: 'POST', body: formData });
+      const res = await resp.json();
+      const icon = resp.ok ? '✅' : '⚠️';
+      const color = resp.ok ? 'var(--green)' : 'var(--amber)';
+      results.innerHTML += `<div style="padding:8px 4px; font-size:12px; border-bottom:1px solid var(--border); color:${color}">
+        ${icon} <b>${file.name}</b> — ${res.mensaje || res.error}
+        ${res.registros ? `<span style="color:var(--muted);"> (${res.registros} registros detectados)</span>` : ''}
+      </div>`;
+      if (resp.ok) {
+        uploadedReports.unshift({ name: file.name, tipo: currentReportType, semana });
+        updateReportList();
+      }
+    } catch(e) {
+      results.innerHTML += `<div style="padding:8px; font-size:12px; color:var(--red)">❌ ${file.name} — Error de conexión</div>`;
+    }
+  }
+  pf.style.width = '100%';
+  setTimeout(() => { pb.style.display = 'none'; }, 1500);
+}
+
+function updateReportList() {
+  const list = document.getElementById('list-reportes');
+  if (!uploadedReports.length) return;
+  const typeLabels = {
+    'diesel-ingeniero': '⛽ Ingeniero', 'marimba': '📊 Marimba',
+    'gasolina-gasolinera': '🚗 Gasolinera', 'acarreos-campo': '🚛 Acarreos'
+  };
+  list.innerHTML = uploadedReports.map(r => `
+    <li class="recent-item">
+      <span style="font-size:12px;">${r.name}</span>
+      <span><span class="badge badge-teal">${typeLabels[r.tipo]||r.tipo}</span>
+            <span class="badge badge-blue">Sem ${r.semana}</span></span>
+    </li>`).join('');
+}
+
+// ─── UPLOAD: FACTURAS ─────────────────────────────────────────────────────
+function handleDragOver3(e) { e.preventDefault(); document.getElementById('upload-zone-facturas').classList.add('dragover'); }
+function handleDragLeave3(e) { document.getElementById('upload-zone-facturas').classList.remove('dragover'); }
+function handleDrop3(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone-facturas').classList.remove('dragover');
+  processFacturas(Array.from(e.dataTransfer.files));
+}
+function handleFileFacturas(e) { processFacturas(Array.from(e.target.files)); }
+
+async function processFacturas(files) {
+  if (!files.length) return;
+  const pb = document.getElementById('progress-bar-fac');
+  const pf = document.getElementById('progress-fill-fac');
+  const results = document.getElementById('upload-results-facturas');
+  pb.style.display = 'block'; pf.style.width = '0%'; results.innerHTML = '';
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    pf.style.width = `${Math.round((i / files.length) * 100)}%`;
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const resp = await fetch('/api/captura/upload_factura', { method: 'POST', body: formData });
+      const res = await resp.json();
+      const icon = resp.ok ? '✅' : '⚠️';
+      const color = resp.ok ? 'var(--green)' : 'var(--amber)';
+      results.innerHTML += `<div style="padding:8px; font-size:12px; border-bottom:1px solid var(--border); color:${color}">
+        ${icon} <b>${file.name}</b> — ${res.mensaje || res.error}
+      </div>`;
+    } catch(e) {
+      results.innerHTML += `<div style="padding:8px; font-size:12px; color:var(--red)">❌ ${file.name} — Error de conexión</div>`;
+    }
+  }
+  pf.style.width = '100%';
+  setTimeout(() => { pb.style.display = 'none'; }, 1500);
+  loadRecent('facturas');
+}
+</script>
+</body>
+</html>

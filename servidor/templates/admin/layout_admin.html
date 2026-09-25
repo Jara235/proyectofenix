@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centro de Mando Administrativo - Fénix 2.0</title>
+    <!-- Mismos estilos base que el resto del sistema -->
+    <link rel="stylesheet" href="/static/styles.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Colores específicos del admin para diferenciarlo */
+            --admin-bg: #0b0f19;
+            --admin-panel: #111827;
+            --admin-primary: #8b5cf6; /* Morado en lugar de fucsia/azul */
+            --admin-primary-glow: rgba(139, 92, 246, 0.4);
+            --admin-border: rgba(255, 255, 255, 0.08);
+            --text: #f9fafb;
+            --text-muted: #9ca3af;
+        }
+        
+        body {
+            background-color: var(--admin-bg);
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Topbar Admin */
+        .admin-nav {
+            background: rgba(17, 24, 39, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--admin-primary);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .admin-nav-logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .admin-nav-logo span {
+            color: var(--admin-primary);
+        }
+        
+        .admin-badge {
+            background: var(--admin-primary);
+            color: white;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .admin-nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .admin-nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .admin-nav-links a:hover, .admin-nav-links a.active {
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        /* Contenedor principal para vistas divididas (lista vs detalle/visor) */
+        .split-view {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .admin-panel {
+            background: var(--admin-panel);
+            border: 1px solid var(--admin-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        
+        .panel-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--admin-border);
+            padding-bottom: 12px;
+        }
+        
+        /* Botones Admin */
+        .btn-aprobar {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid #10b981;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-aprobar:hover { background: #10b981; color: white; }
+        
+        .btn-rechazar {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-rechazar:hover { background: #ef4444; color: white; }
+        
+        /* Data Tables style overrrides */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        .admin-table th {
+            background: #1e293b;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-align: left;
+            padding: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 1px solid var(--admin-border);
+        }
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--admin-border);
+            color: #e5e7eb;
+        }
+        .admin-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+        .admin-table tr.selected {
+            background: rgba(139, 92, 246, 0.1);
+            border-left: 3px solid var(--admin-primary);
+        }
+        
+        /* Visor de evidencia */
+        .visor-container {
+            width: 100%;
+            height: 500px;
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .visor-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .visor-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .visor-empty {
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Dropdown Revision */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 110%;
+            background-color: var(--admin-panel);
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+            z-index: 200;
+            border-radius: 8px;
+            border: 1px solid var(--admin-border);
+            overflow: hidden;
+        }
+        .dropdown-content a {
+            color: white !important;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background 0.2s;
+        }
+        .dropdown-content a:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .dropdown-content.show {
+            display: block;
+        }        /* Topbar Admin Minimalista Dos Filas */
+        .admin-nav-header {
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-nav-sub {
+            background: rgba(11, 15, 25, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--admin-primary);
+            padding: 8px 30px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .admin-nav-sub a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.88rem;
+            padding: 7px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+
+        .admin-nav-sub a:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .admin-nav-sub a.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(109, 40, 217, 0.3));
+            border: 1px solid #8b5cf6;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(139, 92, 246, 0.25);
+        }
+
+        /* Estilos universales para las pestañas de módulos (.admin-tab) */
+        .admin-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .admin-tab {
+            background: rgba(17, 24, 39, 0.85) !important;
+            color: #94a3b8 !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            padding: 10px 22px !important;
+            border-radius: 12px !important;
+            font-size: 0.9rem !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            transition: all 0.25s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            backdrop-filter: blur(8px) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+        }
+
+        .admin-tab:hover {
+            background: rgba(30, 41, 59, 0.95) !important;
+            color: #ffffff !important;
+            border-color: rgba(139, 92, 246, 0.5) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .admin-tab.active {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+            color: #ffffff !important;
+            border-color: #8b5cf6 !important;
+            box-shadow: 0 4px 18px rgba(139, 92, 246, 0.45) !important;
+        }
+    
+/* ==================== GLOBAL DROPDOWN SELECT DARK MODE FIX ==================== */
+select {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+}
+select option {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    padding: 8px 12px;
+}
+select option:hover, select option:focus, select option:active, select option:checked {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+</style>
+    {% if session.get('user_role') == 'CONSULTA' %}
+    <style>
+        /* Deshabilitar / Ocultar elementos de edición para usuario de CONSULTA (Solo Lectura) */
+        .btn-aprobar, .btn-rechazar, button[type="submit"], input[type="submit"], 
+        .btn-guardar, .btn-eliminar, .btn-descargar-excel, .btn-descargar-pdf,
+        #btnGuardarNuevos, #btnDescargarExcel, #btnDescargarPDF {
+            display: none !important;
+        }
+        input, select, textarea {
+            pointer-events: none !important;
+            opacity: 0.85 !important;
+        }
+    </style>
+    {% endif %}
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Bar de Alerta de Rol Solo Lectura -->
+    {% if session.get('user_role') == 'CONSULTA' %}
+    <div style="background: linear-gradient(90deg, #1e3a8a, #0284c7); color: white; padding: 6px 16px; font-size: 0.82rem; text-align: center; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; gap: 8px;">
+        <span>👁️ MODO SOLO LECTURA (CONSULTA)</span> — Tienes acceso para visualizar datos. La modificación, aprobación y exportación de reportes están restringidas.
+    </div>
+    {% endif %}
+
+    <!-- FILA 1: Header Principal Minimalista -->
+    <div class="admin-nav-header">
+        <a href="/" class="admin-nav-logo">
+            🛡️ <span>FÉNIX 2.0</span> 
+            <div class="admin-badge">Centro de Mando</div>
+        </a>
+
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <!-- Badge de Usuario y Rol -->
+            <div style="display: flex; align-items: center; gap: 8px; background: rgba(15, 23, 42, 0.9); border: 1px solid var(--admin-border); padding: 6px 14px; border-radius: 10px; font-size: 0.85rem;">
+                <span style="color: #cbd5e1;">👤 <b>{{ session.get('user_name', 'Usuario') }}</b></span>
+                {% if session.get('user_role') == 'ADMIN' %}
+                <span style="background: rgba(139, 92, 246, 0.25); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.5); padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 0.72rem;">ADMIN</span>
+                {% else %}
+                <span style="background: rgba(56, 189, 248, 0.25); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.5); padding: 2px 8px; border-radius: 6px; font-weight: bold; font-size: 0.72rem;">LECTURA</span>
+                {% endif %}
+            </div>
+
+            <!-- Botón Salir -->
+            <a href="/logout" title="Cerrar Sesión" style="color: #fca5a5; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); padding: 6px 14px; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: bold; transition: all 0.2s;">
+                🚪 Salir
+            </a>
+
+            <div style="position: relative;" class="dropdown-revision">
+                <!-- Access to other portals -->
+                <button style="color: #fff; background: var(--admin-primary); padding: 7px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: bold; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px;" onclick="document.getElementById('revisionMenu').classList.toggle('show')">
+                    🔍 Revisión <span style="font-size: 0.7rem;">▼</span>
+                </button>
+                <div id="revisionMenu" class="dropdown-content">
+                    <a href="http://127.0.0.1:5000" target="_blank" style="color: #10b981;">↗ Ver Dashboard</a>
+                    <a href="http://127.0.0.1:5001" target="_blank" style="color: #3b82f6;">↗ Ir a Captura</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILA 2: Menú de Navegación por Módulos -->
+    <nav class="admin-nav-sub">
+        <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Inicio</a>
+        <a href="/admin/resumen" {% if '/resumen' in request.path %}class="active"{% endif %}>📊 Resumen General</a>
+        <a href="/admin/diesel" {% if '/diesel' in request.path %}class="active"{% endif %}>🛢️ Diésel</a>
+        <a href="/admin/gasolina" {% if '/gasolina' in request.path %}class="active"{% endif %}>⛽ Gasolina</a>
+        <a href="/admin/facturas" {% if '/facturas' in request.path %}class="active"{% endif %}>🧾 Facturas</a>
+        <a href="/admin/bitacora_maquinaria" {% if '/bitacora_maquinaria' in request.path %}class="active"{% endif %}>🚜 Bitácora Maquinaria</a>
+        <a href="/admin/tags" {% if '/tags' in request.path %}class="active"{% endif %}>🏷️ Tags</a>
+        <a href="/admin/jalisco" {% if '/jalisco' in request.path %}class="active"{% endif %}>🇲🇽 Base Jalisco</a>
+        <a href="/admin/catalogos" {% if '/catalogos' in request.path %}class="active"{% endif %}>📑 Catálogos</a>
+    </nav>
+
+    <div class="admin-container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Script de utilidad global para admin -->
+    <script>
+        // Cerrar dropdown al clickear fuera
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown-revision button') && !event.target.matches('.dropdown-revision button span')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        async function cambiarEstatus(tabla, id, estatus) {
+            try {
+                const res = await fetch('/api/admin/actualizar_estatus', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({tabla, id, estatus})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    // Refrescar o quitar fila
+                    const row = document.getElementById(`row-${id}`);
+                    if(row) {
+                        row.style.opacity = '0.5';
+                        setTimeout(() => row.remove(), 300);
+                    }
+                    return true;
+                } else {
+                    alert("Error: " + data.error);
+                    return false;
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Error de conexión");
+                return false;
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

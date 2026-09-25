@@ -1,0 +1,734 @@
+{% extends "layout_admin.html" %}
+
+{% block content %}
+<div class="panel-header" style="border:none; margin-bottom: 20px;">
+    <div>
+        <h1 style="margin:0; font-size: 1.8rem; font-weight: 700; color: #0ea5e9;">🇲🇽 Módulo Jalisco - Kardex</h1>
+        <p style="color: var(--text-muted); margin: 5px 0 0 0;">Control de Entradas, Salidas y Ajustes de Inventario en la Base Jalisco.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <!-- Botón de Subida Interactiva -->
+        <button class="btn-action" onclick="window.location.href='/admin/jalisco/subir'" style="display: flex; align-items: center; gap: 5px; background: #6366f1; color: white;">
+            <svg style="width:16px;height:16px" viewBox="0 0 24 24"><path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M13,9V3.5L18.5,9H13M11,15H8V17H11V20H13V17H16V15H13V12H11V15Z" /></svg>
+            Cargar Reporte (PDF)
+        </button>
+        <!-- Botón de Registrar Vales -->
+        <button class="btn-action" onclick="abrirModalVales()" style="display: flex; align-items: center; gap: 5px; background: #f59e0b; color: white;">
+            <svg style="width:16px;height:16px" viewBox="0 0 24 24"><path fill="currentColor" d="M21,18H24V20H21V23H19V20H16V18H19V15H21V18M19,8V6H3V8H19M19,12H3V18H14V20H3C1.89,20 1,19.1 1,18V6C1,4.89 1.89,4 3,4H19A2,2 0 0,1 21,6V13H19V12Z" /></svg>
+            Registrar Vales
+        </button>
+        <!-- Botón de Ajuste -->
+        <button class="btn-action btn-reject" onclick="abrirModalAjuste()" style="display: flex; align-items: center; gap: 5px;">
+            <svg style="width:16px;height:16px" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12C4,14.39 5.05,16.53 6.71,18H17.29C18.95,16.53 20,14.39 20,12A8,8 0 0,0 12,4M15,11H17V13H15V11M7,11H9V13H7V11M11,11H13V13H11V11Z" /></svg>
+            Ajuste de Inventario
+        </button>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px;">
+    <div class="admin-panel" style="padding: 20px; border-left: 4px solid #3b82f6;">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; font-weight: bold; text-transform: uppercase;">Saldo Teórico (Inventario)</p>
+        <h2 id="kpiSaldo" style="margin: 10px 0 0 0; font-size: 2rem; color: #3b82f6;">-- Lts</h2>
+    </div>
+    <div class="admin-panel" style="padding: 20px; border-left: 4px solid #10b981;">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; font-weight: bold; text-transform: uppercase;">Entradas Totales</p>
+        <h2 id="kpiEntradas" style="margin: 10px 0 0 0; font-size: 2rem; color: #10b981;">-- Lts</h2>
+    </div>
+    <div class="admin-panel" style="padding: 20px; border-left: 4px solid #f43f5e;">
+        <p style="margin: 0; color: var(--text-muted); font-size: 0.9rem; font-weight: bold; text-transform: uppercase;">Salidas Totales</p>
+        <h2 id="kpiSalidas" style="margin: 10px 0 0 0; font-size: 2rem; color: #f43f5e;">-- Lts</h2>
+    </div>
+</div>
+
+<div class="split-view">
+    <div class="admin-panel" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding: 12px 16px;">
+            <div>
+                <h3 style="margin:0; font-size:1.1rem; font-weight:700;">Historial de Movimientos (Kardex)</h3>
+                <span style="font-size:0.78rem; color:var(--text-muted);">Selecciona una fila para ver evidencia</span>
+            </div>
+            
+            <!-- Controles de Filtro -->
+            <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <div>
+                    <select id="filtroSemana" onchange="aplicarFiltrosKardex()" style="padding:6px 10px; background:rgba(15,23,42,0.6); border:1px solid var(--admin-border); color:#fff; border-radius:6px; font-size:0.85rem; cursor:pointer;">
+                        <option value="">📅 Todas las Semanas</option>
+                    </select>
+                </div>
+                <div>
+                    <input type="date" id="filtroFecha" onchange="aplicarFiltrosKardex()" onkeyup="aplicarFiltrosKardex()" style="padding:5px 10px; background:rgba(15,23,42,0.6); border:1px solid var(--admin-border); color:#fff; border-radius:6px; font-size:0.85rem;">
+                </div>
+                <div>
+                    <select id="filtroTipo" onchange="aplicarFiltrosKardex()" style="padding:6px 10px; background:rgba(15,23,42,0.6); border:1px solid var(--admin-border); color:#fff; border-radius:6px; font-size:0.85rem; cursor:pointer;">
+                        <option value="">🏷️ Todos los Tipos</option>
+                        <option value="ENTRADA">🟢 ENTRADA (+)</option>
+                        <option value="SALIDA">🔴 SALIDA (-)</option>
+                        <option value="AJUSTE">🟠 AJUSTE</option>
+                    </select>
+                </div>
+                <button type="button" onclick="limpiarFiltrosKardex()" style="padding:6px 12px; background:rgba(255,255,255,0.08); border:1px solid var(--admin-border); color:#cbd5e1; border-radius:6px; cursor:pointer; font-size:0.82rem; font-weight:600; display:flex; align-items:center; gap:4px;">
+                    🧹 Limpiar
+                </button>
+            </div>
+        </div>
+        <div style="flex: 1; overflow-y: auto; padding: 12px 0;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Sem</th>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Equipo Destino</th>
+                        <th>Entrada (+)</th>
+                        <th>Salida (-)</th>
+                        <th>Costo/L ($)</th>
+                        <th>Importe ($)</th>
+                        <th>Saldo Teórico</th>
+                        <th>Evidencia</th>
+                        <th style="text-align:center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="kardexBody">
+                    <tr><td colspan="11" style="text-align:center;">Cargando Kardex...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Visor de Evidencia Panel -->
+    <div class="admin-panel" style="position: sticky; top: 20px;">
+        <div class="panel-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>👁 Visor de Evidencia</span>
+            <span id="visorFolio" style="color: var(--admin-primary); font-size: 0.85rem;">Ningún registro seleccionado</span>
+        </div>
+        
+        <div id="visorEvidencia" style="min-height: 320px; display:flex; justify-content:center; align-items:center; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--admin-border); margin-top: 15px; overflow:hidden; padding: 10px;">
+            <div style="color: var(--text-muted); text-align: center; font-size: 0.9rem;">
+                👈 Selecciona un registro de la tabla para ver su foto o PDF aquí.
+            </div>
+        </div>
+        
+        <div id="visorAcciones" style="display: none; margin-top: 15px; gap: 10px; flex-direction: column;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" style="flex: 1; padding: 10px; background: rgba(56,189,248,0.15); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 8px; cursor: pointer; font-weight: bold; font-size:0.9rem;" onclick="editarRegistroSeleccionado()">✏️ Editar</button>
+                <button type="button" style="flex: 1; padding: 10px; background: rgba(56,189,248,0.15); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 8px; cursor: pointer; font-weight: bold; font-size:0.9rem;" onclick="marcarObservacionSeleccionado()">🔍 Observación</button>
+                <button type="button" style="flex: 1; padding: 10px; background: rgba(239,68,68,0.15); border: 1px solid #ef4444; color: #f87171; border-radius: 8px; cursor: pointer; font-weight: bold; font-size:0.9rem;" onclick="eliminarRegistroSeleccionado()">🗑️ Eliminar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Registro de Vales -->
+<div id="modalVales" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:flex-start; padding-top: 50px; overflow-y:auto;">
+    <div class="admin-panel" style="width: 500px; padding: 0; margin-bottom: 50px;">
+        <div class="panel-header" style="border-bottom: 1px solid var(--admin-border); justify-content: space-between;">
+            <h3 style="margin:0; color:#f59e0b;">💳 Registro de Vales (Pesos)</h3>
+            <button class="btn-action" onclick="cerrarModalVales()" style="color:var(--text-muted);">&times;</button>
+        </div>
+        <div style="padding: 20px;">
+            <form id="formVales" onsubmit="guardarVale(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Semana <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="valesSemana" required min="1" max="53" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;" oninput="cargarMovimientosVale(this.value)">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Importe Total Vales ($ MXN) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="valesImporte" step="0.01" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Costo Diésel ($/L) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="valesCosto" step="0.01" value="27.00" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Observaciones (Opcional)</label>
+                    <input type="text" id="valesObs" placeholder="Ej. Ajuste de vales semana 28" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                </div>
+                
+                <div id="resumenValesBox" style="display:none; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 0.85rem; color: #a7f3d0;">
+                    <div>📊 <strong>Equivalente estimado:</strong> <span id="valesLitrosCalc">0.00</span> Litros</div>
+                </div>
+
+                <!-- Historial de vales de la semana -->
+                <div style="margin-top: 15px; border-top: 1px solid var(--admin-border); padding-top: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #94a3b8; font-size: 0.9rem;">📜 Entradas Registradas en esta Semana</h4>
+                    <div id="listaValesSemana" style="max-height: 150px; overflow-y: auto; font-size: 0.85rem;">
+                        <div style="color: var(--text-muted);">Ingresa un número de semana para ver las entradas.</div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display:flex; gap:10px;">
+                    <button type="button" class="btn-action" onclick="cerrarModalVales()" style="flex:1;">Cancelar</button>
+                    <button type="submit" style="flex:2; padding: 10px; background:#f59e0b; color:white; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;">💾 Registrar Vale</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajuste de Inventario -->
+<div id="modalAjuste" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+    <div class="admin-panel" style="width: 450px; padding: 0;">
+        <div class="panel-header" style="border-bottom: 1px solid var(--admin-border); justify-content: space-between;">
+            <h3 style="margin:0; color:#ef4444;">⚖️ Ajuste de Inventario Jalisco</h3>
+            <button class="btn-action" onclick="cerrarModalAjuste()" style="color:var(--text-muted);">&times;</button>
+        </div>
+        <div style="padding: 20px;">
+            <form id="formAjuste" onsubmit="guardarAjuste(event)">
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Fecha de Ajuste <span style="color:#ef4444">*</span></label>
+                    <input type="date" id="ajusteFecha" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Litros Físicos Reales (Conteo) <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="ajusteLitrosReales" step="0.01" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Motivo / Observaciones <span style="color:#ef4444">*</span></label>
+                    <textarea id="ajusteObs" required rows="2" placeholder="Ej. Medición con regla en tanque Jalisco" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem; resize:vertical;"></textarea>
+                </div>
+                <div style="margin-top: 20px; display:flex; gap:10px;">
+                    <button type="button" class="btn-action" onclick="cerrarModalAjuste()" style="flex:1;">Cancelar</button>
+                    <button type="submit" style="flex:2; padding: 10px; background:#ef4444; color:white; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;">⚖️ Registrar Ajuste</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Movimiento Jalisco -->
+<div id="modalEditarMovimiento" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; padding: 20px; overflow-y:auto;">
+    <div class="admin-panel" style="width: 480px; padding: 0; margin-top: 50px; margin-bottom: 50px;">
+        <div class="panel-header" style="border-bottom: 1px solid var(--admin-border); justify-content: space-between;">
+            <h3 style="margin:0; color:#38bdf8;">✏️ Editar Registro de Jalisco</h3>
+            <button class="btn-action" onclick="cerrarModalEditarMovimiento()" style="color:var(--text-muted);">&times;</button>
+        </div>
+        <div style="padding: 20px;">
+            <form id="formEditarMovimiento" onsubmit="guardarEdicionMovimiento(event)">
+                <input type="hidden" id="editMovId">
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Fecha <span style="color:#ef4444">*</span></label>
+                    <input type="date" id="editMovFecha" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Equipo o Maquinaria Destino</label>
+                    <select id="editMovEquipo" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                        <option value="">Seleccione equipo...</option>
+                        {% for eq in equipos %}
+                        <option value="{{ eq.numero_economico }}|{{ eq.descripcion }}">{{ eq.numero_economico }} - {{ eq.descripcion }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Litros <span style="color:#ef4444">*</span></label>
+                    <input type="number" id="editMovLitros" step="0.01" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Observaciones</label>
+                    <textarea id="editMovObs" rows="2" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--admin-border); color: #fff; border-radius: 6px; font-size: 1rem; resize:vertical;"></textarea>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:0.9rem;">Subir / Reemplazar Foto o PDF de Evidencia</label>
+                    <div style="border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px; padding: 1rem; text-align: center; background: rgba(0,0,0,0.1);">
+                        <input type="file" id="editMovFoto" accept="image/*,.pdf" style="display: none;" onchange="document.getElementById('editMovFotoLbl').innerText = this.files[0] ? this.files[0].name : 'Ningún archivo seleccionado'">
+                        <button type="button" class="btn-secondary-action" onclick="document.getElementById('editMovFoto').click()" style="padding: 6px 12px; font-size:0.85rem;">📄 / 📷 Seleccionar Archivo</button>
+                        <p id="editMovFotoLbl" style="margin-top: 0.5rem; color: #94a3b8; font-size: 0.85rem; margin-bottom: 0;">Ningún archivo seleccionado</p>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" style="flex: 1; padding: 12px; background: rgba(56,189,248,0.15); border: 1px solid #38bdf8; color: #38bdf8; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="marcarObservacionMovimiento()">🔍 En Observación</button>
+                    <button type="submit" style="flex: 1; padding: 12px; background:#0ea5e9; color:white; border:none; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', cargarKardex);
+
+    let allMovimientos = [];
+    let currentSelectedMov = null;
+    let globalMovsMap = {};
+
+    async function cargarKardex() {
+        try {
+            const res = await fetch('/api/admin/jalisco/movimientos');
+            const data = await res.json();
+            
+            if(data.success) {
+                allMovimientos = data.movimientos;
+                poblarSelectorSemanas(allMovimientos);
+                aplicarFiltrosKardex();
+            } else {
+                document.getElementById('kardexBody').innerHTML = `<tr><td colspan="11" style="text-align:center; color:#ef4444;">Error: ${data.error}</td></tr>`;
+            }
+        } catch(e) {
+            document.getElementById('kardexBody').innerHTML = `<tr><td colspan="11" style="text-align:center; color:#ef4444;">Error de red</td></tr>`;
+        }
+    }
+
+    function poblarSelectorSemanas(movs) {
+        const selectSemana = document.getElementById('filtroSemana');
+        if(!selectSemana) return;
+        
+        const valorPrevio = selectSemana.value;
+        const semanasSet = new Set();
+        movs.forEach(m => { if(m.semana != null) semanasSet.add(parseInt(m.semana)); });
+        
+        const semanasOrd = Array.from(semanasSet).sort((a, b) => b - a);
+        
+        selectSemana.innerHTML = '<option value="">📅 Todas las Semanas</option>';
+        semanasOrd.forEach(sem => {
+            selectSemana.innerHTML += `<option value="${sem}">Semana ${sem}</option>`;
+        });
+        selectSemana.value = valorPrevio;
+    }
+
+    function aplicarFiltrosKardex() {
+        const semVal = document.getElementById('filtroSemana').value;
+        const fechaVal = document.getElementById('filtroFecha').value;
+        const tipoVal = document.getElementById('filtroTipo').value;
+
+        let filtrados = allMovimientos.filter(m => {
+            if(semVal && parseInt(m.semana) !== parseInt(semVal)) return false;
+            if(fechaVal && m.fecha !== fechaVal) return false;
+            if(tipoVal && m.tipo_movimiento !== tipoVal) return false;
+            return true;
+        });
+
+        renderKardex(filtrados);
+        actualizarKPIs(allMovimientos, filtrados);
+    }
+
+    function limpiarFiltrosKardex() {
+        document.getElementById('filtroSemana').value = '';
+        document.getElementById('filtroFecha').value = '';
+        document.getElementById('filtroTipo').value = '';
+        aplicarFiltrosKardex();
+    }
+
+    function renderKardex(movs) {
+        const tbody = document.getElementById('kardexBody');
+        tbody.innerHTML = '';
+        globalMovsMap = {};
+
+        if(movs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center; color:var(--text-muted);">No hay movimientos registrados.</td></tr>';
+            return;
+        }
+
+        const numFmt = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const curFmt = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' });
+
+        movs.forEach(m => {
+            globalMovsMap[m.id] = m;
+            let tipoBadge = '';
+            let ltsEntrada = '-';
+            let ltsSalida = '-';
+            let evidenciaBtn = '';
+
+            if(m.tipo_movimiento === 'ENTRADA') {
+                tipoBadge = '<span class="status-badge" style="background: rgba(16,185,129,0.2); color: #10b981;">ENTRADA</span>';
+                ltsEntrada = `<span style="color:#10b981;">+${numFmt.format(m.litros)}</span>`;
+                if(m.has_pdf) {
+                    evidenciaBtn = `<span style="color:#38bdf8; font-size:0.82rem; font-weight:bold;">📄 PDF</span>`;
+                }
+            } else if(m.tipo_movimiento === 'SALIDA') {
+                tipoBadge = '<span class="status-badge" style="background: rgba(244,63,94,0.2); color: #f43f5e;">SALIDA</span>';
+                ltsSalida = `<span style="color:#f43f5e;">-${numFmt.format(m.litros)}</span>`;
+                if(m.has_foto) {
+                    evidenciaBtn = `<span style="color:#34d399; font-size:0.82rem; font-weight:bold;">📷 Foto</span>`;
+                }
+            } else if(m.tipo_movimiento === 'AJUSTE') {
+                tipoBadge = '<span class="status-badge" style="background: rgba(245,158,11,0.2); color: #f59e0b;">AJUSTE</span>';
+                if(m.litros > 0) ltsEntrada = `<span style="color:#f59e0b;">+${numFmt.format(m.litros)}</span>`;
+                else ltsSalida = `<span style="color:#f59e0b;">${numFmt.format(m.litros)}</span>`;
+            }
+
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.id = `row-mov-${m.id}`;
+            tr.onclick = () => seleccionarMovimiento(m.id, tr);
+
+            tr.innerHTML = `
+                <td style="color:var(--text-muted);">S${m.semana}</td>
+                <td>${m.fecha}</td>
+                <td>${tipoBadge}</td>
+                <td style="font-size:0.85rem; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${m.equipo || m.observaciones || '-'}">
+                    ${m.equipo_economico ? `<b>${m.equipo_economico}</b> - ${m.equipo}` : (m.observaciones || '-')}
+                </td>
+                <td style="font-weight:bold; font-family:monospace;">${ltsEntrada}</td>
+                <td style="font-weight:bold; font-family:monospace;">${ltsSalida}</td>
+                <td style="font-family:monospace; color:var(--text-muted);">${m.costo_por_litro ? curFmt.format(m.costo_por_litro) : '-'}</td>
+                <td style="font-family:monospace; color:var(--text-muted);">${m.importe_total ? curFmt.format(m.importe_total) : '-'}</td>
+                <td style="font-weight:bold; font-family:monospace; color:#3b82f6; font-size:1.05rem;">${numFmt.format(m.saldo_teorico)}</td>
+                <td>${evidenciaBtn || '<span style="color:var(--text-muted); font-size:0.8rem;">-</span>'}</td>
+                <td style="text-align:center; white-space:nowrap;">
+                    <button class="btn-action" onclick="event.stopPropagation(); abrirModalEditarMovimiento(${m.id})" style="padding: 3px 7px; font-size:0.85rem;" title="Editar">✏️</button>
+                    <button class="btn-action btn-reject" onclick="event.stopPropagation(); eliminarMovimiento(${m.id})" style="padding: 3px 7px; font-size:0.85rem;" title="Eliminar">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function seleccionarMovimiento(movId, trElement) {
+        document.querySelectorAll('#kardexBody tr').forEach(r => r.style.background = '');
+        if(trElement) trElement.style.background = 'rgba(56, 189, 248, 0.15)';
+        
+        const m = globalMovsMap[movId];
+        if(!m) return;
+
+        currentSelectedMov = m;
+        document.getElementById('visorFolio').innerText = `#${m.id} - ${m.fecha} (S${m.semana})`;
+        document.getElementById('visorAcciones').style.display = 'flex';
+
+        const visor = document.getElementById('visorEvidencia');
+        visor.innerHTML = '';
+
+        if(m.has_foto) {
+            const img = document.createElement('img');
+            img.src = `/api/admin/jalisco/evidencia/${m.id}?tipo=foto&t=${Date.now()}`;
+            img.style.cssText = 'max-width:100%; max-height:350px; border-radius:8px; object-fit:contain; cursor:pointer;';
+            img.onclick = () => window.open(img.src, '_blank');
+            visor.appendChild(img);
+        } else if(m.has_pdf) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `/api/admin/jalisco/evidencia/${m.id}?tipo=pdf#toolbar=0`;
+            iframe.style.cssText = 'width:100%; height:350px; border:none; border-radius:8px;';
+            visor.appendChild(iframe);
+        } else {
+            visor.innerHTML = `
+                <div style="text-align:center; color:var(--text-muted); padding:20px;">
+                    <span style="font-size:2rem; display:block; margin-bottom:8px;">📷</span>
+                    Sin foto o PDF adjunto para este registro.
+                </div>
+            `;
+        }
+    }
+
+    function abrirModalEditarMovimiento(movId) {
+        const m = typeof movId === 'object' ? movId : globalMovsMap[movId];
+        if(!m) return;
+        
+        document.getElementById('editMovId').value = m.id;
+        document.getElementById('editMovFecha').value = m.fecha;
+        document.getElementById('editMovLitros').value = m.litros;
+        document.getElementById('editMovObs').value = m.observaciones || '';
+        document.getElementById('editMovFoto').value = '';
+        document.getElementById('editMovFotoLbl').innerText = 'Ningún archivo seleccionado';
+        
+        const eqSelect = document.getElementById('editMovEquipo');
+        if(eqSelect) {
+            const matchVal = m.equipo_economico ? `${m.equipo_economico}|${m.equipo}` : (m.equipo || '');
+            let found = Array.from(eqSelect.options).find(o => o.value === matchVal);
+            if (!found && m.equipo_economico) {
+                found = Array.from(eqSelect.options).find(o => o.value.startsWith(m.equipo_economico + '|'));
+            }
+            if (!found && m.equipo) {
+                found = Array.from(eqSelect.options).find(o => o.textContent.toLowerCase().includes(m.equipo.toLowerCase()));
+            }
+
+            if (found) {
+                eqSelect.value = found.value;
+            } else if (matchVal || m.equipo) {
+                const newOpt = document.createElement('option');
+                const valToSet = matchVal || m.equipo;
+                newOpt.value = valToSet;
+                newOpt.textContent = m.equipo_economico ? `${m.equipo_economico} - ${m.equipo}` : m.equipo;
+                eqSelect.appendChild(newOpt);
+                eqSelect.value = valToSet;
+            } else {
+                eqSelect.value = '';
+            }
+        }
+
+        document.getElementById('modalEditarMovimiento').style.display = 'flex';
+    }
+
+    function cerrarModalEditarMovimiento() {
+        document.getElementById('modalEditarMovimiento').style.display = 'none';
+        document.getElementById('formEditarMovimiento').reset();
+    }
+
+    function editarRegistroSeleccionado() {
+        if(currentSelectedMov) abrirModalEditarMovimiento(currentSelectedMov.id);
+    }
+
+    async function eliminarRegistroSeleccionado() {
+        if(currentSelectedMov) eliminarMovimiento(currentSelectedMov.id);
+    }
+
+    function marcarObservacionMovimiento() {
+        const obsEl = document.getElementById('editMovObs');
+        if (obsEl && !obsEl.value.includes('[EN OBSERVACIÓN]')) {
+            obsEl.value = `[EN OBSERVACIÓN] ${obsEl.value}`.trim();
+        }
+        const form = document.getElementById('formEditarMovimiento');
+        if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+
+    async function marcarObservacionSeleccionado() {
+        if(!currentSelectedMov) return;
+        const obsActual = currentSelectedMov.observaciones || '';
+        const nuevaObs = obsActual.includes('[EN OBSERVACIÓN]') ? obsActual : `[EN OBSERVACIÓN] ${obsActual}`.trim();
+        
+        const formData = new FormData();
+        formData.append('id', currentSelectedMov.id);
+        formData.append('fecha', currentSelectedMov.fecha);
+        formData.append('equipo', currentSelectedMov.equipo_destino || '');
+        formData.append('litros', currentSelectedMov.litros);
+        formData.append('observaciones', nuevaObs);
+
+        try {
+            Swal.fire({ title: 'Actualizando a Observación...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const res = await fetch('/api/admin/jalisco/movimiento/editar', {
+                method: 'POST',
+                body: formData
+            });
+            const json = await res.json();
+            if(json.success) {
+                Swal.fire('En Observación', 'El registro de Jalisco se ha marcado en observación', 'info');
+                cargarKardex();
+            } else {
+                Swal.fire('Error', json.error, 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Error de conexión', 'error');
+        }
+    }
+
+    async function guardarEdicionMovimiento(e) {
+        e.preventDefault();
+        const id = document.getElementById('editMovId').value;
+        
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('fecha', document.getElementById('editMovFecha').value);
+        formData.append('equipo', document.getElementById('editMovEquipo').value);
+        formData.append('litros', document.getElementById('editMovLitros').value);
+        formData.append('observaciones', document.getElementById('editMovObs').value);
+
+        const fotoInput = document.getElementById('editMovFoto');
+        if(fotoInput.files[0]) {
+            formData.append('foto_evidencia', fotoInput.files[0]);
+        }
+
+        try {
+            Swal.fire({ title: 'Guardando cambios...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const res = await fetch('/api/admin/jalisco/movimiento/editar', {
+                method: 'POST',
+                body: formData
+            });
+            const json = await res.json();
+            if(json.success) {
+                cerrarModalEditarMovimiento();
+                Swal.fire('Guardado', 'El registro ha sido actualizado', 'success');
+                cargarKardex();
+            } else {
+                Swal.fire('Error', json.error, 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Error de conexión', 'error');
+        }
+    }
+
+    async function eliminarMovimiento(movId) {
+        const confirm = await Swal.fire({
+            title: '¿Eliminar registro?',
+            text: 'Esta acción no se puede deshacer y recalculará el saldo teórico.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if(!confirm.isConfirmed) return;
+
+        try {
+            Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const res = await fetch('/api/admin/jalisco/movimiento/eliminar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: movId })
+            });
+            const json = await res.json();
+            if(json.success) {
+                Swal.fire('Eliminado', 'El registro fue eliminado', 'success');
+                document.getElementById('visorEvidencia').innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 20px;">👈 Selecciona un registro de la tabla para ver su foto o PDF aquí.</div>';
+                document.getElementById('visorAcciones').style.display = 'none';
+                document.getElementById('visorFolio').innerText = 'Ningún registro seleccionado';
+                currentSelectedMov = null;
+                cargarKardex();
+            } else {
+                Swal.fire('Error', json.error, 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Error de conexión', 'error');
+        }
+    }
+
+    function actualizarKPIs(allMovs, filteredMovs) {
+        const movs = filteredMovs || allMovs || [];
+        if(!allMovs || allMovs.length === 0) return;
+        const numFmt = new Intl.NumberFormat('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        // El saldo actual es el saldo_teorico del primer elemento (el más reciente)
+        const saldoActual = parseFloat(allMovs[0].saldo_teorico || 0);
+        document.getElementById('kpiSaldo').innerText = `${numFmt.format(saldoActual)} Lts`;
+
+        let entradas = 0;
+        let salidas = 0;
+        movs.forEach(m => {
+            if(m.tipo_movimiento === 'ENTRADA') entradas += parseFloat(m.litros || 0);
+            if(m.tipo_movimiento === 'SALIDA') salidas += parseFloat(m.litros || 0);
+            if(m.tipo_movimiento === 'AJUSTE') {
+                if(m.litros > 0) entradas += parseFloat(m.litros || 0);
+                else salidas += Math.abs(parseFloat(m.litros || 0));
+            }
+        });
+
+        document.getElementById('kpiEntradas').innerText = `${numFmt.format(entradas)} Lts`;
+        document.getElementById('kpiSalidas').innerText = `${numFmt.format(salidas)} Lts`;
+    }
+
+    function abrirModalAjuste() {
+        document.getElementById('modalAjuste').style.display = 'flex';
+    }
+
+    function cerrarModalAjuste() {
+        document.getElementById('modalAjuste').style.display = 'none';
+        document.getElementById('formAjuste').reset();
+    }
+
+    async function guardarAjuste(e) {
+        e.preventDefault();
+        const litros_fisicos = parseFloat(document.getElementById('ajusteLitros').value);
+        const obs = document.getElementById('ajusteObs').value;
+
+        try {
+            Swal.fire({ title: 'Procesando Ajuste...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            const formData = new FormData();
+            formData.append('saldo_fisico', litros_fisicos);
+            formData.append('observaciones', obs);
+
+            const res = await fetch('/api/admin/jalisco/ajuste', {
+                method: 'POST',
+                body: formData
+            });
+            const json = await res.json();
+
+            if(json.success) {
+                cerrarModalAjuste();
+                Swal.fire('Ajuste Aplicado', `El saldo se ha actualizado a ${litros_fisicos} Lts.\nDiferencia: ${json.diferencia} Lts.`, 'success');
+                cargarKardex();
+            } else {
+                Swal.fire('Error', json.error, 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Error de conexión', 'error');
+        }
+    }
+
+    // Funciones para Modal de Vales
+    function abrirModalVales(semana) {
+        document.getElementById('modalVales').style.display = 'flex';
+        if (semana) {
+            document.getElementById('valesSemana').value = semana;
+            cargarMovimientosVale(semana);
+        }
+    }
+
+    function cerrarModalVales() {
+        document.getElementById('modalVales').style.display = 'none';
+        document.getElementById('formVales').reset();
+        document.getElementById('resumenValesBox').style.display = 'none';
+        document.getElementById('listaValesSemana').innerHTML = '<div style="color: var(--text-muted);">Ingresa un número de semana para ver las entradas.</div>';
+    }
+
+    function calcularLitrosVale() {
+        const imp = parseFloat(document.getElementById('valesImporte').value) || 0;
+        const costo = parseFloat(document.getElementById('valesCosto').value) || 27.0;
+        const box = document.getElementById('resumenValesBox');
+        const lbl = document.getElementById('valesLitrosCalc');
+        if(imp > 0 && costo > 0) {
+            const lts = imp / costo;
+            lbl.innerText = lts.toFixed(2);
+            box.style.display = 'block';
+        } else {
+            box.style.display = 'none';
+        }
+    }
+
+    async function cargarMovimientosVale(semana) {
+        const contenedor = document.getElementById('listaValesSemana');
+        if(!semana || isNaN(parseInt(semana))) {
+            contenedor.innerHTML = '<div style="color: var(--text-muted);">Ingresa un número de semana para ver las entradas.</div>';
+            return;
+        }
+        
+        try {
+            const res = await fetch(`/api/admin/jalisco/vales/datos/${semana}`);
+            const json = await res.json();
+            if(json.success && json.ajustes && json.ajustes.length > 0) {
+                let html = '<ul style="padding-left: 15px; margin: 0; color: #38bdf8;">';
+                json.ajustes.forEach(a => {
+                    html += `<li style="margin-bottom: 4px;"><b>Fecha:</b> ${a.fecha || 'Sin fecha'} | <b>Monto:</b> $${parseFloat(a.monto).toLocaleString('es-MX', {minimumFractionDigits:2})} MXN</li>`;
+                });
+                html += '</ul>';
+                contenedor.innerHTML = html;
+            } else {
+                contenedor.innerHTML = '<div style="color: #94a3b8;">No hay entradas registradas previamente en esta semana.</div>';
+            }
+        } catch(e) {
+            contenedor.innerHTML = '<div style="color: #ef4444;">Error al cargar historial.</div>';
+        }
+    }
+
+    async function guardarVale(e) {
+        e.preventDefault();
+        const sem = document.getElementById('valesSemana').value;
+        const importe = document.getElementById('valesImporte').value;
+        const costo = document.getElementById('valesCosto').value;
+        const obs = document.getElementById('valesObs').value;
+
+        if(!sem || !importe) {
+            Swal.fire('Atención', 'Ingresa el número de semana y el importe total.', 'warning');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('semana', sem);
+        formData.append('monto', importe);
+        formData.append('costo_diesel', costo);
+        formData.append('observaciones', obs);
+
+        try {
+            Swal.fire({ title: 'Registrando Vale...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const res = await fetch('/api/admin/jalisco/vales/registrar', {
+                method: 'POST',
+                body: formData
+            });
+            const json = await res.json();
+            if(json.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Vale Registrado Con Éxito!',
+                    text: `Se registraron $${parseFloat(importe).toFixed(2)} MXN de vales en la Semana ${sem}.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                cerrarModalVales();
+                cargarKardex();
+            } else {
+                Swal.fire('Error', json.error || 'No se pudo guardar el vale', 'error');
+            }
+        } catch(err) {
+            Swal.fire('Error', 'Error de conexión con el servidor', 'error');
+        }
+    }
+</script>
+{% endblock %}

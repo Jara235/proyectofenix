@@ -1,0 +1,788 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.25rem;">
+    <div>
+        <h1 class="header-title" style="text-align: left; margin-bottom: 0.2rem;">Gasolina</h1>
+        <p class="header-subtitle" style="text-align: left; margin-bottom: 0;">Ingreso de bitácoras y captura de consumos de unidades ligeras.</p>
+    </div>
+    
+    <!-- Tab Toggle -->
+    <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 4px; display: flex; gap: 4px;">
+        <button id="btnTabConsumo" class="tab-btn active" onclick="switchTab('consumo')" style="padding: 0.6rem 1.25rem; border-radius: 8px; border: none; background: var(--primary); color: white; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Consumos Individuales</button>
+        <button id="btnTabMasiva" class="tab-btn" onclick="switchTab('masiva')" style="padding: 0.6rem 1.25rem; border-radius: 8px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-size: 0.95rem;">📊 Captura Masiva / Conciliación Excel</button>
+    </div>
+</div>
+
+<!-- ==================== FORMULARIO DE CONSUMO DE GASOLINA ==================== -->
+<div class="glass-card" id="formConsumoContainer" style="width: 100%; max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    <form id="gasolinaForm" action="/api/gasolina/guardar_consumo" method="POST" enctype="multipart/form-data">
+        
+        <!-- Fila 1: Fecha y Semana -->
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Fecha</label>
+                <input type="date" name="fecha" id="fechaInputGasolina" value="{{ current_date }}" required>
+            </div>
+            <div class="form-group">
+                <label>Semana</label>
+                <input type="number" name="semana" id="semanaInputGasolina" value="{{ current_week }}" required>
+            </div>
+        </div>
+
+        <!-- Fila 2: Placa (Unidad Principal) y Gasolinería / Estación -->
+        <div class="form-grid" style="margin-top: 1rem; grid-template-columns: 1fr 1fr;">
+            <div class="form-group">
+                <label style="color: #38bdf8; font-weight: bold; font-size: 0.95rem;">🚗 Placa (Unidad Principal) <span style="color:#ef4444">*</span></label>
+                <select name="placa" id="placaSelect" required placeholder="Escribe o selecciona la placa...">
+                    <option value="">Escribe o selecciona la placa...</option>
+                    <option value="S/P" style="color:#38bdf8; font-weight:bold;">⚙️ S/P — SIN PLACA (EQUIPOS MENORES POR OBRA)</option>
+                    {% for p in placas %}
+                        <option value="{{ p['placa'] }}">{{ p['placa'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label style="color: #34d399; font-weight: bold; font-size: 0.95rem;">⛽ Gasolinería / Estación <span style="color:#ef4444">*</span></label>
+                <select name="gasolineria" id="gasolineriaSelect" required placeholder="Selecciona la gasolinería...">
+                    <option value="LEVET" selected>⛽ GASOLINERA LEVET</option>
+                    <option value="MOBIL">⛽ GASOLINERA MOBIL</option>
+                    <option value="VALES">💳 VALES / POR SI VALE</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Box Desplegable para Equipos Menores (Sin Placa S/P) -->
+        <div id="sinPlacaBox" style="display:none; margin-top: 1rem; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 1rem; border-radius: 12px;">
+            <label style="color: #38bdf8; font-weight: bold; font-size: 0.95rem;">⚙️ Selecciona el Equipo Menor por Obra / Responsable <span style="color:#ef4444">*</span></label>
+            <select id="equipoMenorSelect" style="margin-top: 0.5rem; width:100%; padding: 10px; border-radius: 8px; border: 1px solid var(--primary); background: rgba(15, 23, 42, 0.9); font-weight: bold; color: white;">
+                <option value="">Selecciona Equipo Menor...</option>
+            </select>
+        </div>
+
+        <!-- Fila 3: Obra, Responsable y Tipo de Gasolina -->
+        <div class="form-grid" style="margin-top: 1rem; grid-template-columns: 1fr 1fr 1fr;">
+            <div class="form-group">
+                <label>🏗️ Obra / Centro de Trabajo <span style="font-size:0.75rem; color:#a78bfa;">(Auto por Placa)</span></label>
+                <select name="obra_destino" id="obraSelect" required placeholder="Selecciona obra...">
+                    <option value="">Selecciona obra...</option>
+                    {% for o in obras %}
+                        <option value="{{ o['nombre'] }}">{{ o['nombre'] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>👤 Conductor / Responsable <span style="font-size:0.75rem; color:#a78bfa;">(Auto por Placa)</span></label>
+                <input type="text" name="conductor" id="conductorInput" placeholder="Nombre del responsable" required>
+            </div>
+
+            <div class="form-group">
+                <label style="color: #f59e0b; font-weight: bold;">⛽ Tipo de Gasolina</label>
+                <select name="tipo_gasolina" id="tipoGasolinaSelect" style="font-weight: 600;">
+                    <option value="EXTRA" selected>🟢 EXTRA / MAGNA ($23.90/L)</option>
+                    <option value="PREMIUM">🔴 PREMIUM ($25.90/L)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Fila 4: Vehículo / Unidad -->
+        <div class="form-grid" style="margin-top: 1rem;">
+            <div class="form-group" style="grid-column: span 2;">
+                <label style="color: #38bdf8; font-weight: bold;">🚙 Vehículo / Unidad <span style="font-size:0.75rem; color:#a78bfa;">(Auto por Placa)</span></label>
+                <input type="text" name="vehiculo" id="vehiculoInput" placeholder="Se autocompleta con la unidad de la placa..." required style="background: rgba(255,255,255,0.05); font-weight: bold; color: #38bdf8;">
+            </div>
+        </div>
+
+        <!-- Fila 5: Litros, Costo por Litro e Importe Total -->
+        <div class="form-grid" style="margin-top: 1rem; grid-template-columns: 1fr 1fr 1fr;">
+            <div class="form-group">
+                <label style="color: var(--primary); font-weight: bold;">Litros Cargados (hasta 4 decimales)</label>
+                <input type="number" step="0.0001" name="litros" id="litrosInput" placeholder="Ej. 45.0000" required>
+            </div>
+
+            <div class="form-group">
+                <label>Costo por Litro ($)</label>
+                <input type="number" step="0.01" name="costo_por_litro" id="costoLitroInput" value="23.90" required>
+            </div>
+
+            <div class="form-group">
+                <label style="color: #34d399; font-weight: bold;">Importe Total ($)</label>
+                <input type="number" step="0.01" name="importe_total" id="importeTotalInput" placeholder="Auto-calculado" readonly style="background: rgba(52, 211, 153, 0.1); color: #34d399; font-weight: bold;">
+            </div>
+        </div>
+
+        <!-- Fila 6: Evidencia Fotografías -->
+        <div class="form-group" style="margin-top: 1.25rem;">
+            <label>📸 Fotografías de Tickets / Evidencia (Puedes seleccionar varias o tomar foto)</label>
+            <div class="file-upload-wrapper" id="dropAreaGasolina" style="height: auto; min-height: 100px; padding: 1rem; position: relative; border: 2px dashed rgba(255,255,255,0.2); border-radius: 12px; text-align: center;">
+                <input type="file" name="foto_evidencia" accept="image/*" id="fileInputGasolina" multiple style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; z-index: 2;">
+                <div class="file-upload-text" id="uploadTextGasolina" style="pointer-events: none; z-index: 1;">📷 Toca para tomar foto del ticket o adjuntar evidencia</div>
+                <div id="previewGasolina" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; position: relative; z-index: 3;"></div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submitBtnGasolina" style="margin-top: 1.5rem; width: 100%; padding: 0.85rem; font-size: 1.1rem; font-weight: bold;">Guardar Consumo Gasolina</button>
+    </form>
+</div>
+
+<!-- ==================== SECCIÓN CAPTURA MASIVA Y CONCILIACIÓN EXCEL ==================== -->
+<div class="glass-card" id="containerCapturaMasiva" style="display:none; width: 100%; max-width: 1400px; margin: 0 auto; padding: 2rem;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2 style="margin: 0; font-size: 1.25rem; color: #38bdf8; display: flex; align-items: center; gap: 8px;">
+                <span>📊</span> Captura Masiva y Conciliación de Gasolina (Excel Gasolinerías / Levet)
+            </h2>
+            <p style="margin: 4px 0 0 0; font-size: 0.85rem; color: var(--text-muted);">
+                Sube el archivo Excel de la gasolinería (ej. CONTROL JDJ PROVISIONAL). Se separará automáticamente por semanas y se conciliará con la base de datos.
+            </p>
+        </div>
+    </div>
+
+    <!-- Zona Carga de Archivo Excel -->
+    <div id="dropZoneExcel" style="border: 2px dashed rgba(56, 189, 248, 0.4); border-radius: 16px; padding: 2.5rem; text-align: center; background: rgba(15, 23, 42, 0.6); transition: all 0.3s; cursor: pointer;" onclick="document.getElementById('excelFileInput').click();">
+        <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="procesarArchivoExcel(this.files[0])">
+        <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📂</div>
+        <h3 style="margin: 0; font-size: 1.1rem; color: white;">Haz clic o arrastra aquí tu archivo Excel de Gasolinería</h3>
+        <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: #94a3b8;">Soporta formatos .xlsx y .xls (ej. CONTROL JDJ PROVISIONAL con cargas de todo el mes)</p>
+    </div>
+
+    <!-- Seccion Resultados y Filtros (Oculto al inicio) -->
+    <div id="seccionResultadosExcel" style="display: none; margin-top: 1.5rem;">
+        
+        <!-- Tarjetas de Resumen KPI -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; text-align: center;">
+                <div style="font-size: 0.8rem; color: #94a3b8;">TOTAL CARGAS</div>
+                <div id="kpiTotalCargas" style="font-size: 1.6rem; font-weight: bold; color: white;">0</div>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; text-align: center;">
+                <div style="font-size: 0.8rem; color: #94a3b8;">TOTAL LITROS</div>
+                <div id="kpiTotalLitros" style="font-size: 1.6rem; font-weight: bold; color: #38bdf8;">0.00 L</div>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem; text-align: center;">
+                <div style="font-size: 0.8rem; color: #94a3b8;">TOTAL IMPORTE</div>
+                <div id="kpiTotalImporte" style="font-size: 1.6rem; font-weight: bold; color: #f59e0b;">$0.00</div>
+            </div>
+            <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 1rem; text-align: center;">
+                <div style="font-size: 0.8rem; color: #34d399;">✔ CONCILIADOS / DUPLICADOS</div>
+                <div id="kpiDuplicados" style="font-size: 1.6rem; font-weight: bold; color: #34d399;">0</div>
+            </div>
+            <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); border-radius: 12px; padding: 1rem; text-align: center;">
+                <div style="font-size: 0.8rem; color: #60a5fa;">🆕 NUEVOS POR AGREGAR</div>
+                <div id="kpiNuevos" style="font-size: 1.6rem; font-weight: bold; color: #60a5fa;">0</div>
+            </div>
+        </div>
+
+        <!-- Filtros por Semana y Estatus -->
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; background: rgba(0,0,0,0.2); padding: 12px 18px; border-radius: 12px; margin-bottom: 1rem;">
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block;">📅 Filtrar por Semana:</label>
+                    <select id="selFiltroSemana" onchange="renderTablaMasiva()" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--primary); background: #0f172a; color: white; font-weight: bold;">
+                        <option value="TODAS">📅 Todas las Semanas del Mes</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #94a3b8; display: block;">🔍 Filtrar por Estado:</label>
+                    <select id="selFiltroEstatus" onchange="renderTablaMasiva()" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--primary); background: #0f172a; color: white; font-weight: bold;">
+                        <option value="TODOS">🔍 Todos los Registros</option>
+                        <option value="NUEVO" selected>🆕 Solo Nuevos (Faltantes en BD)</option>
+                        <option value="DUPLICADO">✔ Solo Conciliados / Duplicados</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <button id="btnGuardarNuevos" onclick="guardarCargasNuevas()" style="padding: 0.75rem 1.5rem; border-radius: 10px; border: none; background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: all 0.2s;">
+                    💾 Guardar Cargas Nuevas Seleccionadas
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabla Previa -->
+        <div style="overflow-x: auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left;">
+                <thead>
+                    <tr style="background: rgba(15, 23, 42, 0.9); color: #94a3b8; border-bottom: 2px solid rgba(255,255,255,0.1);">
+                        <th style="padding: 10px; text-align: center;"><input type="checkbox" id="chkSelectAll" onchange="toggleSelectAll(this)"></th>
+                        <th style="padding: 10px;">Ticket / Folio</th>
+                        <th style="padding: 10px;">Fecha</th>
+                        <th style="padding: 10px;">Semana</th>
+                        <th style="padding: 10px;">Placa / Unidad</th>
+                        <th style="padding: 10px;">Conductor</th>
+                        <th style="padding: 10px;">Obra Destino</th>
+                        <th style="padding: 10px; text-align: right;">Litros</th>
+                        <th style="padding: 10px; text-align: right;">Precio ($)</th>
+                        <th style="padding: 10px; text-align: right;">Importe ($)</th>
+                        <th style="padding: 10px; text-align: center;">Estatus Conciliación</th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyCapturaMasiva">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== HISTÓRICO DE CONSUMOS RECIENTES ==================== -->
+<div class="glass-card" id="historicoConsumosContainer" style="width: 100%; max-width: 1400px; margin: 2rem auto 0 auto; padding: 1.5rem;">
+    <h3 style="margin-top: 0; color: var(--text-main); font-size: 1.15rem;">📋 Histórico Reciente de Consumos de Gasolina</h3>
+    <div style="overflow-x: auto; margin-top: 1rem;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left;">
+            <thead>
+                <tr style="background: rgba(30, 41, 59, 0.8); color: var(--text-muted); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <th style="padding: 10px;">Folio</th>
+                    <th style="padding: 10px;">Fecha</th>
+                    <th style="padding: 10px;">Placa</th>
+                    <th style="padding: 10px;">Vehículo</th>
+                    <th style="padding: 10px;">Obra</th>
+                    <th style="padding: 10px; text-align: right;">Litros</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in historial_consumos %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <td style="padding: 10px; color: #38bdf8; font-weight: bold;">{{ c['folio_conciliacion'] }}</td>
+                    <td style="padding: 10px;">{{ c['fecha'] }}</td>
+                    <td style="padding: 10px; font-weight: bold;">{{ c['placa'] }}</td>
+                    <td style="padding: 10px;">{{ c['vehiculo'] }}</td>
+                    <td style="padding: 10px;">{{ c['obra_destino'] }}</td>
+                    <td style="padding: 10px; text-align: right; color: #34d399; font-weight: bold;">{{ c['litros'] }} L</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="padding: 15px; text-align: center; color: var(--text-muted);">No hay registros recientes.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function switchTab(tab) {
+        document.getElementById('btnTabConsumo').classList.remove('active');
+        document.getElementById('btnTabConsumo').style.background = 'transparent';
+        document.getElementById('btnTabConsumo').style.color = 'var(--text-muted)';
+        
+        document.getElementById('btnTabMasiva').classList.remove('active');
+        document.getElementById('btnTabMasiva').style.background = 'transparent';
+        document.getElementById('btnTabMasiva').style.color = 'var(--text-muted)';
+
+        const formConsumo = document.getElementById('formConsumoContainer');
+        const historico = document.getElementById('historicoConsumosContainer');
+        const capturaMasiva = document.getElementById('containerCapturaMasiva');
+
+        if (tab === 'consumo') {
+            document.getElementById('btnTabConsumo').classList.add('active');
+            document.getElementById('btnTabConsumo').style.background = 'var(--primary)';
+            document.getElementById('btnTabConsumo').style.color = 'white';
+            
+            if (formConsumo) formConsumo.style.display = 'block';
+            if (historico) historico.style.display = 'block';
+            if (capturaMasiva) capturaMasiva.style.display = 'none';
+        } else if (tab === 'masiva') {
+            document.getElementById('btnTabMasiva').classList.add('active');
+            document.getElementById('btnTabMasiva').style.background = 'var(--primary)';
+            document.getElementById('btnTabMasiva').style.color = 'white';
+            
+            if (formConsumo) formConsumo.style.display = 'none';
+            if (historico) historico.style.display = 'none';
+            if (capturaMasiva) capturaMasiva.style.display = 'block';
+        }
+    }
+
+    let cargasExcelGlobal = [];
+
+    async function procesarArchivoExcel(file) {
+        if (!file) return;
+        
+        const formData = new FormData();
+        formData.append('archivo_excel', file);
+        
+        const dropZone = document.getElementById('dropZoneExcel');
+        dropZone.innerHTML = `<div style="font-size:2rem;">⏳</div><h3 style="color:#38bdf8;">Procesando y Conciliando Excel con la Base de Datos...</h3>`;
+        
+        try {
+            const res = await fetch('/api/gasolina/procesar_excel_masivo', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            
+            if (!data.success) {
+                alert('❌ Error al procesar Excel: ' + (data.error || 'Error desconocido'));
+                resetDropZone();
+                return;
+            }
+            
+            cargasExcelGlobal = data.cargas || [];
+            
+            document.getElementById('kpiTotalCargas').innerText = data.totales.total_cargas;
+            document.getElementById('kpiTotalLitros').innerText = data.totales.total_litros.toLocaleString('es-MX', {minimumFractionDigits: 2}) + ' L';
+            document.getElementById('kpiTotalImporte').innerText = '$' + data.totales.total_importe.toLocaleString('es-MX', {minimumFractionDigits: 2});
+            document.getElementById('kpiDuplicados').innerText = data.totales.cnt_duplicados;
+            document.getElementById('kpiNuevos').innerText = data.totales.cnt_nuevos;
+            
+            const selSemana = document.getElementById('selFiltroSemana');
+            selSemana.innerHTML = '<option value="TODAS">📅 Todas las Semanas del Mes</option>';
+            (data.semanas || []).forEach(sem => {
+                selSemana.innerHTML += `<option value="${sem}">${sem}</option>`;
+            });
+            
+            document.getElementById('seccionResultadosExcel').style.display = 'block';
+            resetDropZone();
+            renderTablaMasiva();
+            
+        } catch (err) {
+            console.error('Error procesando Excel:', err);
+            alert('❌ Error de conexión al procesar el archivo Excel.');
+            resetDropZone();
+        }
+    }
+
+    function resetDropZone() {
+        document.getElementById('dropZoneExcel').innerHTML = `
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;" onchange="procesarArchivoExcel(this.files[0])">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">📂</div>
+            <h3 style="margin: 0; font-size: 1.1rem; color: white;">Haz clic o arrastra aquí tu archivo Excel de Gasolinería</h3>
+            <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: #94a3b8;">Soporta formatos .xlsx y .xls (ej. CONTROL JDJ PROVISIONAL con cargas de todo el mes)</p>
+        `;
+    }
+
+    function renderTablaMasiva() {
+        const sem = document.getElementById('selFiltroSemana').value;
+        const est = document.getElementById('selFiltroEstatus').value;
+        const tbody = document.getElementById('tbodyCapturaMasiva');
+        tbody.innerHTML = '';
+        
+        const filtrados = cargasExcelGlobal.filter(c => {
+            const matchSem = (sem === 'TODAS' || c.semana === sem);
+            const matchEst = (est === 'TODOS' || c.estatus === est);
+            return matchSem && matchEst;
+        });
+        
+        if (filtrados.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="11" style="padding:2rem; text-align:center; color:#94a3b8;">No hay registros con los filtros seleccionados.</td></tr>`;
+            return;
+        }
+        
+        filtrados.forEach(c => {
+            const isNuevo = (c.estatus === 'NUEVO');
+            const badgeHtml = isNuevo 
+                ? `<span style="background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem;">🆕 NUEVO</span>`
+                : `<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.75rem;" title="${c.match_info || ''}">✔ CONCILIADO</span>`;
+                
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            tr.innerHTML = `
+                <td style="padding: 10px; text-align: center;">
+                    <input type="checkbox" class="chkRowExcel" value="${c.row_id}" ${isNuevo ? 'checked' : ''}>
+                </td>
+                <td style="padding: 10px; font-weight: bold; color: #38bdf8;">#${c.ticket}</td>
+                <td style="padding: 10px;">${c.fecha}</td>
+                <td style="padding: 10px; font-weight: bold; color: #a78bfa;">${c.semana}</td>
+                <td style="padding: 10px; font-weight: bold;">${c.placa}</td>
+                <td style="padding: 10px;">${c.conductor}</td>
+                <td style="padding: 10px;">${c.obra}</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold; color: #38bdf8;">${c.litros.toFixed(2)} L</td>
+                <td style="padding: 10px; text-align: right;">$${c.precio.toFixed(2)}</td>
+                <td style="padding: 10px; text-align: right; font-weight: bold; color: #f59e0b;">$${c.importe.toFixed(2)}</td>
+                <td style="padding: 10px; text-align: center;">${badgeHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function toggleSelectAll(master) {
+        const chks = document.querySelectorAll('.chkRowExcel');
+        chks.forEach(c => c.checked = master.checked);
+    }
+
+    async function guardarCargasNuevas() {
+        const chks = document.querySelectorAll('.chkRowExcel:checked');
+        if (chks.length === 0) {
+            alert('⚠️ Por favor selecciona al menos una carga para guardar.');
+            return;
+        }
+        
+        const idsToSave = Array.from(chks).map(c => parseInt(c.value));
+        const cargasToSave = cargasExcelGlobal.filter(c => idsToSave.includes(c.row_id));
+        
+        if (!confirm(`¿Deseas guardar ${cargasToSave.length} cargas seleccionadas en la Base de Datos?`)) {
+            return;
+        }
+        
+        const btn = document.getElementById('btnGuardarNuevos');
+        btn.innerHTML = '⏳ Guardando...';
+        btn.disabled = true;
+        
+        try {
+            const res = await fetch('/api/gasolina/guardar_captura_masiva', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ cargas: cargasToSave })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                alert('🎉 ' + data.message);
+                cargasExcelGlobal.forEach(c => {
+                    if (idsToSave.includes(c.row_id)) {
+                        c.estatus = 'DUPLICADO';
+                    }
+                });
+                renderTablaMasiva();
+            } else {
+                alert('❌ Error al guardar: ' + (data.error || 'Error desconocido'));
+            }
+        } catch (err) {
+            console.error('Error al guardar:', err);
+            alert('❌ Error de conexión al guardar las cargas.');
+        } finally {
+            btn.innerHTML = '💾 Guardar Cargas Nuevas Seleccionadas';
+            btn.disabled = false;
+        }
+    }
+    const PLACAS_MAP = {% if placas_map_json %}{{ placas_map_json|safe }}{% else %}{}{% endif %};
+    const EQUIPOS_SIN_PLACA = {% if equipos_sin_placa_json %}{{ equipos_sin_placa_json|safe }}{% else %}[]{% endif %};
+
+    // Inicializar TomSelects
+    let tomSelectObraObj = initTomSelect("#obraSelect");
+    let tomSelectGasolineriaObj = initTomSelect("#gasolineriaSelect");
+    let tomSelectPlacaObj = initTomSelect("#placaSelect", {
+        create: true,
+        sortField: false
+    });
+
+    // Tab Switcher
+    function switchTab(tab) {
+        document.getElementById('formConsumoContainer').style.display = 'none';
+        document.getElementById('formFacturasContainer').style.display = 'none';
+        document.getElementById('btnTabConsumo').classList.remove('active');
+        document.getElementById('btnTabFacturas').classList.remove('active');
+
+        if (tab === 'consumo') {
+            document.getElementById('formConsumoContainer').style.display = 'block';
+            document.getElementById('btnTabConsumo').classList.add('active');
+        } else if (tab === 'facturas') {
+            document.getElementById('formFacturasContainer').style.display = 'block';
+            document.getElementById('btnTabFacturas').classList.add('active');
+        }
+    }
+
+    // Cálculo automático de Importe Total = Litros * Costo por Litro
+    function calcularTotal() {
+        const litros = parseFloat(document.getElementById('litrosInput').value) || 0;
+        const costo = parseFloat(document.getElementById('costoLitroInput').value) || 0;
+        const total = litros * costo;
+        document.getElementById('importeTotalInput').value = total > 0 ? total.toFixed(2) : '';
+    }
+
+    document.getElementById('litrosInput').addEventListener('input', calcularTotal);
+    document.getElementById('costoLitroInput').addEventListener('input', calcularTotal);
+
+    // Función principal de autocompletado por Placa (idéntica en arquitectura a Diésel)
+    async function autocompletarPorPlaca(val) {
+        const sinPlacaBox = document.getElementById('sinPlacaBox');
+        const eqSelect = document.getElementById('equipoMenorSelect');
+
+        if (!val) {
+            if (sinPlacaBox) sinPlacaBox.style.display = 'none';
+            document.getElementById('vehiculoInput').value = '';
+            document.getElementById('conductorInput').value = '';
+            if (tomSelectObraObj) tomSelectObraObj.setValue('');
+            return;
+        }
+
+        const raw = String(val).trim();
+        const upper = raw.toUpperCase();
+
+        // Manejo de opción Sin Placa (S/P)
+        if (upper === 'S/P' || upper.startsWith('S/P') || upper === 'SIN PLACA') {
+            if (sinPlacaBox) sinPlacaBox.style.display = 'block';
+            if (eqSelect) {
+                eqSelect.innerHTML = '<option value="">Selecciona Equipo Menor por Obra...</option>';
+                if (Array.isArray(EQUIPOS_SIN_PLACA)) {
+                    EQUIPOS_SIN_PLACA.forEach(eq => {
+                        const opt = document.createElement('option');
+                        opt.value = eq.id;
+                        opt.textContent = '[' + eq.obra + '] ' + eq.vehiculo + ' - ' + eq.responsable + ' ($' + parseFloat(eq.importe_semanal || 0).toFixed(2) + ')';
+                        eqSelect.appendChild(opt);
+                    });
+                }
+            }
+            document.getElementById('vehiculoInput').value = '';
+            document.getElementById('conductorInput').value = '';
+            if (tomSelectObraObj) tomSelectObraObj.setValue('');
+            return;
+        }
+
+        if (sinPlacaBox) sinPlacaBox.style.display = 'none';
+
+        // 1. Asignación inmediata desde PLACAS_MAP (0ms)
+        if (PLACAS_MAP[raw] || PLACAS_MAP[upper]) {
+            const info = PLACAS_MAP[raw] || PLACAS_MAP[upper];
+            if (info.vehiculo) document.getElementById('vehiculoInput').value = info.vehiculo;
+            if (info.responsable) document.getElementById('conductorInput').value = info.responsable;
+            if (info.obra && tomSelectObraObj) {
+                if (!tomSelectObraObj.options[info.obra]) {
+                    tomSelectObraObj.addOption({ value: info.obra, text: info.obra });
+                }
+                tomSelectObraObj.setValue(info.obra);
+            }
+        }
+
+        // 2. Consulta al servidor Python (misma arquitectura de Diésel)
+        try {
+            const res = await fetch('/api/gasolina/unidad_info?placa=' + encodeURIComponent(raw));
+            const data = await res.json();
+            if (data.success) {
+                if (data.vehiculo) document.getElementById('vehiculoInput').value = data.vehiculo;
+                if (data.responsable) document.getElementById('conductorInput').value = data.responsable;
+                if (data.obra && tomSelectObraObj) {
+                    if (!tomSelectObraObj.options[data.obra]) {
+                        tomSelectObraObj.addOption({ value: data.obra, text: data.obra });
+                    }
+                    tomSelectObraObj.setValue(data.obra);
+                }
+            }
+        } catch(err) {
+            console.error('Error al consultar unidad_info:', err);
+        }
+    }
+
+    // Escuchador de eventos en TomSelect de Placa
+    if (tomSelectPlacaObj) {
+        tomSelectPlacaObj.on('change', function(val) {
+            autocompletarPorPlaca(val);
+        });
+    }
+
+    // Escuchador para Selección de Equipo Menor (S/P)
+    const equipoMenorSel = document.getElementById('equipoMenorSelect');
+    if (equipoMenorSel) {
+        equipoMenorSel.addEventListener('change', function() {
+            const idVal = parseInt(this.value);
+            if (!idVal) return;
+            if (Array.isArray(EQUIPOS_SIN_PLACA)) {
+                const found = EQUIPOS_SIN_PLACA.find(e => e.id === idVal);
+                if (found) {
+                    if (found.vehiculo) document.getElementById('vehiculoInput').value = found.vehiculo;
+                    if (found.responsable) document.getElementById('conductorInput').value = found.responsable;
+                    if (found.obra && tomSelectObraObj) {
+                        if (!tomSelectObraObj.options[found.obra]) {
+                            tomSelectObraObj.addOption({ value: found.obra, text: found.obra });
+                        }
+                        tomSelectObraObj.setValue(found.obra);
+                    }
+                }
+            }
+        });
+    }
+
+    // ==================== GESTIÓN DE EVIDENCIA FOTOGRÁFICA (Drag & Drop + Ctrl+V / Portapapeles) ====================
+    let selectedFilesGasolina = new DataTransfer();
+
+    function updateFileInputAndPreviewGasolina() {
+        const input = document.getElementById('fileInputGasolina');
+        const uploadText = document.getElementById('uploadTextGasolina');
+        const previewArea = document.getElementById('previewGasolina');
+
+        if (input) {
+            input.files = selectedFilesGasolina.files;
+        }
+
+        if (uploadText) {
+            const count = selectedFilesGasolina.files.length;
+            if (count > 0) {
+                uploadText.textContent = '📸 ' + count + ' foto(s) de evidencia seleccionada(s)';
+                uploadText.style.color = '#38bdf8';
+            } else {
+                uploadText.textContent = '📷 Toca para tomar foto del ticket, selecciona o pega desde el portapapeles (Ctrl + V)';
+                uploadText.style.color = '';
+            }
+        }
+
+        if (previewArea) {
+            previewArea.innerHTML = '';
+            Array.from(selectedFilesGasolina.files).forEach((file, index) => {
+                if (!file.type.startsWith('image/')) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const container = document.createElement('div');
+                    container.style.cssText = 'position: relative; width: 90px; height: 90px; border-radius: 8px; overflow: hidden; border: 2px solid var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.4); background: #0f172a;';
+                    
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.style.cssText = 'width: 100%; height: 100%; object-fit: cover;';
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.innerHTML = '✕';
+                    removeBtn.title = 'Eliminar imagen';
+                    removeBtn.style.cssText = 'position: absolute; top: 3px; right: 3px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.5);';
+                    removeBtn.onclick = function(ev) {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        removeFileGasolina(index);
+                    };
+                    
+                    container.appendChild(img);
+                    container.appendChild(removeBtn);
+                    previewArea.appendChild(container);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function addFilesGasolina(files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith('image/')) {
+                selectedFilesGasolina.items.add(file);
+            }
+        }
+        updateFileInputAndPreviewGasolina();
+    }
+
+    function removeFileGasolina(index) {
+        const dt = new DataTransfer();
+        Array.from(selectedFilesGasolina.files).forEach((file, i) => {
+            if (i !== index) dt.items.add(file);
+        });
+        selectedFilesGasolina = dt;
+        updateFileInputAndPreviewGasolina();
+    }
+
+    // 1. Evento Change en el input file
+    const fileInputGasolina = document.getElementById('fileInputGasolina');
+    if (fileInputGasolina) {
+        fileInputGasolina.addEventListener('change', function(e) {
+            if (this.files && this.files.length > 0) {
+                addFilesGasolina(this.files);
+            }
+        });
+    }
+
+    // 2. Drag & Drop en la zona de carga
+    const dropAreaGasolina = document.getElementById('dropAreaGasolina');
+    if (dropAreaGasolina) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropAreaGasolina.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropAreaGasolina.addEventListener(eventName, () => {
+                dropAreaGasolina.style.borderColor = 'var(--primary)';
+                dropAreaGasolina.style.background = 'rgba(59, 130, 246, 0.15)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropAreaGasolina.addEventListener(eventName, () => {
+                dropAreaGasolina.style.borderColor = '';
+                dropAreaGasolina.style.background = '';
+            }, false);
+        });
+
+        dropAreaGasolina.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            if (dt && dt.files && dt.files.length > 0) {
+                addFilesGasolina(dt.files);
+            }
+        });
+    }
+
+    // 3. Pegado directo desde el Portapapeles (Ctrl+V / Win+V)
+    document.addEventListener('paste', function(e) {
+        const container = document.getElementById('formConsumoContainer');
+        if (container && container.style.display === 'none') return;
+
+        const activeEl = document.activeElement;
+        const targetTag = activeEl ? activeEl.tagName.toLowerCase() : '';
+        if (targetTag === 'textarea') return;
+        
+        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        if (!items) return;
+
+        let pastedFiles = [];
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    const ext = blob.type.split('/')[1] || 'png';
+                    const file = new File([blob], 'evidencia_gasolina_pegada_' + Date.now() + '_' + i + '.' + ext, { type: blob.type });
+                    pastedFiles.push(file);
+                }
+            }
+        }
+
+        if (pastedFiles.length > 0) {
+            addFilesGasolina(pastedFiles);
+            if (typeof showToast === 'function') {
+                showToast('📸 ' + pastedFiles.length + ' imagen(es) pegada(s) desde el portapapeles.', 'success');
+            }
+        }
+    });
+
+    // ==================== ENVÍO ASÍNCRONO DEL FORMULARIO DE GASOLINA ====================
+    document.getElementById('gasolinaForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtnGasolina');
+        btn.innerHTML = '⏳ Guardando...';
+        btn.disabled = true;
+
+        try {
+            const formData = new FormData(this);
+            // Sincronizar archivos desde la evidencia capturada (incluyendo pegadas con Ctrl+V)
+            if (selectedFilesGasolina && selectedFilesGasolina.files.length > 0) {
+                formData.delete('foto_evidencia');
+                Array.from(selectedFilesGasolina.files).forEach(f => {
+                    formData.append('foto_evidencia', f);
+                });
+            }
+
+            const res = await fetch('/api/gasolina/consumo', { method: 'POST', body: formData });
+            const result = await res.json();
+
+            if (result.success) {
+                if (typeof showToast === 'function') {
+                    showToast('✅ Carga de gasolina registrada exitosamente con Folio: ' + result.folio, 'success');
+                } else {
+                    alert('✅ Carga de gasolina registrada exitosamente con Folio: ' + result.folio);
+                }
+                setTimeout(() => window.location.reload(), 1200);
+            } else {
+                const msg = result.error || result.message || 'Error al guardar el consumo';
+                if (typeof showToast === 'function') {
+                    showToast('❌ ' + msg, 'error');
+                } else {
+                    alert('❌ ' + msg);
+                }
+                btn.innerHTML = 'Guardar Consumo Gasolina';
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error al guardar:', error);
+            if (typeof showToast === 'function') {
+                showToast('❌ Error de conexión al guardar.', 'error');
+            } else {
+                alert('❌ Error de conexión al guardar.');
+            }
+            btn.innerHTML = 'Guardar Consumo Gasolina';
+            btn.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Captura | Fénix 2.0</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Toastify for nice alerts -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+    <nav>
+        <a href="/" class="brand">Fénix 2.0 Captura</a>
+        <div class="nav-links" style="display: flex; align-items: center;">
+            <a href="/diesel" class="{{ 'active' if 'diesel' in request.path }}">Diésel</a>
+            <a href="/gasolina" class="{{ 'active' if 'gasolina' in request.path }}">Gasolina</a>
+            <a href="/jalisco" class="{{ 'active' if 'jalisco' in request.path }}" style="color: #38bdf8;">Jalisco</a>
+            <a href="/solicitudes" class="{{ 'active' if 'solicitudes' in request.path }}" style="{{ 'background: rgba(99,102,241,0.15); border-radius:8px; padding: 0.35rem 0.75rem;' if 'solicitudes' in request.path else '' }}">📋 Solicitudes</a>
+            <a href="/acarreos" class="{{ 'active' if 'acarreos' in request.path }}">Acarreos</a>
+            <a href="/mezcla" class="{{ 'active' if 'mezcla' in request.path }}">Mezcla</a>
+            <a href="/catalogos" class="{{ 'active' if 'catalogos' in request.path }}">Catálogos</a>
+            
+            <a href="#" id="btnSyncExcel" style="background: linear-gradient(135deg, var(--accent), var(--primary)); color: white; padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-weight: bold; margin-left: 1rem; box-shadow: 0 4px 15px rgba(99,102,241,0.4); display: flex; align-items: center; gap: 0.5rem;">
+                <span id="syncIcon">🔄</span> Sincronizar Excel
+            </a>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <style>
+        .ts-control { background: rgba(15, 23, 42, 0.6) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 12px !important; color: white !important; padding: 0.875rem 1rem !important; }
+        .ts-control input { color: white !important; }
+        .ts-dropdown { background: #1e293b !important; color: white !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 12px !important; }
+        .ts-dropdown .option:hover, .ts-dropdown .option.active { background: var(--primary) !important; color: white !important; }
+    </style>
+    <script>
+        // Global Helper for TomSelect with Tab & Enter Selection & Focus Advance
+        function initTomSelect(target, userOptions = {}) {
+            const el = typeof target === 'string' ? document.querySelector(target) : target;
+            if (!el) return null;
+
+            const defaultOpts = {
+                create: false,
+                selectOnTab: true,
+                openOnFocus: true,
+                sortField: { field: "text", direction: "asc" }
+            };
+
+            const opts = Object.assign({}, defaultOpts, userOptions);
+            const ts = new TomSelect(el, opts);
+
+            // Handler for Enter & Tab key on TomSelect instance
+            ts.on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    if (ts.isOpen) {
+                        if (ts.activeOption) {
+                            ts.setValue(ts.activeOption.dataset.value);
+                        } else {
+                            const firstOpt = ts.dropdown_content.querySelector('.option:not(.create)');
+                            if (firstOpt && firstOpt.dataset.value) {
+                                ts.setValue(firstOpt.dataset.value);
+                            }
+                        }
+                        ts.close();
+                    }
+                    focusNextInput(ts.control_input);
+                } else if (e.key === 'Tab') {
+                    if (ts.isOpen) {
+                        if (ts.activeOption) {
+                            ts.setValue(ts.activeOption.dataset.value);
+                        } else {
+                            const firstOpt = ts.dropdown_content.querySelector('.option:not(.create)');
+                            if (firstOpt && firstOpt.dataset.value) {
+                                ts.setValue(firstOpt.dataset.value);
+                            }
+                        }
+                    }
+                }
+            });
+
+            return ts;
+        }
+
+        function focusNextInput(currentEl) {
+            if (!currentEl) return;
+            const form = currentEl.closest('form') || document.body;
+            const focusables = Array.from(form.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([type="button"]):not([disabled]), .ts-control input'));
+            
+            const visible = focusables.filter(item => {
+                return item.offsetWidth > 0 && item.offsetHeight > 0 && window.getComputedStyle(item).visibility !== 'hidden';
+            });
+
+            const index = visible.indexOf(currentEl);
+            if (index > -1 && index + 1 < visible.length) {
+                const next = visible[index + 1];
+                next.focus();
+                if (typeof next.select === 'function' && next.type !== 'date') {
+                    try { next.select(); } catch(err) {}
+                }
+            }
+        }
+
+        // Keydown listener for standard select & input fields on Enter key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const target = e.target;
+                if (!target) return;
+
+                // Ignore textareas and submit buttons
+                if (target.tagName === 'TEXTAREA' || (target.tagName === 'BUTTON' && target.type === 'submit')) {
+                    return;
+                }
+
+                // Standard select element
+                if (target.tagName === 'SELECT' && !target.classList.contains('ts-hidden-accessible')) {
+                    e.preventDefault();
+                    focusNextInput(target);
+                }
+            }
+        });
+
+        function showToast(message, type='success') {
+            Toastify({
+                text: message,
+                duration: 3000,
+                close: true,
+                gravity: "bottom",
+                position: "right",
+                style: {
+                    background: type === 'success' ? "#10b981" : "#ef4444",
+                    borderRadius: "8px",
+                    fontFamily: "'Inter', sans-serif"
+                }
+            }).showToast();
+        }
+
+        document.getElementById('btnSyncExcel').addEventListener('click', async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSyncExcel');
+            const icon = document.getElementById('syncIcon');
+            
+            if(btn.style.opacity === '0.5') return; // prevent double click
+            
+            btn.style.opacity = '0.5';
+            icon.innerText = '⏳';
+            showToast('Sincronizando con Excel... Por favor espera.', 'success');
+            
+            try {
+                const res = await fetch('/api/sync_excel', { method: 'POST' });
+                const data = await res.json();
+                if(data.success) {
+                    showToast(`¡Sincronización exitosa! Importados: ${data.importados}, Exportados: ${data.exportados}`, 'success');
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    alert('Error de Sincronización: ' + data.error);
+                }
+            } catch (err) {
+                alert('Ocurrió un error al contactar al servidor.');
+            } finally {
+                btn.style.opacity = '1';
+                icon.innerText = '🔄';
+            }
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

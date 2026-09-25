@@ -1,0 +1,22 @@
+class DbProxy:
++    def __init__(self, conn):
++        self.conn = conn
++    def execute(self, sql, params=()):
++        cur = self.conn.cursor(cursor_factory=DictCursor)
++        cur.execute(sql, params)
++        return cur
++    def close(self):
++        self.conn.close()
++
+ def get_db():
+-    conn = sqlite3.connect(DB_PATH)
+-    conn.row_factory = sqlite3.Row
+-    return conn
++    conn = psycopg2.connect(dbname='fenix_db', user='postgres', password='Bupito*268', host='localhost')
++    return DbProxy(conn)
+ 
+ # ─────────────────────────────────────────
+ #  PAGINA PRINCIPAL
+[diff_block_end]
+
+Please note that the above snippet only shows the MODIFIED lines from the last change. It shows up to 3 lines of unchanged lines before and after the modified lines. The actual file contents may have m

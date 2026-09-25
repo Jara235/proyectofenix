@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto Fénix - Control y Conciliación de Diésel</title>
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-fire-flame-curved logo-icon"></i>
+                <h2>Proyecto <span>Fénix</span></h2>
+            </div>
+            
+            <nav class="side-nav">
+                <button class="nav-btn active" data-tab="dashboard">
+                    <i class="fa-solid fa-chart-line"></i> Conciliación & KPIs
+                </button>
+                <button class="nav-btn" data-tab="bitacoras">
+                    <i class="fa-solid fa-book-open"></i> Bitácoras Diésel
+                </button>
+                <button class="nav-btn" data-tab="asistente">
+                    <i class="fa-solid fa-robot"></i> Asistente IA Seguro
+                </button>
+                <button class="nav-btn" data-tab="simulador">
+                    <i class="fa-brands fa-whatsapp"></i> Simulador WhatsApp
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="btn-config" class="config-btn">
+                    <i class="fa-solid fa-sliders"></i> Ajustes Supabase
+                </button>
+                <div class="db-status-badge offline" id="db-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Datos Locales (Mock)</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="main-header">
+                <div class="header-title">
+                    <h1 id="page-title">Conciliación & KPIs</h1>
+                    <p id="page-subtitle">Monitoreo de flujo de combustible de Grupo Trujano</p>
+                </div>
+                <div class="date-selector">
+                    <i class="fa-regular fa-calendar"></i>
+                    <span id="current-date-display">Lunes, 15 de Junio de 2026</span>
+                </div>
+            </header>
+
+            <!-- Top KPIs Cards -->
+            <section class="kpis-section">
+                <!-- KPI 1 -->
+                <div class="kpi-card" id="kpi-pegaso">
+                    <div class="kpi-icon icon-cyan"><i class="fa-solid fa-warehouse"></i></div>
+                    <div class="kpi-info">
+                        <h3>Tanque Pegaso</h3>
+                        <div class="kpi-value"><span id="val-pegaso-inventario">4,840</span> <span class="unit">L</span></div>
+                        <p class="kpi-subtext"><i class="fa-solid fa-arrow-down"></i> Hoy se despacharon <span id="val-pegaso-despachado">60</span> L</p>
+                    </div>
+                </div>
+                <!-- KPI 2 -->
+                <div class="kpi-card" id="kpi-marimba">
+                    <div class="kpi-icon icon-violet"><i class="fa-solid fa-truck-moving"></i></div>
+                    <div class="kpi-info">
+                        <h3>Mamba (Marimba M-01)</h3>
+                        <div class="kpi-value"><span id="val-marimba-inventario">835</span> <span class="unit">L</span></div>
+                        <p class="kpi-subtext"><span id="val-marimba-estado">Abastecida Pegaso/Gasolinera</span></p>
+                    </div>
+                </div>
+                <!-- KPI 3 -->
+                <div class="kpi-card" id="kpi-obras">
+                    <div class="kpi-icon icon-emerald"><i class="fa-solid fa-helmet-safety"></i></div>
+                    <div class="kpi-info">
+                        <h3>Consumo Obras</h3>
+                        <div class="kpi-value"><span id="val-obras-consumo">415</span> <span class="unit">L</span></div>
+                        <p class="kpi-subtext"><span id="val-obras-costo">$11,304.00</span> pesos invertidos</p>
+                    </div>
+                </div>
+                <!-- KPI 4 -->
+                <div class="kpi-card" id="kpi-alertas">
+                    <div class="kpi-icon icon-amber" id="alert-icon-wrapper"><i class="fa-solid fa-scale-unbalanced"></i></div>
+                    <div class="kpi-info">
+                        <h3>Conciliación</h3>
+                        <div class="kpi-value" id="val-diff-total">0 <span class="unit">L</span></div>
+                        <p class="kpi-subtext" id="val-diff-desc">Flujo de combustible verificado</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab Contents -->
+            <div class="tab-container">
+                
+                <!-- TAB 1: DASHBOARD DE CONCILIACION -->
+                <section class="tab-content active" id="tab-dashboard">
+                    <!-- Alert Panel -->
+                    <div class="alert-panel" id="conciliation-alerts-box">
+                        <div class="alert-header">
+                            <h4><i class="fa-solid fa-triangle-exclamation"></i> Diagnóstico de Conciliación en Tiempo Real</h4>
+                            <span class="badge" id="btn-re-conciliar"><i class="fa-solid fa-rotate"></i> Forzar Recálculo</span>
+                        </div>
+                        <div class="alert-body" id="alerts-list">
+                            <!-- Dynamically populated -->
+                            <div class="alert-item success">
+                                <i class="fa-solid fa-circle-check"></i>
+                                <span><strong>Conciliación Huixquilucan:</strong> Las entradas en Pegaso y Marimba corresponden exactamente a los tickets de compra registrados de la gasolinera.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Flujo de combustible: Despachado vs. Recibido</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-flow-comparison"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Rendimiento Promedio por Maquina (L/h y km/L)</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-performance"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Diésel Consumido por Obra</h3>
+                            <div class="chart-wrapper pie-chart-wrapper">
+                                <canvas id="chart-obra-distribution"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card list-card">
+                            <h3>Resumen de Inventarios e Historial de Costos</h3>
+                            <div class="inventario-list">
+                                <div class="inv-item">
+                                    <span>Gasolinera Huixquilucan (Costo Promedio)</span>
+                                    <strong>$28.30 / Litro</strong>
+                                </div>
+                                <div class="inv-item">
+                                    <span>Cargas Totales de la Semana</span>
+                                    <strong id="stat-total-cargas">2,300 Litros</strong>
+                                </div>
+                                <div class="inv-item">
+                                    <span>Costo Total de combustible</span>
+                                    <strong id="stat-total-costo">$62,600.00 MXN</strong>
+                                </div>
+                                <div class="inv-item">
+                                    <span>Máquina con Mayor Consumo</span>
+                                    <strong id="stat-top-maquina">Excavadora EX-01 (300 L)</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW ROW: ESTIMADOS SEMANALES VS CONSUMO REAL -->
+                    <div class="charts-grid" style="grid-template-columns: 1fr;">
+                        <div class="chart-card list-card" style="height: auto;">
+                            <h3>Control de Solicitudes y Estimados Semanales vs. Suministro Real</h3>
+                            <p class="pane-desc" style="margin-bottom: 15px;">Comparativa del combustible solicitado por los ingenieros de obra vs. lo despachado en la semana.</p>
+                            <div class="table-wrapper">
+                                <table id="table-estimates-comparison">
+                                    <thead>
+                                        <tr>
+                                            <th>Obra</th>
+                                            <th>Equipo / Económico</th>
+                                            <th>Est. Semanal (L)</th>
+                                            <th>Suministro Real (L)</th>
+                                            <th>Desviación (L)</th>
+                                            <th>% Desviación</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Will be dynamically populated by app.js -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW ROW: ANALISIS EJECUTIVO DIARIO Y SEMANAL -->
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Peticiones (Estimados) por Obra</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-peticiones-dia-obra"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Salidas Marimba por Día y Obra</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-marimba-dia-obra"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Salidas Pegaso por Día y Obra</h3>
+                            <div class="chart-wrapper">
+                                <canvas id="chart-pegaso-dia-obra"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card list-card" style="height: auto;">
+                            <h3>Resumen Ejecutivo de Diésel</h3>
+                            <div class="inventario-list" style="margin-top: 10px;">
+                                <div class="inv-item">
+                                    <span>Total Diésel Hoy (Suministrado)</span>
+                                    <strong id="stat-total-hoy">0 Litros</strong>
+                                </div>
+                                <div class="inv-item">
+                                    <span>Total Diésel Semana (Suministrado)</span>
+                                    <strong id="stat-total-semana">0 Litros</strong>
+                                </div>
+                                <div class="inv-item" style="flex-direction: column; align-items: flex-start; gap: 8px; border-bottom: none;">
+                                    <span style="font-weight: 600; color: var(--text-color);">Consumo Semana por Obra:</span>
+                                    <div id="stat-obras-semana" style="width: 100%; font-size: 0.9em; display: flex; flex-direction: column; gap: 5px;">
+                                        <!-- dinamico -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: BITACORAS (PEGASO, MARIMBA, OBRA) -->
+                <section class="tab-content" id="tab-bitacoras">
+                    <div class="subtabs-header">
+                        <button class="subtab-btn active" data-subtab="pegaso">
+                            <i class="fa-solid fa-warehouse"></i> Tanque Pegaso (Bitácora GC-COMB-001)
+                        </button>
+                        <button class="subtab-btn" data-subtab="marimba">
+                            <i class="fa-solid fa-truck-moving"></i> Marimba / Mamba (Bitácora GC-COMB-002)
+                        </button>
+                        <button class="subtab-btn" data-subtab="obra">
+                            <i class="fa-solid fa-helmet-safety"></i> Consumo Obras (Bitácora GC-COMB-003)
+                        </button>
+                    </div>
+
+                    <!-- Subtab 1: Pegaso -->
+                    <div class="subtab-content active" id="subtab-pegaso">
+                        <div class="table-actions">
+                            <div class="filters">
+                                <input type="date" class="filter-input" id="filter-pegaso-date">
+                                <select class="filter-input" id="filter-pegaso-mov">
+                                    <option value="">Todos los movimientos</option>
+                                    <option value="Entrada">Entradas (Cargas de Gasolinera)</option>
+                                    <option value="Salida a Marimba">Salidas a Mamba (Marimba)</option>
+                                    <option value="Salida Directa Máquina">Salida Directa a Máquina</option>
+                                </select>
+                            </div>
+                            <button class="add-row-btn" id="btn-add-pegaso"><i class="fa-solid fa-plus"></i> Añadir Registro</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="table-pegaso">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Movimiento</th>
+                                        <th>Origen / Destino</th>
+                                        <th>Obra</th>
+                                        <th>Litros E</th>
+                                        <th>Litros S</th>
+                                        <th>Costo/L</th>
+                                        <th>Importe</th>
+                                        <th>Obs/Evidencia</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Subtab 2: Marimba -->
+                    <div class="subtab-content" id="subtab-marimba">
+                        <div class="table-actions">
+                            <div class="filters">
+                                <input type="date" class="filter-input" id="filter-marimba-date">
+                                <select class="filter-input" id="filter-marimba-mov">
+                                    <option value="">Todos los movimientos</option>
+                                    <option value="Entrada desde Pegaso">Cargas desde Pegaso</option>
+                                    <option value="Entrada desde Gasolinera">Cargas de Gasolinera</option>
+                                    <option value="Salida a Obra">Salidas a Obras</option>
+                                </select>
+                            </div>
+                            <button class="add-row-btn" id="btn-add-marimba"><i class="fa-solid fa-plus"></i> Añadir Registro</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="table-marimba">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Movimiento</th>
+                                        <th>Ubicación / Obra</th>
+                                        <th>Equipo Surtido</th>
+                                        <th>Litros E</th>
+                                        <th>Litros S</th>
+                                        <th>Costo/L</th>
+                                        <th>Importe</th>
+                                        <th>Obs/Evidencia</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Subtab 3: Obra -->
+                    <div class="subtab-content" id="subtab-obra">
+                        <div class="table-actions">
+                            <div class="filters">
+                                <input type="date" class="filter-input" id="filter-obra-date">
+                                <select class="filter-input" id="filter-obra-site">
+                                    <option value="">Todas las Obras</option>
+                                    <option value="México-Toluca">México-Toluca</option>
+                                    <option value="Lerma - Tres Marías">Lerma - Tres Marías</option>
+                                    <option value="Chamapa-Lechería">Chamapa-Lechería</option>
+                                </select>
+                            </div>
+                            <button class="add-row-btn" id="btn-add-obra"><i class="fa-solid fa-plus"></i> Añadir Registro</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table id="table-obra">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Obra</th>
+                                        <th>Fuente</th>
+                                        <th>Máquina</th>
+                                        <th>L. Recibidos</th>
+                                        <th>Costo/L</th>
+                                        <th>Importe</th>
+                                        <th>Rendimiento</th>
+                                        <th>Actividad / Obs</th>
+                                        <th>Evidencia</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: ASISTENTE IA SEGURO -->
+                <section class="tab-content" id="tab-asistente">
+                    <div class="assistant-container">
+                        <div class="assistant-sidebar">
+                            <div class="assistant-welcome">
+                                <i class="fa-solid fa-user-shield welcome-shield-icon"></i>
+                                <h4>Asistente Diésel Seguro</h4>
+                                <p>Este agente está conectado de forma parametrizada a la base de datos de Supabase. No ejecuta SQL directo (evita inyección de código).</p>
+                            </div>
+                            <div class="assistant-suggestions">
+                                <h5>Consultas Rápidas</h5>
+                                <button class="suggest-btn" data-query="Muestra un resumen de rendimiento de todas las excavadoras.">
+                                    <i class="fa-solid fa-gauge-high"></i> Rendimiento de excavadoras
+                                </button>
+                                <button class="suggest-btn" data-query="¿Tenemos discrepancias activas entre el tanque Pegaso y la Mamba?">
+                                    <i class="fa-solid fa-scale-unbalanced-flip"></i> Conciliar Mamba vs Pegaso
+                                </button>
+                                <button class="suggest-btn" data-query="Genera el resumen de consumo y costo por obra de esta semana.">
+                                    <i class="fa-solid fa-file-invoice-dollar"></i> Costos por Obra
+                                </button>
+                                <button class="suggest-btn" data-query="¿Cuánto diésel ha salido del tanque Pegaso directo a obra?">
+                                    <i class="fa-solid fa-right-from-bracket"></i> Salidas directas Pegaso
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="chat-area">
+                            <div class="chat-messages" id="chat-messages-container">
+                                <div class="message system">
+                                    <div class="bubble">
+                                        <p><strong>Fénix IA:</strong> Hola. Estoy listo para ayudarte a conciliar y auditar los datos de diésel. Puedes hacerme preguntas sobre los tanques, consumos de las 3 obras, costos o rendimiento de las máquinas.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chat-input-field" placeholder="Pregunta algo al asistente seguro (ej: ¿Cuáles son las discrepancias de hoy?)...">
+                                <button id="btn-send-chat"><i class="fa-solid fa-paper-plane"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 4: SIMULADOR DE WHATSAPP -->
+                <section class="tab-content" id="tab-simulador">
+                    <div class="simulator-layout">
+                        <!-- Left pane: Input Simulator -->
+                        <div class="sim-pane input-pane">
+                            <h3><i class="fa-brands fa-whatsapp"></i> Simulación de Reporte (Envío desde WhatsApp)</h3>
+                            <p class="pane-desc">Simula cómo los operarios del Tanque Pegaso, choferes de la Mamba o ingenieros de obra envían sus reportes diarios mediante mensajes de texto y fotografías.</p>
+
+                            <div class="sim-form">
+                                <div class="form-group">
+                                    <label for="sim-sender">Remitente (Rol de Trabajo)</label>
+                                    <select id="sim-sender" class="form-control">
+                                        <option value="operador_pegaso">Operador Pegaso (Tanque Fijo)</option>
+                                        <option value="chofer_mamba">Chofer Mamba M-01 (Pipa móvil)</option>
+                                        <option value="ingeniero_obra">Ingeniero de Obra (Recepción/Consumo)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Plantillas de Mensaje Rápidas (Haz click para rellenar)</label>
+                                    <div class="templates-grid">
+                                        <button class="tmpl-btn" id="tmpl-pegaso-in">Pegaso: Entrada (Huixquilucan)</button>
+                                        <button class="tmpl-btn" id="tmpl-pegaso-out">Pegaso: Despacho a Mamba</button>
+                                        <button class="tmpl-btn" id="tmpl-mamba-in-gas">Mamba: Carga Gasolinera</button>
+                                        <button class="tmpl-btn" id="tmpl-mamba-out">Mamba: Despacho a Excavadora</button>
+                                        <button class="tmpl-btn" id="tmpl-obra-rec">Obra: Recepción diésel</button>
+                                        <button class="tmpl-btn" id="tmpl-engineer-estimate">Ingeniero: Estimado Semanal MT</button>
+                                        <button class="tmpl-btn" id="tmpl-ocr-compactador">Medidor OCR: Compactador (40L)</button>
+                                        <button class="tmpl-btn" id="tmpl-ocr-perfiladora">Medidor OCR: Perfiladora (250L)</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="sim-message">Mensaje de WhatsApp</label>
+                                    <textarea id="sim-message" rows="4" class="form-control" placeholder="Escribe el mensaje de reporte..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="sim-image-select">Foto del Reporte (Ticket / Odómetro)</label>
+                                    <select id="sim-image-select" class="form-control">
+                                        <option value="ticket_gasolina.jpg">Ticket de Carga Gasolinera (Huixquilucan)</option>
+                                        <option value="medidor_pegaso.jpg">Foto de Flujómetro / Medidor Tanque Pegaso</option>
+                                        <option value="odometro.jpg">Foto de Horómetro / Odómetro de Excavadora</option>
+                                        <option value="">Sin Foto (Solo Texto)</option>
+                                    </select>
+                                </div>
+
+                                <button class="btn-primary" id="btn-simulate-send">
+                                    <i class="fa-solid fa-share"></i> Enviar Mensaje al Grupo Fénix
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Right pane: Real-time logs of what n8n would receive -->
+                        <div class="sim-pane logs-pane">
+                            <h3><i class="fa-solid fa-terminal"></i> Monitoreo Webhook de n8n (Historial de Procesamiento)</h3>
+                            <p class="pane-desc">Flujo de depuración en tiempo real. Aquí verás cómo n8n recibe el webhook y cómo el Agente de IA extrae la información en un JSON estructurado para guardarla en Supabase.</p>
+
+                            <div class="logs-container" id="simulation-logs">
+                                <div class="log-entry system">
+                                    <span class="log-time">[18:02:47]</span>
+                                    <span class="log-msg">Simulador iniciado. Esperando mensajes en el grupo de WhatsApp...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: AJUSTES DE CONFIGURACION DE SUPABASE -->
+    <div class="modal-overlay" id="config-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-sliders"></i> Ajustes de Base de Datos (Supabase)</h3>
+                <button class="close-modal-btn" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>Para conectar este Dashboard a tu base de datos de Supabase real, introduce tus credenciales del proyecto. Si lo dejas en blanco, el Dashboard se ejecutará en <strong>Modo Mock (Datos en memoria local)</strong> para demostración.</p>
+                <div class="form-group">
+                    <label for="cfg-supabase-url">Supabase Project URL</label>
+                    <input type="text" id="cfg-supabase-url" class="form-control" placeholder="https://xxxxxxxxxxxxxxxxxxxx.supabase.co">
+                </div>
+                <div class="form-group">
+                    <label for="cfg-supabase-key">Supabase Anon Key / API Key</label>
+                    <input type="password" id="cfg-supabase-key" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="btn-clear-config">Restablecer Mock</button>
+                <button class="btn-primary" id="btn-save-config">Guardar y Conectar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: VISOR DE FOTOS / EVIDENCIAS -->
+    <div class="modal-overlay" id="image-viewer-modal">
+        <div class="modal-box image-modal-box">
+            <div class="modal-header">
+                <h3 id="viewer-title">Evidencia de Reporte</h3>
+                <button class="close-modal-btn" id="btn-close-viewer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="viewer-img" src="" alt="Evidencia" class="img-fluid rounded">
+                <p id="viewer-desc" class="mt-2 text-muted"></p>
+            </div>
+        </div>
+    </div>
+<script src="app.js"></script>
+</body>
+</html>

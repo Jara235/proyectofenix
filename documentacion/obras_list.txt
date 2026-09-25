@@ -1,0 +1,21 @@
+BTL | Bacheo Toluca
+BACH | BACHEO TOLUCA Y CALLE VICENTE LOMBARDO TOLEDANO
+CALL | Calle Revolución y Calle Lerdo, en
+la Delegación San Pedro
+CL | Chamapa-Lechería
+CUAR | Cuarteles Generales Valle de México/Edificios de Apoyo Armas y              
+Servicios/Centro
+EXPL | EXPLANADA DAMIAN CARMONA
+LT | Lerma-Tenango
+L3M | Lerma - Tres Marías
+LERM | LERMA TENANGO
+MAUI | MAǪUINARIA
+MPE | Maquinaria Pegaso
+MEXI | MEXICO-TOLUCA
+MT | México-Toluca
+OBRA | OBRA MEXICO TOLUCA
+PASF | P.ASFALTO HUIX
+HX | Planta Huixquilucan
+PHX | Planta Huixquilucan
+PPE | Planta Pegaso
+TRAN | TRANSPORTES FLOTILLA

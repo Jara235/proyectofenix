@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fénix - Dashboard Directivo</title>
+    <!-- Fuentes modernas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Iconos -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Fondo dinámico animado -->
+    <div class="bg-animated">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar lateral -->
+        <aside class="sidebar glass-panel">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="ri-fire-fill"></i></div>
+                <h2>FÉNIX</h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active"><i class="ri-dashboard-line"></i> Dashboard General</a>
+                <a href="#" class="nav-item"><i class="ri-check-double-line"></i> Autorizaciones</a>
+                <a href="#" class="nav-item"><i class="ri-exchange-funds-line"></i> Conciliación</a>
+                <a href="#" class="nav-item"><i class="ri-bar-chart-box-line"></i> Rendimientos</a>
+                <a href="#" class="nav-item"><i class="ri-robot-2-line"></i> Asistente IA</a>
+            </nav>
+
+            <div class="user-profile">
+                <img src="https://ui-avatars.com/api/?name=Director+GT&background=0D8ABC&color=fff" alt="User">
+                <div class="user-info">
+                    <h4>Director General</h4>
+                    <p>Grupo Trujano</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <header class="top-header">
+                <div>
+                    <h1>Resumen Ejecutivo</h1>
+                    <p class="subtitle">Semana 25 - Jun 16 al Jun 22, 2026</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-outline"><i class="ri-calendar-event-line"></i> Cambiar Semana</button>
+                    <button class="btn btn-primary"><i class="ri-download-cloud-2-line"></i> Exportar Reporte</button>
+                </div>
+            </header>
+
+            <!-- KPIs -->
+            <section class="kpi-grid">
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon info"><i class="ri-gas-station-fill"></i></div>
+                    <div class="kpi-data">
+                        <h3>Lts Solicitados</h3>
+                        <p class="value">14,580 <span>Lts</span></p>
+                        <p class="trend positive"><i class="ri-arrow-up-line"></i> +5.2% vs sem ant</p>
+                    </div>
+                </div>
+                
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon success"><i class="ri-shield-check-fill"></i></div>
+                    <div class="kpi-data">
+                        <h3>Lts Autorizados</h3>
+                        <p class="value">12,200 <span>Lts</span></p>
+                        <p class="trend">83% Aprobación</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon warning"><i class="ri-error-warning-fill"></i></div>
+                    <div class="kpi-data">
+                        <h3>Discrepancias</h3>
+                        <p class="value">2 <span>Alertas</span></p>
+                        <p class="trend negative"><i class="ri-alert-line"></i> Requieren revisión</p>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-panel">
+                    <div class="kpi-icon highlight"><i class="ri-truck-fill"></i></div>
+                    <div class="kpi-data">
+                        <h3>Equipos Activos</h3>
+                        <p class="value">42</p>
+                        <p class="trend">En 5 Obras/Plantas</p>
+                    </div>
+                </div>
+            </section>
+
+            <div class="dashboard-grid">
+                <!-- Gráfica de Consumo -->
+                <div class="glass-panel chart-container">
+                    <div class="panel-header">
+                        <h3>Consumo vs Autorizado (Lts por Día)</h3>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="consumptionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Alertas de Conciliación -->
+                <div class="glass-panel list-container">
+                    <div class="panel-header">
+                        <h3>Alertas de Conciliación (IA)</h3>
+                        <span class="badge">2 Pendientes</span>
+                    </div>
+                    <div class="alert-list">
+                        <div class="alert-item error">
+                            <div class="alert-icon"><i class="ri-spam-3-line"></i></div>
+                            <div class="alert-content">
+                                <h4>Discrepancia Cruce 2 (Tanque Pegaso -> Marimba)</h4>
+                                <p>Faltante de <strong>50 Lts</strong>. Folio: PAP-25-012.</p>
+                                <span class="ai-insight"><i class="ri-robot-2-fill"></i> Sugerencia IA: Posible error de dedo, el importe facturado coincide con lo despachado.</span>
+                            </div>
+                        </div>
+
+                        <div class="alert-item warning">
+                            <div class="alert-icon"><i class="ri-gas-station-line"></i></div>
+                            <div class="alert-content">
+                                <h4>Diferencia Rendimiento (PR-01)</h4>
+                                <p>Perfiladora en México-Toluca consumió 20% más L/h del esperado.</p>
+                                <span class="ai-insight"><i class="ri-robot-2-fill"></i> Sugerencia IA: Ing. Javier reportó falla en inyectores el Martes.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Obras -->
+                <div class="glass-panel table-container full-width">
+                    <div class="panel-header">
+                        <h3>Resumen por Obra / Planta</h3>
+                    </div>
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Centro de Trabajo</th>
+                                <th>Responsable</th>
+                                <th>Solicitado (Lts)</th>
+                                <th>Autorizado (Lts)</th>
+                                <th>Entregado (Lts)</th>
+                                <th>Estatus</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>México-Toluca</td>
+                                <td><span class="user-chip">F. Javier</span></td>
+                                <td>5,400</td>
+                                <td>4,800</td>
+                                <td>4,800</td>
+                                <td><span class="status ok">Conciliado</span></td>
+                                <td><button class="btn-icon"><i class="ri-eye-line"></i></button></td>
+                            </tr>
+                            <tr>
+                                <td>Lerma - Tres Marías</td>
+                                <td><span class="user-chip">Apolinar</span></td>
+                                <td>3,200</td>
+                                <td>3,000</td>
+                                <td>2,950</td>
+                                <td><span class="status warn">Diferencia Menor</span></td>
+                                <td><button class="btn-icon"><i class="ri-eye-line"></i></button></td>
+                            </tr>
+                            <tr>
+                                <td>Planta Huixquilucan</td>
+                                <td><span class="user-chip">Luis</span></td>
+                                <td>2,500</td>
+                                <td>2,500</td>
+                                <td>2,500</td>
+                                <td><span class="status pending">Esperando Factura</span></td>
+                                <td><button class="btn-icon"><i class="ri-eye-line"></i></button></td>
+                            </tr>
+                            <tr>
+                                <td>Planta Asfalto Pegaso</td>
+                                <td><span class="user-chip">Janeth</span></td>
+                                <td>1,600</td>
+                                <td>1,600</td>
+                                <td>1,600</td>
+                                <td><span class="status ok">Conciliado</span></td>
+                                <td><button class="btn-icon"><i class="ri-eye-line"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de Gráficas -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

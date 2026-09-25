@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fénix 2.0 — Módulo Gasolina</title>
+    <meta name="description" content="Dashboard Fénix 2.0 — Detalle de consumos, facturación y conciliación del módulo Gasolina por gasolinera, obra y vehículo.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020817; --bg2: #0f172a; --bg3: #1e293b;
+            --primary: #6366f1; --accent: #38bdf8;
+            --green: #10b981; --yellow: #f59e0b;
+            --red: #ef4444; --pink: #ec4899; --purple: #8b5cf6;
+            --blue: #3b82f6; --text: #f1f5f9; --muted: #64748b;
+            --border: rgba(255,255,255,0.08);
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse 80% 50% at 30% -10%, rgba(245,158,11,0.1), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(236,72,153,0.07), transparent);
+        }
+        nav {
+            background: rgba(15,23,42,0.92);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-left { display: flex; align-items: center; gap: 1rem; }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 0.4rem 0.85rem;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: color 0.2s, border-color 0.2s, background 0.2s;
+        }
+        .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.09); }
+        .brand {
+            font-size: 1.1rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f59e0b, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.03em;
+        }
+        .nav-right { display: flex; align-items: center; gap: 0.85rem; }
+        .semana-select {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.45rem 1rem;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.84rem;
+            cursor: pointer;
+        }
+        .semana-select option { background: var(--bg3); color: var(--text); }
+        .captura-btn {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; border: none;
+            padding: 0.45rem 1.1rem; border-radius: 10px;
+            font-size: 0.84rem; font-weight: 700; cursor: pointer; text-decoration: none;
+        }
+        main { padding: 2.5rem 2rem; max-width: 1400px; margin: 0 auto; }
+        .page-header { margin-bottom: 2rem; display: flex; align-items: flex-start; gap: 1rem; }
+        .page-icon { font-size: 2.5rem; line-height: 1; }
+        .page-header h1 { font-size: 1.8rem; font-weight: 900; letter-spacing: -0.04em; color: #f59e0b; }
+        .page-header p { color: var(--muted); font-size: 0.9rem; margin-top: 0.3rem; }
+        .card {
+            background: rgba(15,23,42,0.7);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            margin-bottom: 1.5rem;
+        }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem; }
+        .card-title { font-size: 1rem; font-weight: 800; color: var(--text); }
+        .card-sub   { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .kpi-box { padding: 0.9rem 1rem; border-radius: 12px; border: 1px solid var(--border); }
+        .kpi-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 0.3rem; }
+        .kpi-val   { font-size: 1.35rem; font-weight: 800; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th { padding: 0.6rem 0.9rem; text-align: left; color: var(--muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); }
+        td { padding: 0.7rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
+        tfoot td { background: rgba(255,255,255,0.04); font-weight: 700; border-top: 1px solid var(--border); }
+        .pos { color: var(--green); }
+        .neg { color: var(--red); }
+        .bar-wrap { display: flex; flex-direction: column; gap: 0.65rem; }
+        .bar-row { display: flex; align-items: center; gap: 0.75rem; font-size: 0.82rem; }
+        .bar-label { width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); flex-shrink: 0; }
+        .bar-track { flex: 1; height: 10px; background: rgba(255,255,255,0.06); border-radius: 99px; position: relative; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 99px; }
+        .bar-val { width: 120px; text-align: right; font-weight: 700; font-size: 0.8rem; color: var(--muted); }
+        .legend-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: .4rem; font-size: 0.78rem; color: var(--muted); }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-left">
+        <a href="/" class="back-btn">← Inicio</a>
+        <span class="brand">⛽ Gasolina</span>
+    </div>
+    <div class="nav-right">
+        <select class="semana-select" id="globalSemana" onchange="onSemanaChange()">
+            <option value="">Todas las Semanas</option>
+        </select>
+        <a href="http://127.0.0.1:5001/diesel" target="_blank" class="captura-btn">Ir a Captura</a>
+    </div>
+</nav>
+
+<main>
+    <div class="page-header">
+        <div class="page-icon">⛽</div>
+        <div>
+            <h1>Módulo Gasolina</h1>
+            <p>Comparativo por gasolinera, presupuesto vs gasto por frente y estado de cuenta vs consumos por vehículo</p>
+        </div>
+    </div>
+
+    <!-- COMPARATIVO POR GASOLINERA -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title" style="color:#ec4899;">&#9981; Gasolina — Consumos vs Facturación</div>
+                <div class="card-sub">Comparativo por gasolinera y semana</div>
+            </div>
+        </div>
+        <div class="kpi-row">
+            <div class="kpi-box" style="background:rgba(236,72,153,0.08);border-color:rgba(236,72,153,0.2);">
+                <div class="kpi-label">Litros Consumidos</div>
+                <div class="kpi-val" style="color:#ec4899;" id="gkpi-cons-lts">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);">
+                <div class="kpi-label">Litros Facturados</div>
+                <div class="kpi-val" style="color:#10b981;" id="gkpi-fac-lts">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(234,179,8,0.08);border-color:rgba(234,179,8,0.2);">
+                <div class="kpi-label">Importe Consumido</div>
+                <div class="kpi-val" style="color:#f59e0b;" id="gkpi-cons-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.2);">
+                <div class="kpi-label">Importe Facturado</div>
+                <div class="kpi-val" style="color:#8b5cf6;" id="gkpi-fac-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);">
+                <div class="kpi-label">Diferencia Litros</div>
+                <div class="kpi-val" id="gkpi-dif-lts">--</div>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Gasolinera</th>
+                        <th style="text-align:right;color:#ec4899;">Lts. Consumidos</th>
+                        <th style="text-align:right;color:#10b981;">Lts. Facturados</th>
+                        <th style="text-align:right;">Diferencia Lts.</th>
+                        <th style="text-align:right;color:#f59e0b;">Imp. Consumido</th>
+                        <th style="text-align:right;color:#8b5cf6;">Imp. Facturado</th>
+                        <th style="text-align:right;color:var(--muted);">Regs.</th>
+                    </tr>
+                </thead>
+                <tbody id="gasolina-tbody"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted);">Cargando...</td></tr></tbody>
+                <tfoot id="gasolina-tfoot"></tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- PRESUPUESTO VS GASTO POR OBRA -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <div class="card-title">&#128202; Presupuesto vs Gasto (Por Frente de Trabajo)</div>
+                <div class="card-sub">Autorizado (Verde) vs Consumido (Rojo)</div>
+            </div>
+            <div class="legend-row">
+                <div class="legend-item"><span class="dot" style="background:#10b981;"></span>Autorizado</div>
+                <div class="legend-item"><span class="dot" style="background:#ef4444;"></span>Consumido</div>
+            </div>
+        </div>
+        <div class="bar-wrap" id="gas-bars">
+            <div style="color:var(--muted);font-size:0.85rem;">Cargando...</div>
+        </div>
+    </div>
+
+    <!-- CONCILIACION POR GASOLINERA -->
+    <div class="card" style="border-top: 2px solid rgba(236,72,153,0.3);">
+        <div class="card-header">
+            <div>
+                <div class="card-title" style="color:#ec4899;">&#9878; Gasolina — Conciliación por Gasolinera</div>
+                <div class="card-sub">Reporte de campo vs Facturas XML — diferencias pendientes de aclarar</div>
+            </div>
+            <div class="legend-row">
+                <div class="legend-item"><span class="dot" style="background:#10b981;"></span>Cuadrado</div>
+                <div class="legend-item"><span class="dot" style="background:#ef4444;"></span>Falta Factura</div>
+                <div class="legend-item"><span class="dot" style="background:#f59e0b;"></span>Factura Excede</div>
+            </div>
+        </div>
+        <div class="kpi-row">
+            <div class="kpi-box" style="background:rgba(236,72,153,0.08);border-color:rgba(236,72,153,0.2);">
+                <div class="kpi-label">Total Reportado</div>
+                <div class="kpi-val" style="color:#ec4899;" id="gconc-rep-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);">
+                <div class="kpi-label">Total Facturado</div>
+                <div class="kpi-val" style="color:#10b981;" id="gconc-fac-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);">
+                <div class="kpi-label">Diferencia</div>
+                <div class="kpi-val" id="gconc-dif-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);">
+                <div class="kpi-label">Gasolineras OK</div>
+                <div class="kpi-val" style="color:#10b981;" id="gconc-ok">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);">
+                <div class="kpi-label">Con Problema</div>
+                <div class="kpi-val" style="color:#ef4444;" id="gconc-prob">--</div>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Gasolinera / Origen</th>
+                        <th style="text-align:right;color:#ec4899;">Rep. Regs</th>
+                        <th style="text-align:right;color:#ec4899;">Rep. Litros</th>
+                        <th style="text-align:right;color:#ec4899;">Rep. Importe</th>
+                        <th style="text-align:right;color:#10b981;">Fac. Regs</th>
+                        <th style="text-align:right;color:#10b981;">Fac. Litros</th>
+                        <th style="text-align:right;color:#10b981;">Fac. Importe</th>
+                        <th style="text-align:right;">Dif. Litros</th>
+                        <th style="text-align:right;">Dif. Importe</th>
+                        <th style="text-align:center;">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody id="gas-conc-tbody"><tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted);">Cargando...</td></tr></tbody>
+                <tfoot id="gas-conc-tfoot"></tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- ESTADO DE CUENTA VS CONSUMOS POR PLACA -->
+    <div class="card" style="border-top: 2px solid rgba(139,92,246,0.3);">
+        <div class="card-header">
+            <div>
+                <div class="card-title" style="color:#8b5cf6;">&#128221; Gasolina — Estado de Cuenta vs Consumos (Por Vehículo)</div>
+                <div class="card-sub">Importe Autorizado y Edo. Cuenta vs Importe Reportado en Campo</div>
+            </div>
+            <div class="legend-row">
+                <div class="legend-item"><span class="dot" style="background:#10b981;"></span>Cuadrado</div>
+                <div class="legend-item"><span class="dot" style="background:#ef4444;"></span>Falta Reporte</div>
+                <div class="legend-item"><span class="dot" style="background:#f59e0b;"></span>Diferencia Importe</div>
+            </div>
+        </div>
+        <div class="kpi-row">
+            <div class="kpi-box" style="background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.2);">
+                <div class="kpi-label">Total Edo. Cuenta</div>
+                <div class="kpi-val" style="color:#8b5cf6;" id="gec-edo-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(236,72,153,0.08);border-color:rgba(236,72,153,0.2);">
+                <div class="kpi-label">Total Reportado</div>
+                <div class="kpi-val" style="color:#ec4899;" id="gec-rep-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);">
+                <div class="kpi-label">Diferencia</div>
+                <div class="kpi-val" id="gec-dif-imp">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.2);">
+                <div class="kpi-label">Vehículos OK</div>
+                <div class="kpi-val" style="color:#10b981;" id="gec-ok">--</div>
+            </div>
+            <div class="kpi-box" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);">
+                <div class="kpi-label">Con Problema</div>
+                <div class="kpi-val" style="color:#ef4444;" id="gec-prob">--</div>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Placa / Vehículo</th>
+                        <th style="text-align:right;color:#8b5cf6;">Edo. Cta (Autorizado)</th>
+                        <th style="text-align:right;color:#8b5cf6;">Edo. Cta (Consumido)</th>
+                        <th style="text-align:right;color:#ec4899;">Rep. Consumo (Imp)</th>
+                        <th style="text-align:right;color:#ec4899;">Rep. Consumo (Lts)</th>
+                        <th style="text-align:right;">Dif. Importe</th>
+                        <th style="text-align:center;">Estatus</th>
+                    </tr>
+                </thead>
+                <tbody id="gas-ec-tbody"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted);">Cargando...</td></tr></tbody>
+                <tfoot id="gas-ec-tfoot"></tfoot>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script>
+    const N = new Intl.NumberFormat('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const C = new Intl.NumberFormat('es-MX', {style:'currency', currency:'MXN', maximumFractionDigits:0});
+
+    function getSemana() { return localStorage.getItem('fenix_semana') || ''; }
+    function setSemana(v) { localStorage.setItem('fenix_semana', v); }
+
+    function onSemanaChange() {
+        const val = document.getElementById('globalSemana').value;
+        setSemana(val);
+        reloadAll();
+    }
+
+    async function loadSemanas() {
+        const res  = await fetch('/api/semanas');
+        const sems = await res.json();
+        const sel  = document.getElementById('globalSemana');
+        sems.forEach(s => {
+            const o = document.createElement('option');
+            o.value = s; o.text = s;
+            sel.appendChild(o);
+        });
+        const saved = getSemana();
+        if (saved) { sel.value = saved; if (!sel.value) { setSemana(''); sel.value = ''; } }
+    }
+
+    async function loadGasolinaComparativo() {
+        const sem = getSemana();
+        const res = await fetch('/api/gasolina/comparativo_gasolinera?semana=' + encodeURIComponent(sem));
+        const d   = await res.json();
+        if (!d.success) return;
+
+        document.getElementById('gkpi-cons-lts').innerText = N.format(d.kpis.cons_lts);
+        document.getElementById('gkpi-cons-imp').innerText = C.format(d.kpis.cons_imp);
+        document.getElementById('gkpi-fac-lts').innerText  = N.format(d.kpis.fac_lts);
+        document.getElementById('gkpi-fac-imp').innerText  = C.format(d.kpis.fac_imp);
+        const kDif = d.kpis.fac_lts - d.kpis.cons_lts;
+        const kEl  = document.getElementById('gkpi-dif-lts');
+        kEl.innerText = (kDif >= 0 ? '+' : '') + N.format(kDif);
+        kEl.style.color = kDif >= 0 ? '#10b981' : '#ef4444';
+
+        const tbody = document.getElementById('gasolina-tbody');
+        const tfoot = document.getElementById('gasolina-tfoot');
+        tbody.innerHTML = '';
+        if (d.table.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted);">No hay datos de gasolina</td></tr>';
+            tfoot.innerHTML = ''; return;
+        }
+        d.table.forEach(r => {
+            const dif = r.fac_lts - r.cons_lts;
+            const cls = dif >= 0 ? 'pos' : 'neg';
+            tbody.innerHTML += `<tr>
+                <td style="color:var(--accent);font-weight:700;">${r.gasolinera}</td>
+                <td style="text-align:right;color:#ec4899;">${N.format(r.cons_lts)}</td>
+                <td style="text-align:right;color:#10b981;">${N.format(r.fac_lts)}</td>
+                <td style="text-align:right;" class="${cls}">${(dif>=0?'+':'') + N.format(dif)}</td>
+                <td style="text-align:right;">${C.format(r.cons_imp)}</td>
+                <td style="text-align:right;">${C.format(r.fac_imp)}</td>
+                <td style="text-align:right;color:var(--muted);">${r.registros}</td>
+            </tr>`;
+        });
+        const tD = d.kpis.fac_lts - d.kpis.cons_lts;
+        const tc = tD >= 0 ? 'pos' : 'neg';
+        tfoot.innerHTML = `<tr>
+            <td>TOTAL</td>
+            <td style="text-align:right;color:#ec4899;">${N.format(d.kpis.cons_lts)}</td>
+            <td style="text-align:right;color:#10b981;">${N.format(d.kpis.fac_lts)}</td>
+            <td style="text-align:right;" class="${tc}">${(tD>=0?'+':'') + N.format(tD)}</td>
+            <td style="text-align:right;">${C.format(d.kpis.cons_imp)}</td>
+            <td style="text-align:right;">${C.format(d.kpis.fac_imp)}</td>
+            <td></td>
+        </tr>`;
+    }
+
+    async function loadGasBars() {
+        const sem = getSemana();
+        const res = await fetch('/api/gasolina/por_obra?semana=' + encodeURIComponent(sem));
+        const d   = await res.json();
+        const bars = document.getElementById('gas-bars');
+        if (!d.success || !d.data.length) {
+            bars.innerHTML = '<div style="color:var(--muted);font-size:0.85rem;">No hay presupuestos ni gastos registrados</div>';
+            return;
+        }
+        const max = Math.max(...d.data.map(o => Math.max(o.auth_imp, o.cons_imp)));
+        bars.innerHTML = '';
+        d.data.forEach(r => {
+            const pctA = max > 0 ? (r.auth_imp / max * 100).toFixed(1) : 0;
+            const pctC = max > 0 ? (r.cons_imp / max * 100).toFixed(1) : 0;
+            const over = r.cons_imp > r.auth_imp;
+            bars.innerHTML += `<div class="bar-row">
+                <div class="bar-label" title="${r.obra}">${r.obra}</div>
+                <div class="bar-track" style="height:14px;">
+                    <div class="bar-fill" style="width:${pctA}%;background:#10b981;opacity:0.5;position:absolute;height:100%;" title="Autorizado"></div>
+                    <div class="bar-fill" style="width:${pctC}%;background:${over?'#ef4444':'#ec4899'};position:absolute;height:100%;" title="Consumido"></div>
+                </div>
+                <div class="bar-val">${C.format(r.cons_imp)} <span style="font-size:0.72rem;color:var(--muted)">/ ${C.format(r.auth_imp)}</span></div>
+            </div>`;
+        });
+    }
+
+    async function loadGasConc() {
+        const sem = getSemana();
+        const res = await fetch('/api/gasolina/conciliacion?semana=' + encodeURIComponent(sem));
+        const d   = await res.json();
+        if (!d.success) return;
+
+        document.getElementById('gconc-rep-imp').innerText = C.format(d.kpis.total_rep);
+        document.getElementById('gconc-fac-imp').innerText = C.format(d.kpis.total_fac);
+        const dEl = document.getElementById('gconc-dif-imp');
+        dEl.innerText = (d.kpis.total_dif >= 0 ? '+' : '') + C.format(d.kpis.total_dif);
+        dEl.style.color = d.kpis.total_dif >= 0 ? '#10b981' : '#ef4444';
+        document.getElementById('gconc-ok').innerText   = d.kpis.cuadrados;
+        document.getElementById('gconc-prob').innerText = d.kpis.con_problema;
+
+        const tbody = document.getElementById('gas-conc-tbody');
+        const tfoot = document.getElementById('gas-conc-tfoot');
+        tbody.innerHTML = '';
+        if (!d.table.length) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:2rem;color:var(--muted);">Sin datos</td></tr>'; return; }
+        const STAT_STYLE = {
+            'CUADRADO':       'background:rgba(16,185,129,0.12);color:#10b981;font-weight:700;border-radius:12px;padding:2px 10px;',
+            'FALTA FACTURA':  'background:rgba(239,68,68,0.12);color:#ef4444;font-weight:700;border-radius:12px;padding:2px 10px;',
+            'FACTURA EXCEDE': 'background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:700;border-radius:12px;padding:2px 10px;'
+        };
+        let totRepImp=0, totFacImp=0, totDif=0;
+        d.table.forEach(r => {
+            totRepImp += r.rep_imp; totFacImp += r.fac_imp; totDif += r.dif_imp;
+            const ss = STAT_STYLE[r.estatus] || '';
+            tbody.innerHTML += `<tr>
+                <td style="font-weight:600;">${r.gasolinera}</td>
+                <td style="text-align:right;color:#ec4899;">${r.rep_regs}</td>
+                <td style="text-align:right;color:#ec4899;">${N.format(r.rep_lts)}</td>
+                <td style="text-align:right;color:#ec4899;">${C.format(r.rep_imp)}</td>
+                <td style="text-align:right;color:#10b981;">${r.fac_regs}</td>
+                <td style="text-align:right;color:#10b981;">${N.format(r.fac_lts)}</td>
+                <td style="text-align:right;color:#10b981;">${C.format(r.fac_imp)}</td>
+                <td style="text-align:right;${r.dif_lts<0?'color:#ef4444;':''}">${N.format(r.dif_lts)}</td>
+                <td style="text-align:right;${r.dif_imp<0?'color:#ef4444;':'color:#10b981;'}">${(r.dif_imp>=0?'+':'')+C.format(r.dif_imp)}</td>
+                <td style="text-align:center;"><span style="${ss}">${r.estatus}</span></td>
+            </tr>`;
+        });
+        tfoot.innerHTML = `<tr>
+            <td>TOTAL</td><td></td><td></td>
+            <td style="text-align:right;">${C.format(totRepImp)}</td>
+            <td></td><td></td>
+            <td style="text-align:right;">${C.format(totFacImp)}</td>
+            <td></td>
+            <td style="text-align:right;${totDif<0?'color:#ef4444;':'color:#10b981;'}">${(totDif>=0?'+':'')+C.format(totDif)}</td>
+            <td></td>
+        </tr>`;
+    }
+
+    async function loadGasEdoCuenta() {
+        const sem = getSemana();
+        const res = await fetch('/api/gasolina/estado_cuenta_conciliacion?semana=' + encodeURIComponent(sem));
+        const d   = await res.json();
+        if (!d.success) return;
+
+        document.getElementById('gec-edo-imp').innerText = C.format(d.kpis.total_ec_imp);
+        document.getElementById('gec-rep-imp').innerText = C.format(d.kpis.total_cons_imp);
+        const dEl = document.getElementById('gec-dif-imp');
+        dEl.innerText = (d.kpis.total_dif >= 0 ? '+' : '') + C.format(d.kpis.total_dif);
+        dEl.style.color = d.kpis.total_dif >= 0 ? '#10b981' : '#ef4444';
+        document.getElementById('gec-ok').innerText   = d.kpis.cuadrados;
+        document.getElementById('gec-prob').innerText = d.kpis.problemas;
+
+        const tbody = document.getElementById('gas-ec-tbody');
+        const tfoot = document.getElementById('gas-ec-tfoot');
+        tbody.innerHTML = '';
+        if (!d.table.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted);">Sin datos</td></tr>'; return; }
+        const STAT_STYLE = {
+            'CUADRADO': 'background:rgba(16,185,129,0.12);color:#10b981;font-weight:700;border-radius:12px;padding:2px 10px;',
+            'FALTA REPORTE (SOLO EN EDO. CTA)': 'background:rgba(239,68,68,0.12);color:#ef4444;font-weight:700;border-radius:12px;padding:2px 10px;',
+            'FALTA EDO. CTA (SOLO EN REPORTE)': 'background:rgba(239,68,68,0.12);color:#ef4444;font-weight:700;border-radius:12px;padding:2px 10px;',
+            'EDO. CTA EXCEDE REPORTE': 'background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:700;border-radius:12px;padding:2px 10px;',
+            'REPORTE EXCEDE EDO. CTA': 'background:rgba(245,158,11,0.12);color:#f59e0b;font-weight:700;border-radius:12px;padding:2px 10px;'
+        };
+        let totAuth=0, totEc=0, totCons=0, totLts=0, totDif=0;
+        d.table.forEach(r => {
+            totAuth += r.auth_imp; totEc += r.ec_imp; totCons += r.cons_imp; totLts += r.cons_lts; totDif += r.diferencia;
+            const ss = STAT_STYLE[r.estatus] || '';
+            tbody.innerHTML += `<tr>
+                <td style="font-weight:600;"><div style="color:var(--text);">${r.placa}</div><div style="font-size:0.75rem;color:var(--muted);">${r.vehiculo}</div></td>
+                <td style="text-align:right;color:#8b5cf6;">${C.format(r.auth_imp)}</td>
+                <td style="text-align:right;color:#8b5cf6;">${C.format(r.ec_imp)}</td>
+                <td style="text-align:right;color:#ec4899;">${C.format(r.cons_imp)}</td>
+                <td style="text-align:right;color:#ec4899;">${N.format(r.cons_lts)}</td>
+                <td style="text-align:right;${r.diferencia<0?'color:#ef4444;':'color:#10b981;'}">${(r.diferencia>=0?'+':'')+C.format(r.diferencia)}</td>
+                <td style="text-align:center;"><span style="${ss}">${r.estatus}</span></td>
+            </tr>`;
+        });
+        tfoot.innerHTML = `<tr>
+            <td>TOTAL</td>
+            <td style="text-align:right;">${C.format(totAuth)}</td>
+            <td style="text-align:right;">${C.format(totEc)}</td>
+            <td style="text-align:right;">${C.format(totCons)}</td>
+            <td style="text-align:right;">${N.format(totLts)}</td>
+            <td style="text-align:right;${totDif<0?'color:#ef4444;':'color:#10b981;'}">${(totDif>=0?'+':'')+C.format(totDif)}</td>
+            <td></td>
+        </tr>`;
+    }
+
+    
+    async function loadGasolinaAuth() {
+        const sem = getSemana();
+        const res = await fetch('/api/gasolina/autorizaciones?semana=' + encodeURIComponent(sem));
+        const d   = await res.json();
+        if (!d.success) return;
+
+        const tbody = document.getElementById('gasolina-auth-tbody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        if (!d.data || d.data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--muted);">Sin datos de autorizaciones</td></tr>';
+            return;
+        }
+
+        d.data.forEach(r => {
+            const st = r.excedido ? '<span style="background:rgba(239,68,68,0.12);color:#ef4444;font-weight:700;border-radius:12px;padding:2px 10px;">EXCEDIDO</span>' : '<span style="background:rgba(16,185,129,0.12);color:#10b981;font-weight:700;border-radius:12px;padding:2px 10px;">EN REGLA</span>';
+            tbody.innerHTML += `<tr>
+                <td style="font-weight:600;">${r.vehiculo}</td>
+                <td style="text-align:right;color:#10b981;">${N.format(r.autorizado)} L</td>
+                <td style="text-align:right;color:#3b82f6;">${N.format(r.consumido)} L</td>
+                <td style="text-align:right;">${st}</td>
+            </tr>`;
+        });
+    }
+
+async function reloadAll() {
+        await Promise.all([loadGasolinaComparativo(), loadGasBars(), loadGasConc(), loadGasEdoCuenta()]);
+    }
+
+    (async () => {
+        await loadSemanas();
+        await reloadAll();
+    })();
+</script>
+</body>
+</html>
